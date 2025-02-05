@@ -2,16 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Gérer la connexion ici
+    // Simuler une connexion réussie
     console.log("Login attempt:", { email, password });
+    if (email && password) {
+      toast.success("Connexion réussie");
+      navigate("/patient");
+    } else {
+      toast.error("Veuillez remplir tous les champs");
+    }
   };
 
   return (
