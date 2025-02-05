@@ -31,18 +31,22 @@ const FindDoctor = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Trouver un médecin</h1>
           <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex-1 min-w-[200px] relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <Search className="w-4 h-4" />
+              </div>
               <Input
                 placeholder="Spécialité ou nom du médecin"
-                className="w-full"
-                icon={<Search className="w-4 h-4" />}
+                className="pl-9"
               />
             </div>
-            <div className="flex-1 min-w-[200px]">
+            <div className="flex-1 min-w-[200px] relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <MapPin className="w-4 h-4" />
+              </div>
               <Input
                 placeholder="Localisation"
-                className="w-full"
-                icon={<MapPin className="w-4 h-4" />}
+                className="pl-9"
               />
             </div>
             <Button className="flex gap-2">
