@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Hero = () => {
   return (
@@ -12,13 +13,17 @@ export const Hero = () => {
           Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et 7j/7
         </p>
         <div className="flex justify-center gap-4">
-          <Button size="lg" className="bg-primary hover:bg-primary/90">
-            <Search className="mr-2 h-5 w-5" />
-            Trouver un médecin
-          </Button>
-          <Button size="lg" variant="outline">
-            Je suis médecin
-          </Button>
+          <Link to="/find-doctor">
+            <Button size="lg" className="bg-primary hover:bg-primary/90">
+              <Search className="mr-2 h-5 w-5" />
+              Trouver un médecin
+            </Button>
+          </Link>
+          <Link to="/register">
+            <Button size="lg" variant="outline">
+              Je suis médecin
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
