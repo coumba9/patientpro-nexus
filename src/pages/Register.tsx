@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ const Register = () => {
     // Simuler une inscription réussie
     console.log("Register attempt:", formData);
     toast.success("Inscription réussie");
+    // Rediriger vers la page de connexion
     navigate("/login");
   };
 
