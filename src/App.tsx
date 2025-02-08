@@ -11,6 +11,11 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PatientDashboard from "./pages/patient/Dashboard";
 import DoctorDashboard from "./pages/doctor/Dashboard";
+import DoctorMessages from "./pages/doctor/Messages";
+import DoctorDocuments from "./pages/doctor/Documents";
+import DoctorSettings from "./pages/doctor/Settings";
+import DoctorPatients from "./pages/doctor/Patients";
+import DoctorTeleconsultation from "./pages/doctor/Teleconsultation";
 import AdminDashboard from "./pages/admin/Dashboard";
 import About from "./pages/About";
 import Values from "./pages/Values";
@@ -37,7 +42,12 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/patient/*" element={<PatientDashboard />} />
-          <Route path="/doctor/*" element={<DoctorDashboard />} />
+          <Route path="/doctor" element={<DoctorDashboard />} />
+          <Route path="/doctor/messages" element={<DoctorMessages />} />
+          <Route path="/doctor/documents" element={<DoctorDocuments />} />
+          <Route path="/doctor/settings" element={<DoctorSettings />} />
+          <Route path="/doctor/patients" element={<DoctorPatients />} />
+          <Route path="/doctor/teleconsultation" element={<DoctorTeleconsultation />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
           <Route path="/about" element={<About />} />
           <Route path="/values" element={<Values />} />
