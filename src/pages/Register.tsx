@@ -2,20 +2,33 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isDoctor = searchParams.get("type") === "doctor";
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    userType: "patient", // ou "doctor"
+    userType: "patient",
+    // Champs spécifiques aux médecins
+    speciality: "",
+    licenseNumber: "",
+    yearsOfExperience: "",
   });
+
+  useEffect(() => {
+    if (isDoctor) {
+      setFormData(prev => ({ ...prev, userType: "doctor" }));
+    }
+  }, [isDoctor]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,9 +37,27 @@ const Register = () => {
       toast.error("Les mots de passe ne correspondent pas");
       return;
     }
+
+    // Validation supplémentaire pour les médecins
+    if (isDoctor) {
+      if (!formData.speciality || !formData.licenseNumber || !formData.yearsOfExperience) {
+        toast.error("Veuillez remplir tous les champs obligatoires");
+        return;
+      }
+      // Simuler la vérification du numéro de licence
+      if (formData.licenseNumber.length < 6) {
+        toast.error("Le numéro de licence doit contenir au moins 6 caractères");
+        return;
+      }
+    }
+
     // Simuler une inscription réussie
     console.log("Register attempt:", formData);
-    toast.success("Inscription réussie");
+    if (isDoctor) {
+      toast.success("Votre demande d'inscription a été envoyée et sera examinée par notre équipe");
+    } else {
+      toast.success("Inscription réussie");
+    }
     // Rediriger vers la page de connexion
     navigate("/login");
   };
@@ -43,7 +74,7 @@ const Register = () => {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-sm">
         <div>
           <h2 className="text-center text-3xl font-bold text-gray-900">
-            Créer un compte
+            {isDoctor ? "Inscription Médecin" : "Créer un compte"}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Ou{" "}
@@ -92,6 +123,45 @@ const Register = () => {
               />
             </div>
 
+            {isDoctor && (
+              <>
+                <div>
+                  <Label htmlFor="speciality">Spécialité</Label>
+                  <Input
+                    id="speciality"
+                    name="speciality"
+                    type="text"
+                    value={formData.speciality}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="licenseNumber">Numéro de licence</Label>
+                  <Input
+                    id="licenseNumber"
+                    name="licenseNumber"
+                    type="text"
+                    value={formData.licenseNumber}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="yearsOfExperience">Années d'expérience</Label>
+                  <Input
+                    id="yearsOfExperience"
+                    name="yearsOfExperience"
+                    type="number"
+                    min="0"
+                    value={formData.yearsOfExperience}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
             <div>
               <Label htmlFor="password">Mot de passe</Label>
               <Input
@@ -116,34 +186,17 @@ const Register = () => {
               />
             </div>
 
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="userType"
-                  value="patient"
-                  checked={formData.userType === "patient"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Patient
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="userType"
-                  value="doctor"
-                  checked={formData.userType === "doctor"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Médecin
-              </label>
-            </div>
+            {!isDoctor && (
+              <input
+                type="hidden"
+                name="userType"
+                value="patient"
+              />
+            )}
           </div>
 
           <Button type="submit" className="w-full">
-            S'inscrire
+            {isDoctor ? "Envoyer la demande d'inscription" : "S'inscrire"}
           </Button>
         </form>
       </div>
