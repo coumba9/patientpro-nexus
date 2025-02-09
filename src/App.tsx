@@ -27,6 +27,7 @@ import Pricing from "./pages/Pricing";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Legal from "./pages/Legal";
+import { BookAppointment } from "./pages/BookAppointment";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/find-doctor" element={<FindDoctor />} />
+          <Route path="/book-appointment" element={<BookAppointment />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/patient/*" element={<PatientDashboard />} />

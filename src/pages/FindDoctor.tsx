@@ -1,7 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Search } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Doctor {
   id: number;
@@ -40,6 +42,7 @@ const mockDoctors: Doctor[] = [
 ];
 
 const FindDoctor = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>(mockDoctors);
@@ -52,6 +55,10 @@ const FindDoctor = () => {
         doctor.location.toLowerCase().includes(location.toLowerCase())
     );
     setFilteredDoctors(filtered);
+  };
+
+  const handleBooking = (doctor: Doctor) => {
+    navigate(`/book-appointment?doctor=${encodeURIComponent(doctor.name)}&specialty=${encodeURIComponent(doctor.specialty)}`);
   };
 
   return (
@@ -104,7 +111,7 @@ const FindDoctor = () => {
               <p className="text-green-600 mb-4">{doctor.availability}</p>
               <div className="flex justify-between items-center">
                 <div className="text-yellow-500">★ {doctor.rating}</div>
-                <Button>Prendre RDV</Button>
+                <Button onClick={() => handleBooking(doctor)}>Prendre RDV</Button>
               </div>
             </div>
           ))}
