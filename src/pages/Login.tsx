@@ -9,7 +9,7 @@ import { toast } from "sonner";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("patient"); // "patient" ou "doctor"
+  const [role, setRole] = useState("patient"); // "patient", "doctor" ou "admin"
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -19,7 +19,17 @@ const Login = () => {
     if (email && password) {
       toast.success("Connexion réussie");
       // Rediriger vers le tableau de bord correspondant
-      navigate(role === "patient" ? "/patient" : "/doctor");
+      switch (role) {
+        case "patient":
+          navigate("/patient");
+          break;
+        case "doctor":
+          navigate("/doctor");
+          break;
+        case "admin":
+          navigate("/admin");
+          break;
+      }
     } else {
       toast.error("Veuillez remplir tous les champs");
     }
@@ -83,6 +93,17 @@ const Login = () => {
                   className="mr-2"
                 />
                 Médecin
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="role"
+                  value="admin"
+                  checked={role === "admin"}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="mr-2"
+                />
+                Administrateur
               </label>
             </div>
           </div>
