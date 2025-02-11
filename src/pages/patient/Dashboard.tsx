@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -135,6 +134,12 @@ const PatientDashboard = () => {
                 Mes rendez-vous
               </Button>
             </Link>
+            <Link to="/patient/tickets">
+              <Button variant="ghost" className="w-full justify-start" size="lg">
+                <ClipboardList className="mr-2 h-5 w-5" />
+                Mes tickets
+              </Button>
+            </Link>
             <Link to="/patient/profile">
               <Button variant="ghost" className="w-full justify-start" size="lg">
                 <User className="mr-2 h-5 w-5" />
@@ -177,6 +182,7 @@ const PatientDashboard = () => {
           <div className="md:col-span-3">
             <Routes>
               <Route path="/" element={<Appointments />} />
+              <Route path="/tickets" element={<AppointmentTickets />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/medical-history" element={<MedicalHistory />} />
               <Route path="/prescriptions" element={<Prescriptions />} />
