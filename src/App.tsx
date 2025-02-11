@@ -17,6 +17,9 @@ import DoctorSettings from "./pages/doctor/Settings";
 import DoctorPatients from "./pages/doctor/Patients";
 import DoctorTeleconsultation from "./pages/doctor/Teleconsultation";
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminModeration from "./pages/admin/Moderation";
+import AdminSettings from "./pages/admin/Settings";
+import AdminAnalytics from "./pages/admin/Analytics";
 import About from "./pages/About";
 import Values from "./pages/Values";
 import Contact from "./pages/Contact";
@@ -50,7 +53,10 @@ const App = () => (
           <Route path="/doctor/settings" element={<DoctorSettings />} />
           <Route path="/doctor/patients" element={<DoctorPatients />} />
           <Route path="/doctor/teleconsultation" element={<DoctorTeleconsultation />} />
-          <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/moderation" element={<AdminModeration />} />
+          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/about" element={<About />} />
           <Route path="/values" element={<Values />} />
           <Route path="/contact" element={<Contact />} />
