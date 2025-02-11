@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -19,6 +20,7 @@ import SettingsPage from "./Settings";
 import Profile from "./Profile";
 import MedicalHistory from "./MedicalHistory";
 import Prescriptions from "./Prescriptions";
+import AppointmentTickets from "./AppointmentTickets";
 
 interface Appointment {
   id: number;
