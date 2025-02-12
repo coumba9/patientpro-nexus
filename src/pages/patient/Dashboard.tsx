@@ -52,6 +52,7 @@ interface Appointment {
   time: string;
   location: string;
   type: string;
+  status: "confirmed" | "pending";
 }
 
 const mockAppointments: Appointment[] = [
@@ -63,6 +64,7 @@ const mockAppointments: Appointment[] = [
     time: "14:30",
     location: "Paris",
     type: "Consultation",
+    status: "pending",
   },
   {
     id: 2,
@@ -72,6 +74,7 @@ const mockAppointments: Appointment[] = [
     time: "10:00",
     location: "Lyon",
     type: "Suivi",
+    status: "confirmed",
   },
 ];
 
@@ -230,21 +233,23 @@ const Appointments = () => {
                   </DialogContent>
                 </Dialog>
 
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => handleConfirm(appointment.id)}
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Confirmer
-                </Button>
-
-                <Link to="/patient/tickets">
-                  <Button variant="outline" size="sm">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Voir le ticket
+                {appointment.status === "pending" ? (
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => handleConfirm(appointment.id)}
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Confirmer
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/patient/tickets">
+                    <Button variant="outline" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Voir le ticket
+                    </Button>
+                  </Link>
+                )}
 
                 <Button variant="destructive" size="sm">
                   <X className="h-4 w-4 mr-2" />

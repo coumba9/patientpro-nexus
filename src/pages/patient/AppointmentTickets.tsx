@@ -6,27 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   CalendarDays, 
-  MessageSquare, 
   Video, 
   MapPin, 
   Download,
@@ -43,7 +24,7 @@ interface AppointmentTicket {
   date: string;
   time: string;
   type: "consultation" | "teleconsultation";
-  status: "confirmed" | "pending" | "completed" | "cancelled";
+  status: "confirmed" | "completed";
   location: string;
   price: number;
   paymentStatus: "paid" | "pending";
@@ -77,37 +58,16 @@ const AppointmentTickets = () => {
     },
   ]);
 
-  const [rescheduleReason, setRescheduleReason] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-
   const handleDownloadTicket = (appointmentId: string) => {
     toast.success("Ticket téléchargé avec succès");
-  };
-
-  const handleSendMessage = (doctorName: string) => {
-    if (newMessage.trim()) {
-      toast.success(`Message envoyé au ${doctorName}`);
-      setNewMessage("");
-    }
-  };
-
-  const handleReschedule = (appointmentId: string) => {
-    if (rescheduleReason.trim()) {
-      toast.success("Demande de report envoyée");
-      setRescheduleReason("");
-    }
   };
 
   const getStatusBadgeColor = (status: AppointmentTicket["status"]) => {
     switch (status) {
       case "confirmed":
         return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
       case "completed":
         return "bg-blue-100 text-blue-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -124,9 +84,7 @@ const AppointmentTickets = () => {
                 <CardTitle className="flex justify-between items-center">
                   <span>{appointment.doctor}</span>
                   <span className={`text-sm px-3 py-1 rounded-full ${getStatusBadgeColor(appointment.status)}`}>
-                    {appointment.status === "confirmed" ? "Confirmé" : 
-                     appointment.status === "pending" ? "En attente" :
-                     appointment.status === "completed" ? "Terminé" : "Annulé"}
+                    {appointment.status === "confirmed" ? "Confirmé" : "Terminé"}
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -165,83 +123,6 @@ const AppointmentTickets = () => {
                         <Download className="h-4 w-4 mr-2" />
                         Télécharger
                       </Button>
-
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Message
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Envoyer un message</DialogTitle>
-                            <DialogDescription>
-                              Envoyer un message à {appointment.doctor}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 mt-4">
-                            <Textarea
-                              placeholder="Votre message..."
-                              value={newMessage}
-                              onChange={(e) => setNewMessage(e.target.value)}
-                            />
-                            <Button 
-                              onClick={() => handleSendMessage(appointment.doctor)}
-                              className="w-full"
-                            >
-                              Envoyer
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <CalendarDays className="h-4 w-4 mr-2" />
-                            Reporter
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Reporter le rendez-vous</DialogTitle>
-                            <DialogDescription>
-                              Veuillez indiquer la raison du report
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 mt-4">
-                            <div className="space-y-2">
-                              <Label>Motif du report</Label>
-                              <Select>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Sélectionnez un motif" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="schedule_conflict">Conflit d'horaire</SelectItem>
-                                  <SelectItem value="transportation">Problème de transport</SelectItem>
-                                  <SelectItem value="health">Raison de santé</SelectItem>
-                                  <SelectItem value="other">Autre</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Précisions (optionnel)</Label>
-                              <Textarea
-                                placeholder="Détails supplémentaires..."
-                                value={rescheduleReason}
-                                onChange={(e) => setRescheduleReason(e.target.value)}
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => handleReschedule(appointment.id)}
-                              className="w-full"
-                            >
-                              Confirmer le report
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
                     </div>
                   </div>
                 </div>
