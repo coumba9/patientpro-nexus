@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -13,7 +12,28 @@ import {
   User,
   Home,
   ArrowLeft,
+  CalendarDays,
+  Check,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { Link, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import Messages from "./Messages";
@@ -57,6 +77,26 @@ const mockAppointments: Appointment[] = [
 
 const Appointments = () => {
   const [appointments] = useState<Appointment[]>(mockAppointments);
+  const [newMessage, setNewMessage] = useState("");
+  const [rescheduleReason, setRescheduleReason] = useState("");
+  
+  const handleSendMessage = (doctorName: string) => {
+    if (newMessage.trim()) {
+      toast.success(`Message envoyé au ${doctorName}`);
+      setNewMessage("");
+    }
+  };
+
+  const handleReschedule = (appointmentId: number) => {
+    if (rescheduleReason.trim()) {
+      toast.success("Demande de report envoyée");
+      setRescheduleReason("");
+    }
+  };
+
+  const handleConfirm = (appointmentId: number) => {
+    toast.success("Rendez-vous confirmé avec succès");
+  };
 
   return (
     <div className="space-y-6">
@@ -112,11 +152,104 @@ const Appointments = () => {
                 </div>
                 <p className="text-sm text-primary">{appointment.type}</p>
               </div>
-              <div className="space-x-2">
+              <div className="space-y-2 md:space-y-0 md:space-x-2 flex flex-col md:flex-row">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Envoyer un message</DialogTitle>
+                      <DialogDescription>
+                        Envoyer un message à {appointment.doctor}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <Textarea
+                        placeholder="Votre message..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                      />
+                      <Button 
+                        onClick={() => handleSendMessage(appointment.doctor)}
+                        className="w-full"
+                      >
+                        Envoyer
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Reporter
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reporter le rendez-vous</DialogTitle>
+                      <DialogDescription>
+                        Veuillez indiquer la raison du report
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div className="space-y-2">
+                        <Label>Motif du report</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un motif" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="schedule_conflict">Conflit d'horaire</SelectItem>
+                            <SelectItem value="transportation">Problème de transport</SelectItem>
+                            <SelectItem value="health">Raison de santé</SelectItem>
+                            <SelectItem value="other">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Précisions (optionnel)</Label>
+                        <Textarea
+                          placeholder="Détails supplémentaires..."
+                          value={rescheduleReason}
+                          onChange={(e) => setRescheduleReason(e.target.value)}
+                        />
+                      </div>
+                      <Button 
+                        onClick={() => handleReschedule(appointment.id)}
+                        className="w-full"
+                      >
+                        Confirmer le report
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => handleConfirm(appointment.id)}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Confirmer
+                </Button>
+
                 <Link to="/patient/tickets">
-                  <Button variant="outline">Voir le ticket</Button>
+                  <Button variant="outline" size="sm">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Voir le ticket
+                  </Button>
                 </Link>
-                <Button variant="destructive">Annuler</Button>
+
+                <Button variant="destructive" size="sm">
+                  <X className="h-4 w-4 mr-2" />
+                  Annuler
+                </Button>
               </div>
             </div>
           ))}
