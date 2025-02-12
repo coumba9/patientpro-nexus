@@ -113,7 +113,9 @@ const Appointments = () => {
                 <p className="text-sm text-primary">{appointment.type}</p>
               </div>
               <div className="space-x-2">
-                <Button variant="outline">Reporter</Button>
+                <Link to="/patient/tickets">
+                  <Button variant="outline">Voir le ticket</Button>
+                </Link>
                 <Button variant="destructive">Annuler</Button>
               </div>
             </div>
