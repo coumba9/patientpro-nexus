@@ -11,8 +11,10 @@ import {
   Pill,
   ClipboardList,
   User,
+  Home,
+  ArrowLeft,
 } from "lucide-react";
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import Messages from "./Messages";
 import Documents from "./Documents";
@@ -123,9 +125,38 @@ const Appointments = () => {
 };
 
 const PatientDashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/patient";
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
+        {/* Boutons de navigation */}
+        <div className="mb-6 flex items-center gap-4">
+          {!isHomePage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Button>
+          )}
+          <Link to="/patient">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Accueil
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
