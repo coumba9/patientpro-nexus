@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Euro, CreditCard, Building, Info } from "lucide-react";
+import { Euro, CreditCard, Building, Info, MapPin, Video } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -48,6 +47,7 @@ interface BookingFormValues {
   date: Date;
   time: string;
   type: string;
+  consultationType: "presentiel" | "teleconsultation";
   paymentMethod: string;
 }
 
@@ -73,6 +73,7 @@ export const BookAppointment = () => {
 
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [consultationType, setConsultationType] = useState("consultation");
+  const [isOnline, setIsOnline] = useState(false);
 
   // Exemple d'informations du médecin
   const doctorInfo: DoctorInfo = {
@@ -92,6 +93,7 @@ export const BookAppointment = () => {
   const form = useForm<BookingFormValues>({
     defaultValues: {
       type: "consultation",
+      consultationType: "presentiel",
       paymentMethod: "card",
     },
   });
@@ -206,6 +208,7 @@ export const BookAppointment = () => {
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Type de consultation */}
                     <FormField
                       control={form.control}
                       name="type"
@@ -241,6 +244,46 @@ export const BookAppointment = () => {
                       )}
                     />
 
+                    {/* Mode de consultation */}
+                    <FormField
+                      control={form.control}
+                      name="consultationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mode de consultation</FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              setIsOnline(value === "teleconsultation");
+                            }}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choisissez le mode de consultation" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="presentiel">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4" />
+                                  Consultation en cabinet
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="teleconsultation">
+                                <div className="flex items-center gap-2">
+                                  <Video className="h-4 w-4" />
+                                  Téléconsultation
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Date et heure */}
                     <FormField
                       control={form.control}
                       name="date"
@@ -293,6 +336,7 @@ export const BookAppointment = () => {
                       )}
                     />
 
+                    {/* Paiement */}
                     <FormField
                       control={form.control}
                       name="paymentMethod"
@@ -355,5 +399,3 @@ export const BookAppointment = () => {
     </div>
   );
 };
-
-export default BookAppointment;
