@@ -1,0 +1,262 @@
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { fr } from "date-fns/locale";
+import { Euro, CreditCard, Building, MapPin, Video } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+
+interface BookingFormProps {
+  doctorName?: string | null;
+  specialty?: string | null;
+  doctorFees: {
+    consultation: number;
+    followup: number;
+    urgent: number;
+  };
+  onSubmit: (data: BookingFormValues) => void;
+}
+
+interface BookingFormValues {
+  date: Date;
+  time: string;
+  type: string;
+  consultationType: "presentiel" | "teleconsultation";
+  paymentMethod: string;
+}
+
+export const BookingForm = ({
+  doctorName,
+  specialty,
+  doctorFees,
+  onSubmit,
+}: BookingFormProps) => {
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [consultationType, setConsultationType] = useState("consultation");
+  const [isOnline, setIsOnline] = useState(false);
+
+  const form = useForm<BookingFormValues>({
+    defaultValues: {
+      type: "consultation",
+      consultationType: "presentiel",
+      paymentMethod: "card",
+    },
+  });
+
+  const availableTimeSlots = [
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "14:00",
+    "14:30",
+    "15:00",
+    "15:30",
+    "16:00",
+  ];
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Type de consultation */}
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type de consultation</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setConsultationType(value);
+                }}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez le type de consultation" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="consultation">
+                    Première consultation ({doctorFees.consultation}€)
+                  </SelectItem>
+                  <SelectItem value="followup">
+                    Consultation de suivi ({doctorFees.followup}€)
+                  </SelectItem>
+                  <SelectItem value="urgent">
+                    Urgence ({doctorFees.urgent}€)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Mode de consultation */}
+        <FormField
+          control={form.control}
+          name="consultationType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mode de consultation</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setIsOnline(value === "teleconsultation");
+                }}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choisissez le mode de consultation" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="presentiel">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Consultation en cabinet
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="teleconsultation">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4" />
+                      Téléconsultation
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Date */}
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date du rendez-vous</FormLabel>
+              <Calendar
+                mode="single"
+                selected={field.value}
+                onSelect={(date) => {
+                  field.onChange(date);
+                  setSelectedDate(date);
+                }}
+                locale={fr}
+                disabled={(date) =>
+                  date < new Date() || date.getDay() === 0
+                }
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Horaire */}
+        <FormField
+          control={form.control}
+          name="time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Horaire</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={!selectedDate}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez un horaire" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableTimeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Paiement */}
+        <FormField
+          control={form.control}
+          name="paymentMethod"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Moyen de paiement</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez un moyen de paiement" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="card">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      Carte bancaire
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="thirdparty">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      Tiers payant
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cash">
+                    <div className="flex items-center gap-2">
+                      <Euro className="h-4 w-4" />
+                      Espèces
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="pt-4 border-t">
+          <div className="flex justify-between items-center mb-4">
+            <span className="font-semibold">Total à payer :</span>
+            <span className="text-xl font-bold">
+              {doctorFees[consultationType as keyof typeof doctorFees]}€
+            </span>
+          </div>
+          <Button type="submit" className="w-full">
+            Confirmer et payer
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+};
