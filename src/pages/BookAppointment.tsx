@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -6,8 +5,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { DoctorInfoCard } from "@/components/appointment/DoctorInfoCard";
 import { BookingForm } from "@/components/appointment/BookingForm";
 
@@ -58,6 +58,14 @@ export const BookAppointment = () => {
     toast.success("Rendez-vous pris avec succès !");
     navigate("/patient");
   };
+
+  // Simulation d'un état de connexion (à remplacer par votre logique d'authentification)
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+  if (!isLoggedIn) {
+    toast.error("Veuillez vous connecter pour prendre un rendez-vous");
+    return <Navigate to="/login" />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
