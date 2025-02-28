@@ -10,18 +10,30 @@ export const Hero = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Vérification directe de la valeur dans localStorage
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    console.log("Hero - Login status:", loginStatus, localStorage.getItem("isLoggedIn"));
-    setIsLoggedIn(loginStatus);
+    // Utilisation d'une fonction pour vérifier l'état de connexion
+    const checkLoginStatus = () => {
+      const status = window.localStorage.getItem("isLoggedIn") === "true";
+      console.log("Hero component - checking login status:", status);
+      setIsLoggedIn(status);
+    };
+    
+    // Vérifier au chargement
+    checkLoginStatus();
+    
+    // Configurer un événement pour détecter les changements de localStorage
+    window.addEventListener('storage', checkLoginStatus);
+    
+    // Nettoyage
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+    };
   }, []);
 
   const handleBookAppointment = () => {
-    // Vérification à nouveau au moment du clic
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    console.log("HandleBookAppointment - Login status:", loginStatus, localStorage.getItem("isLoggedIn"));
+    // Vérification directe
+    const status = window.localStorage.getItem("isLoggedIn") === "true";
     
-    if (!loginStatus) {
+    if (!status) {
       toast.error("Veuillez vous connecter pour prendre un rendez-vous");
       navigate("/login");
       return;

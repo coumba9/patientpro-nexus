@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -12,36 +12,61 @@ const Login = () => {
   const [role, setRole] = useState("patient"); // "patient", "doctor" ou "admin"
   const navigate = useNavigate();
 
+  // Vérifier si l'utilisateur est déjà connecté
+  useEffect(() => {
+    // Si déjà connecté, rediriger vers le tableau de bord approprié
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    const userRole = localStorage.getItem("userRole");
+    
+    if (isLoggedIn === "true" && userRole) {
+      console.log("Already logged in as:", userRole);
+      navigateToDashboard(userRole);
+    }
+  }, []);
+
+  const navigateToDashboard = (role: string) => {
+    switch (role) {
+      case "patient":
+        navigate("/patient");
+        break;
+      case "doctor":
+        navigate("/doctor");
+        break;
+      case "admin":
+        navigate("/admin");
+        break;
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simuler une connexion réussie
     console.log("Login attempt:", { email, password, role });
+    
     if (email && password) {
-      // Supprimer d'abord tout état de connexion existant
-      localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("userRole");
-      
-      // Définir explicitement isLoggedIn à "true" (en tant que chaîne)
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", role);
-      
-      // Vérifier immédiatement que les valeurs ont été correctement définies
-      console.log("After login, isLoggedIn:", localStorage.getItem("isLoggedIn"));
-      console.log("After login, userRole:", localStorage.getItem("userRole"));
-      
-      toast.success("Connexion réussie");
-      
-      // Rediriger vers le tableau de bord correspondant
-      switch (role) {
-        case "patient":
-          navigate("/patient");
-          break;
-        case "doctor":
-          navigate("/doctor");
-          break;
-        case "admin":
-          navigate("/admin");
-          break;
+      try {
+        // Effacer toutes les données de connexion existantes
+        window.localStorage.clear();
+        
+        // Définir les nouvelles données de connexion
+        window.localStorage.setItem("isLoggedIn", "true");
+        window.localStorage.setItem("userRole", role);
+        
+        // Vérification immédiate
+        const checkLogin = window.localStorage.getItem("isLoggedIn");
+        const checkRole = window.localStorage.getItem("userRole");
+        
+        console.log("Storage check - Login:", checkLogin);
+        console.log("Storage check - Role:", checkRole);
+        
+        if (checkLogin !== "true") {
+          throw new Error("Failed to set login state");
+        }
+        
+        toast.success("Connexion réussie");
+        navigateToDashboard(role);
+      } catch (error) {
+        console.error("Login error:", error);
+        toast.error("Erreur de connexion. Veuillez réessayer.");
       }
     } else {
       toast.error("Veuillez remplir tous les champs");

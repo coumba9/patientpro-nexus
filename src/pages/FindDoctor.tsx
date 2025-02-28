@@ -51,10 +51,23 @@ const FindDoctor = () => {
 
   // Vérifier l'état de connexion au chargement du composant
   useEffect(() => {
-    // Vérification directe de la valeur dans localStorage
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    console.log("FindDoctor - Login status:", loginStatus, localStorage.getItem("isLoggedIn"));
-    setIsLoggedIn(loginStatus);
+    // Fonction de vérification
+    const checkLoginStatus = () => {
+      const status = window.localStorage.getItem("isLoggedIn") === "true";
+      console.log("FindDoctor component - checking login status:", status);
+      setIsLoggedIn(status);
+    };
+    
+    // Vérifier immédiatement
+    checkLoginStatus();
+    
+    // Configurer l'écouteur d'événements
+    window.addEventListener('storage', checkLoginStatus);
+    
+    // Nettoyage
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+    };
   }, []);
 
   const handleSearch = () => {
@@ -68,11 +81,11 @@ const FindDoctor = () => {
   };
 
   const handleBooking = (doctor: Doctor) => {
-    // Vérification à nouveau au moment du clic
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    console.log("HandleBooking - Login status:", loginStatus, localStorage.getItem("isLoggedIn"));
+    // Vérification directe
+    const status = window.localStorage.getItem("isLoggedIn") === "true";
+    console.log("handleBooking - Login status:", status);
     
-    if (!loginStatus) {
+    if (!status) {
       toast.error("Veuillez vous connecter pour prendre un rendez-vous");
       navigate("/login");
       return;
