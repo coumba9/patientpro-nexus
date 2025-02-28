@@ -1,9 +1,28 @@
 
 import { Button } from "@/components/ui/button";
 import { LogIn, Search, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const Hero = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(loginStatus);
+  }, []);
+
+  const handleBookAppointment = () => {
+    if (!isLoggedIn) {
+      toast.error("Veuillez vous connecter pour prendre un rendez-vous");
+      navigate("/login");
+      return;
+    }
+    navigate("/find-doctor");
+  };
+
   return (
     <div className="relative bg-gradient-to-b from-sky-50 to-white py-32 px-6">
       <div className="container mx-auto text-center">
@@ -15,24 +34,33 @@ export const Hero = () => {
           7j/7
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link to="/find-doctor">
-            <Button size="lg" className="w-full sm:w-auto">
-              <Search className="mr-2 h-5 w-5" />
-              Trouver un médecin
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-              <UserPlus className="mr-2 h-5 w-5" />
-              Je suis patient
-            </Button>
-          </Link>
-          <Link to="/login">
-            <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-              <LogIn className="mr-2 h-5 w-5" />
-              Connexion
-            </Button>
-          </Link>
+          <Button size="lg" className="w-full sm:w-auto" onClick={handleBookAppointment}>
+            <Search className="mr-2 h-5 w-5" />
+            Trouver un médecin
+          </Button>
+          {!isLoggedIn && (
+            <>
+              <Link to="/register">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  <UserPlus className="mr-2 h-5 w-5" />
+                  Je suis patient
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Connexion
+                </Button>
+              </Link>
+            </>
+          )}
+          {isLoggedIn && (
+            <Link to="/patient">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                Mon espace patient
+              </Button>
+            </Link>
+          )}
         </div>
         <div className="mt-4">
           <Link to="/register?type=doctor" className="text-primary hover:text-primary/90">

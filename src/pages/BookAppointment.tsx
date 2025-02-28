@@ -13,6 +13,7 @@ import { DoctorInfoCard } from "@/components/appointment/DoctorInfoCard";
 import { BookingForm } from "@/components/appointment/BookingForm";
 import { ArrowLeft, Home } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 interface BookingFormValues {
   date: Date;
@@ -41,6 +42,15 @@ export const BookAppointment = () => {
   const doctorName = searchParams.get("doctor");
   const specialty = searchParams.get("specialty");
   const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Vérifier l'état de connexion au chargement du composant
+  useEffect(() => {
+    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(loginStatus);
+    setIsChecking(false);
+  }, []);
 
   const doctorInfo: DoctorInfo = {
     name: doctorName || "Dr. Non spécifié",
@@ -62,9 +72,12 @@ export const BookAppointment = () => {
     navigate("/patient");
   };
 
-  // Simulation d'un état de connexion (à remplacer par votre logique d'authentification)
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  // Attendre que la vérification soit terminée
+  if (isChecking) {
+    return null; // Ou un spinner de chargement
+  }
 
+  // Rediriger si non connecté
   if (!isLoggedIn) {
     toast.error("Veuillez vous connecter pour prendre un rendez-vous");
     return <Navigate to="/login" />;

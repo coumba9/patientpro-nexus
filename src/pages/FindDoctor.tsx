@@ -1,7 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Search, Home, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -46,6 +47,13 @@ const FindDoctor = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>(mockDoctors);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Vérifier l'état de connexion au chargement du composant
+  useEffect(() => {
+    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+    setIsLoggedIn(loginStatus);
+  }, []);
 
   const handleSearch = () => {
     const filtered = mockDoctors.filter(
@@ -59,14 +67,13 @@ const FindDoctor = () => {
 
   const handleBooking = (doctor: Doctor) => {
     // Vérification si l'utilisateur est connecté
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    
     if (!isLoggedIn) {
       toast.error("Veuillez vous connecter pour prendre un rendez-vous");
       navigate("/login");
       return;
     }
     
+    // Si l'utilisateur est connecté, on navigue directement vers la page de rendez-vous
     navigate(`/book-appointment?doctor=${encodeURIComponent(doctor.name)}&specialty=${encodeURIComponent(doctor.specialty)}`);
   };
 
