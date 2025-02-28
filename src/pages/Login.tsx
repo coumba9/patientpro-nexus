@@ -17,11 +17,20 @@ const Login = () => {
     // Simuler une connexion réussie
     console.log("Login attempt:", { email, password, role });
     if (email && password) {
+      // Supprimer d'abord tout état de connexion existant
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userRole");
+      
       // Définir explicitement isLoggedIn à "true" (en tant que chaîne)
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userRole", role);
       
+      // Vérifier immédiatement que les valeurs ont été correctement définies
+      console.log("After login, isLoggedIn:", localStorage.getItem("isLoggedIn"));
+      console.log("After login, userRole:", localStorage.getItem("userRole"));
+      
       toast.success("Connexion réussie");
+      
       // Rediriger vers le tableau de bord correspondant
       switch (role) {
         case "patient":

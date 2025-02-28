@@ -10,12 +10,18 @@ export const Hero = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Vérification directe de la valeur dans localStorage
     const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+    console.log("Hero - Login status:", loginStatus, localStorage.getItem("isLoggedIn"));
     setIsLoggedIn(loginStatus);
   }, []);
 
   const handleBookAppointment = () => {
-    if (!isLoggedIn) {
+    // Vérification à nouveau au moment du clic
+    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+    console.log("HandleBookAppointment - Login status:", loginStatus, localStorage.getItem("isLoggedIn"));
+    
+    if (!loginStatus) {
       toast.error("Veuillez vous connecter pour prendre un rendez-vous");
       navigate("/login");
       return;
