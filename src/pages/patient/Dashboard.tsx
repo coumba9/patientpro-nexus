@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -15,6 +16,7 @@ import {
   CalendarDays,
   Check,
   X,
+  LogOut
 } from "lucide-react";
 import {
   Dialog,
@@ -282,6 +284,12 @@ const PatientDashboard = () => {
   const location = useLocation();
   const isHomePage = location.pathname === "/patient";
 
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    toast.success("Déconnexion réussie");
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
@@ -362,6 +370,16 @@ const PatientDashboard = () => {
                 Paramètres
               </Button>
             </Link>
+            {/* Bouton de déconnexion */}
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50" 
+              size="lg"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-5 w-5" />
+              Déconnexion
+            </Button>
           </div>
 
           {/* Main Content */}

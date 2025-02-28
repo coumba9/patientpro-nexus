@@ -1,6 +1,7 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Calendar,
   Users,
@@ -8,9 +9,18 @@ import {
   FileText,
   Settings,
   Video,
+  LogOut,
 } from "lucide-react";
 
 export const DoctorSidebar = () => {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    toast.success("Déconnexion réussie");
+    navigate("/login");
+  };
+
   return (
     <div className="space-y-4">
       <Link to="/doctor">
@@ -49,6 +59,16 @@ export const DoctorSidebar = () => {
           Paramètres
         </Button>
       </Link>
+      {/* Bouton de déconnexion */}
+      <Button 
+        variant="ghost" 
+        className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50" 
+        size="lg"
+        onClick={handleLogout}
+      >
+        <LogOut className="mr-2 h-5 w-5" />
+        Déconnexion
+      </Button>
     </div>
   );
 };

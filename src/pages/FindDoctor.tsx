@@ -1,9 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, Home, ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface Doctor {
   id: number;
@@ -58,12 +58,42 @@ const FindDoctor = () => {
   };
 
   const handleBooking = (doctor: Doctor) => {
+    // Vérification si l'utilisateur est connecté
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    
+    if (!isLoggedIn) {
+      toast.error("Veuillez vous connecter pour prendre un rendez-vous");
+      navigate("/login");
+      return;
+    }
+    
     navigate(`/book-appointment?doctor=${encodeURIComponent(doctor.name)}&specialty=${encodeURIComponent(doctor.specialty)}`);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container">
+        <div className="mb-6 flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <Link to="/">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Accueil
+            </Button>
+          </Link>
+        </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Trouver un médecin</h1>
           <div className="flex gap-4 flex-wrap">

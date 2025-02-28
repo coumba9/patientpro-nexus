@@ -1,9 +1,11 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { DoctorSidebar } from "@/components/doctor/Sidebar";
 import { StatsCards } from "@/components/doctor/StatsCards";
 import { AppointmentsList } from "@/components/doctor/AppointmentsList";
+import { Home, ArrowLeft } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 interface Appointment {
   id: number;
@@ -50,6 +52,9 @@ const appointments: Appointment[] = [
 ];
 
 const DoctorDashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/doctor";
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>(appointments);
 
   const handleConfirm = (appointmentId: number) => {
@@ -77,13 +82,35 @@ const DoctorDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
+        <div className="mb-6 flex items-center gap-4">
+          {!isHomePage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Button>
+          )}
+          <Link to="/doctor">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Accueil
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          {/* Sidebar */}
           <div>
             <DoctorSidebar />
           </div>
 
-          {/* Main Content */}
           <div className="md:col-span-4">
             <StatsCards />
             <AppointmentsList

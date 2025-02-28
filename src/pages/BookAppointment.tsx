@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -10,6 +11,8 @@ import { toast } from "sonner";
 import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { DoctorInfoCard } from "@/components/appointment/DoctorInfoCard";
 import { BookingForm } from "@/components/appointment/BookingForm";
+import { ArrowLeft, Home } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface BookingFormValues {
   date: Date;
@@ -70,6 +73,28 @@ export const BookAppointment = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container max-w-4xl">
+        <div className="mb-6 flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+          <Link to="/">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Accueil
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Informations du médecin */}
           <div className="md:col-span-1">
