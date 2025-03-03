@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { LogIn, Search, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export const Hero = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -49,6 +48,7 @@ export const Hero = () => {
             <Search className="mr-2 h-5 w-5" />
             Trouver un médecin
           </Button>
+          
           {!isLoggedIn && (
             <>
               <Link to="/register">
@@ -65,6 +65,7 @@ export const Hero = () => {
               </Link>
             </>
           )}
+          
           {isLoggedIn && (
             <Link to="/patient">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto">
