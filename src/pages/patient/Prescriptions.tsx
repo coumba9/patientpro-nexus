@@ -1,8 +1,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, FileSignature } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 const Prescriptions = () => {
   const prescriptions = [
@@ -14,6 +15,7 @@ const Prescriptions = () => {
         { name: "Ibuprofène", dosage: "400mg", frequency: "2x par jour" },
       ],
       duration: "7 jours",
+      signed: true,
     },
     {
       date: "2024-01-20",
@@ -22,6 +24,16 @@ const Prescriptions = () => {
         { name: "Amoxicilline", dosage: "500mg", frequency: "2x par jour" },
       ],
       duration: "5 jours",
+      signed: true,
+    },
+    {
+      date: "2024-03-05",
+      doctor: "Dr. Martin",
+      medications: [
+        { name: "Doliprane", dosage: "500mg", frequency: "3x par jour" },
+      ],
+      duration: "3 jours",
+      signed: false,
     },
   ];
 
@@ -38,7 +50,19 @@ const Prescriptions = () => {
             <Card key={index}>
               <CardHeader>
                 <CardTitle className="text-lg flex justify-between items-center">
-                  <span>Ordonnance du {prescription.date}</span>
+                  <div className="flex items-center gap-2">
+                    <span>Ordonnance du {prescription.date}</span>
+                    {prescription.signed ? (
+                      <Badge variant="outline" className="bg-green-50 text-green-700">
+                        <FileSignature className="h-3 w-3 mr-1" />
+                        Signée
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+                        En attente de signature
+                      </Badge>
+                    )}
+                  </div>
                   <Button variant="outline" size="sm" onClick={handleDownload}>
                     <Download className="h-4 w-4 mr-2" />
                     Télécharger
