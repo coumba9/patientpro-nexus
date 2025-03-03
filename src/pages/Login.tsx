@@ -1,178 +1,123 @@
 
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Eye, EyeOff, LogIn, ArrowLeft, Home } from "lucide-react";
 
-const Login = () => {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("patient"); // "patient", "doctor" ou "admin"
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const redirectPath = searchParams.get("redirect");
 
-  // Vérifier si l'utilisateur est déjà connecté
-  useEffect(() => {
-    // Si déjà connecté, rediriger vers le tableau de bord approprié
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    const userRole = localStorage.getItem("userRole");
-    
-    if (isLoggedIn === "true" && userRole) {
-      console.log("Already logged in as:", userRole);
-      
-      // Si un chemin de redirection est spécifié, rediriger vers celui-ci
-      if (redirectPath) {
-        console.log("Redirecting to:", redirectPath);
-        navigate(redirectPath);
-      } else {
-        // Sinon, rediriger vers le tableau de bord approprié
-        navigateToDashboard(userRole);
-      }
-    }
-  }, [redirectPath, navigate]);
-
-  const navigateToDashboard = (role: string) => {
-    switch (role) {
-      case "patient":
-        navigate("/patient");
-        break;
-      case "doctor":
-        navigate("/doctor");
-        break;
-      case "admin":
-        navigate("/admin");
-        break;
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { email, password, role });
     
-    if (email && password) {
-      try {
-        // Effacer toutes les données de connexion existantes
-        localStorage.clear();
-        
-        // Définir les nouvelles données de connexion
-        localStorage.setItem("isLoggedIn", "true");
-        localStorage.setItem("userRole", role);
-        
-        // Déclencher l'événement storage manuellement pour notifier les autres composants
-        window.dispatchEvent(new Event('storage'));
-        
-        toast.success("Connexion réussie");
-        
-        // Rediriger vers le chemin spécifié ou le tableau de bord
-        if (redirectPath) {
-          console.log("Redirecting to:", redirectPath);
-          navigate(redirectPath);
-        } else {
-          navigateToDashboard(role);
-        }
-      } catch (error) {
-        console.error("Login error:", error);
-        toast.error("Erreur de connexion. Veuillez réessayer.");
-      }
-    } else {
+    if (!email || !password) {
       toast.error("Veuillez remplir tous les champs");
+      return;
+    }
+
+    // Simuler une connexion réussie
+    localStorage.setItem("isLoggedIn", "true");
+    toast.success("Connexion réussie");
+    
+    // Redirection en fonction du rôle (pour la démonstration, on utilise l'email)
+    if (email.includes("doctor")) {
+      navigate("/doctor");
+    } else if (email.includes("admin")) {
+      navigate("/admin");
+    } else {
+      navigate("/patient");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-sm">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Connexion
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Ou{" "}
-            <Link to="/register" className="text-primary hover:text-primary/90">
-              créez un compte
-            </Link>
-          </p>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-6 text-center">
+          <Link to="/">
+            <Button variant="ghost" className="mb-4">
+              <Home className="mr-2 h-4 w-4" />
+              Retour à l'accueil
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold">Connexion</h1>
+          <p className="text-gray-600 mt-2">Accédez à votre compte</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="role"
-                  value="patient"
-                  checked={role === "patient"}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="mr-2"
-                />
-                Patient
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="role"
-                  value="doctor"
-                  checked={role === "doctor"}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="mr-2"
-                />
-                Médecin
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="role"
-                  value="admin"
-                  checked={role === "admin"}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="mr-2"
-                />
-                Administrateur
-              </label>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link
-                to="/forgot-password"
-                className="text-primary hover:text-primary/90"
-              >
+        <Card>
+          <CardHeader>
+            <CardTitle>Connexion</CardTitle>
+            <CardDescription>
+              Entrez vos identifiants pour vous connecter
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="votre@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Mot de passe</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Cacher" : "Afficher"} le mot de passe
+                    </span>
+                  </Button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full">
+                <LogIn className="mr-2 h-4 w-4" />
+                Se connecter
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col items-center space-y-2">
+            <div className="text-sm text-gray-500">
+              <a href="#" className="text-primary hover:underline">
                 Mot de passe oublié ?
+              </a>
+            </div>
+            <div className="text-sm">
+              Pas encore de compte ?{" "}
+              <Link to="/register" className="text-primary hover:underline">
+                S'inscrire
               </Link>
             </div>
-          </div>
-
-          <Button type="submit" className="w-full">
-            Se connecter
-          </Button>
-        </form>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
