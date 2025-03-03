@@ -61,21 +61,10 @@ const Login = () => {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userRole", role);
         
-        // Vérification immédiate
-        const checkLogin = localStorage.getItem("isLoggedIn");
-        const checkRole = localStorage.getItem("userRole");
-        
-        console.log("Storage check - Login:", checkLogin);
-        console.log("Storage check - Role:", checkRole);
-        
-        if (checkLogin !== "true") {
-          throw new Error("Failed to set login state");
-        }
-        
-        toast.success("Connexion réussie");
-        
         // Déclencher l'événement storage manuellement pour notifier les autres composants
         window.dispatchEvent(new Event('storage'));
+        
+        toast.success("Connexion réussie");
         
         // Rediriger vers le chemin spécifié ou le tableau de bord
         if (redirectPath) {
