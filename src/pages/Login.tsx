@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const Login = () => {
@@ -11,6 +11,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("patient"); // "patient", "doctor" ou "admin"
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
 
   // Vérifier si l'utilisateur est déjà connecté
   useEffect(() => {
@@ -20,9 +22,17 @@ const Login = () => {
     
     if (isLoggedIn === "true" && userRole) {
       console.log("Already logged in as:", userRole);
-      navigateToDashboard(userRole);
+      
+      // Si un chemin de redirection est spécifié, rediriger vers celui-ci
+      if (redirectPath) {
+        console.log("Redirecting to:", redirectPath);
+        navigate(redirectPath);
+      } else {
+        // Sinon, rediriger vers le tableau de bord approprié
+        navigateToDashboard(userRole);
+      }
     }
-  }, []);
+  }, [redirectPath, navigate]);
 
   const navigateToDashboard = (role: string) => {
     switch (role) {
@@ -45,15 +55,15 @@ const Login = () => {
     if (email && password) {
       try {
         // Effacer toutes les données de connexion existantes
-        window.localStorage.clear();
+        localStorage.clear();
         
         // Définir les nouvelles données de connexion
-        window.localStorage.setItem("isLoggedIn", "true");
-        window.localStorage.setItem("userRole", role);
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userRole", role);
         
         // Vérification immédiate
-        const checkLogin = window.localStorage.getItem("isLoggedIn");
-        const checkRole = window.localStorage.getItem("userRole");
+        const checkLogin = localStorage.getItem("isLoggedIn");
+        const checkRole = localStorage.getItem("userRole");
         
         console.log("Storage check - Login:", checkLogin);
         console.log("Storage check - Role:", checkRole);
@@ -63,7 +73,17 @@ const Login = () => {
         }
         
         toast.success("Connexion réussie");
-        navigateToDashboard(role);
+        
+        // Déclencher l'événement storage manuellement pour notifier les autres composants
+        window.dispatchEvent(new Event('storage'));
+        
+        // Rediriger vers le chemin spécifié ou le tableau de bord
+        if (redirectPath) {
+          console.log("Redirecting to:", redirectPath);
+          navigate(redirectPath);
+        } else {
+          navigateToDashboard(role);
+        }
       } catch (error) {
         console.error("Login error:", error);
         toast.error("Erreur de connexion. Veuillez réessayer.");

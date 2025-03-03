@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { DoctorInfoCard } from "@/components/appointment/DoctorInfoCard";
 import { BookingForm } from "@/components/appointment/BookingForm";
-import { ArrowLeft, Home } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Home, LogIn } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface BookingFormValues {
@@ -43,13 +42,25 @@ export const BookAppointment = () => {
   const specialty = searchParams.get("specialty");
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
 
   // Vérifier l'état de connexion au chargement du composant
   useEffect(() => {
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loginStatus);
-    setIsChecking(false);
+    const checkLoginStatus = () => {
+      const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+      console.log("BookAppointment - Login status:", loginStatus);
+      setIsLoggedIn(loginStatus);
+    };
+    
+    // Vérifier immédiatement
+    checkLoginStatus();
+    
+    // Configurer l'écouteur d'événements
+    window.addEventListener('storage', checkLoginStatus);
+    
+    // Nettoyage
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+    };
   }, []);
 
   const doctorInfo: DoctorInfo = {
@@ -67,21 +78,17 @@ export const BookAppointment = () => {
   };
 
   const handleSubmit = (data: BookingFormValues) => {
+    // Vérifier à nouveau si l'utilisateur est connecté avant de finaliser la réservation
+    if (!localStorage.getItem("isLoggedIn")) {
+      toast.error("Vous devez être connecté pour finaliser la réservation");
+      navigate(`/login?redirect=/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}`);
+      return;
+    }
+    
     console.log("Booking data:", { ...data, doctorName, specialty });
     toast.success("Rendez-vous pris avec succès !");
     navigate("/patient");
   };
-
-  // Attendre que la vérification soit terminée
-  if (isChecking) {
-    return null; // Ou un spinner de chargement
-  }
-
-  // Rediriger si non connecté
-  if (!isLoggedIn) {
-    toast.error("Veuillez vous connecter pour prendre un rendez-vous");
-    return <Navigate to="/login" />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -114,7 +121,7 @@ export const BookAppointment = () => {
             <DoctorInfoCard doctorInfo={doctorInfo} />
           </div>
 
-          {/* Formulaire de réservation */}
+          {/* Formulaire de réservation ou message de connexion */}
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
@@ -126,12 +133,26 @@ export const BookAppointment = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <BookingForm
-                  doctorName={doctorName}
-                  specialty={specialty}
-                  doctorFees={doctorInfo.fees}
-                  onSubmit={handleSubmit}
-                />
+                {!isLoggedIn ? (
+                  <div className="text-center py-8">
+                    <p className="text-lg mb-6">
+                      Vous devez être connecté pour prendre un rendez-vous
+                    </p>
+                    <Link to={`/login?redirect=/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}`}>
+                      <Button className="w-full sm:w-auto">
+                        <LogIn className="mr-2 h-5 w-5" />
+                        Se connecter
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <BookingForm
+                    doctorName={doctorName}
+                    specialty={specialty}
+                    doctorFees={doctorInfo.fees}
+                    onSubmit={handleSubmit}
+                  />
+                )}
               </CardContent>
             </Card>
           </div>

@@ -12,7 +12,7 @@ export const Hero = () => {
   useEffect(() => {
     // Utilisation d'une fonction pour vérifier l'état de connexion
     const checkLoginStatus = () => {
-      const status = window.localStorage.getItem("isLoggedIn") === "true";
+      const status = localStorage.getItem("isLoggedIn") === "true";
       console.log("Hero component - checking login status:", status);
       setIsLoggedIn(status);
     };
@@ -30,14 +30,7 @@ export const Hero = () => {
   }, []);
 
   const handleBookAppointment = () => {
-    // Vérification directe
-    const status = window.localStorage.getItem("isLoggedIn") === "true";
-    
-    if (!status) {
-      toast.error("Veuillez vous connecter pour prendre un rendez-vous");
-      navigate("/login");
-      return;
-    }
+    // Naviguer directement vers la page "Trouver un médecin" sans vérification de connexion
     navigate("/find-doctor");
   };
 

@@ -53,7 +53,7 @@ const FindDoctor = () => {
   useEffect(() => {
     // Fonction de vérification
     const checkLoginStatus = () => {
-      const status = window.localStorage.getItem("isLoggedIn") === "true";
+      const status = localStorage.getItem("isLoggedIn") === "true";
       console.log("FindDoctor component - checking login status:", status);
       setIsLoggedIn(status);
     };
@@ -81,17 +81,14 @@ const FindDoctor = () => {
   };
 
   const handleBooking = (doctor: Doctor) => {
-    // Vérification directe
-    const status = window.localStorage.getItem("isLoggedIn") === "true";
-    console.log("handleBooking - Login status:", status);
-    
-    if (!status) {
-      toast.error("Veuillez vous connecter pour prendre un rendez-vous");
-      navigate("/login");
-      return;
+    // Vérifier si l'utilisateur est connecté, mais naviguer directement 
+    // vers la page de réservation sans redirection forcée vers login
+    if (!isLoggedIn) {
+      // Informer l'utilisateur mais ne pas rediriger
+      toast.info("Vous allez être redirigé vers la page de réservation. Vous pourrez vous connecter par la suite.");
     }
     
-    // Si l'utilisateur est connecté, on navigue directement vers la page de rendez-vous
+    // Naviguer directement vers la page de rendez-vous dans tous les cas
     navigate(`/book-appointment?doctor=${encodeURIComponent(doctor.name)}&specialty=${encodeURIComponent(doctor.specialty)}`);
   };
 
