@@ -86,7 +86,18 @@ export const BookAppointment = () => {
     }
     
     console.log("Booking data:", { ...data, doctorName, specialty });
-    toast.success("Rendez-vous pris avec succès !");
+    
+    // Afficher un message spécifique en fonction du mode de paiement
+    let paymentMessage = "Rendez-vous pris avec succès !";
+    if (["wave", "orange-money", "mobile-money"].includes(data.paymentMethod)) {
+      paymentMessage = `Merci de compléter votre paiement avec ${
+        data.paymentMethod === "wave" ? "Wave" : 
+        data.paymentMethod === "orange-money" ? "Orange Money" : 
+        "Mobile Money"
+      }. Vous allez recevoir des instructions par SMS.`;
+    }
+    
+    toast.success(paymentMessage);
     navigate("/patient");
   };
 

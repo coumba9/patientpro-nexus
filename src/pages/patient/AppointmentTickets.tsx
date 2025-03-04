@@ -12,7 +12,9 @@ import {
   MapPin, 
   Download,
   Clock,
-  Euro
+  Euro,
+  Wallet,
+  Phone
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -28,6 +30,7 @@ interface AppointmentTicket {
   location: string;
   price: number;
   paymentStatus: "paid" | "pending";
+  paymentMethod: "card" | "cash" | "wave" | "orange-money" | "mobile-money" | "thirdparty";
 }
 
 const AppointmentTickets = () => {
@@ -43,7 +46,21 @@ const AppointmentTickets = () => {
       location: "Consultation en ligne",
       price: 35,
       paymentStatus: "paid",
+      paymentMethod: "wave"
     },
+    {
+      id: "RDV-003",
+      doctor: "Dr. Marie Dupont",
+      specialty: "Généraliste",
+      date: "2024-03-15",
+      time: "14:30",
+      type: "consultation",
+      status: "confirmed",
+      location: "Cabinet médical",
+      price: 50,
+      paymentStatus: "pending",
+      paymentMethod: "orange-money"
+    }
   ]);
 
   const handleDownloadTicket = (appointmentId: string) => {
@@ -58,6 +75,44 @@ const AppointmentTickets = () => {
         return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getPaymentMethodIcon = (method: AppointmentTicket["paymentMethod"]) => {
+    switch (method) {
+      case "card":
+        return <Euro className="h-4 w-4" />;
+      case "cash":
+        return <Euro className="h-4 w-4" />;
+      case "wave":
+        return <Wallet className="h-4 w-4 text-blue-600" />;
+      case "orange-money":
+        return <Phone className="h-4 w-4 text-orange-500" />;
+      case "mobile-money":
+        return <Phone className="h-4 w-4 text-green-500" />;
+      case "thirdparty":
+        return <Euro className="h-4 w-4" />;
+      default:
+        return <Euro className="h-4 w-4" />;
+    }
+  };
+
+  const getPaymentMethodName = (method: AppointmentTicket["paymentMethod"]) => {
+    switch (method) {
+      case "card":
+        return "Carte bancaire";
+      case "cash":
+        return "Espèces";
+      case "wave":
+        return "Wave";
+      case "orange-money":
+        return "Orange Money";
+      case "mobile-money":
+        return "Mobile Money";
+      case "thirdparty":
+        return "Tiers payant";
+      default:
+        return "Autre";
     }
   };
 
@@ -102,8 +157,9 @@ const AppointmentTickets = () => {
                         {appointment.location}
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Euro className="h-4 w-4" />
-                        {appointment.price}€ - {appointment.paymentStatus === "paid" ? "Payé" : "En attente de paiement"}
+                        {getPaymentMethodIcon(appointment.paymentMethod)}
+                        {appointment.price}€ - {getPaymentMethodName(appointment.paymentMethod)}
+                        {appointment.paymentStatus === "paid" ? " (Payé)" : " (En attente)"}
                       </div>
                     </div>
                     <div className="space-y-2 flex flex-col justify-end">

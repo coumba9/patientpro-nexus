@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { fr } from "date-fns/locale";
-import { Euro, CreditCard, Building, MapPin, Video } from "lucide-react";
+import { Euro, CreditCard, Building, MapPin, Video, Phone, Wallet } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 
@@ -224,6 +224,24 @@ export const BookingForm = ({
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
                       Carte bancaire
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="wave">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-blue-600" />
+                      Wave
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="orange-money">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-orange-500" />
+                      Orange Money
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="mobile-money">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-green-500" />
+                      Mobile Money
                     </div>
                   </SelectItem>
                   <SelectItem value="thirdparty">
