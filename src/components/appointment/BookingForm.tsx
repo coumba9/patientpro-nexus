@@ -152,13 +152,13 @@ export const BookingForm = ({
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="consultation">
-                      Première consultation ({doctorFees.consultation}€)
+                      Première consultation ({doctorFees.consultation} CFA)
                     </SelectItem>
                     <SelectItem value="followup">
-                      Consultation de suivi ({doctorFees.followup}€)
+                      Consultation de suivi ({doctorFees.followup} CFA)
                     </SelectItem>
                     <SelectItem value="urgent">
-                      Urgence ({doctorFees.urgent}€)
+                      Urgence ({doctorFees.urgent} CFA)
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -320,7 +320,7 @@ export const BookingForm = ({
             <div className="flex justify-between items-center mb-4">
               <span className="font-semibold">Total à payer :</span>
               <span className="text-xl font-bold">
-                {doctorFees[consultationType as keyof typeof doctorFees]}€
+                {doctorFees[consultationType as keyof typeof doctorFees]} CFA
               </span>
             </div>
             <Button type="submit" className="w-full">

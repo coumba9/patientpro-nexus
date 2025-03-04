@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +17,15 @@ import {
   Filter,
   FileSignature,
   Share2,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SignaturePad } from "@/components/doctor/SignaturePad";
 import { Badge } from "@/components/ui/badge";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Document {
   id: number;
@@ -37,6 +39,7 @@ interface Document {
 }
 
 const Documents = () => {
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([
     {
       id: 1,
@@ -80,7 +83,6 @@ const Documents = () => {
   const saveSignature = (signatureData: string) => {
     if (!selectedDocument) return;
     
-    // Mise à jour du document avec la signature
     setDocuments(docs => 
       docs.map(doc => 
         doc.id === selectedDocument.id 
@@ -89,14 +91,12 @@ const Documents = () => {
       )
     );
     
-    // Dans une application réelle, nous sauvegarderions aussi l'image de la signature
     setSignatureDialogOpen(false);
     setSelectedDocument(null);
     toast.success("Document signé avec succès");
   };
 
   const handleDownload = (document: Document) => {
-    // Dans une application réelle, cela déclencherait un téléchargement du document
     toast.success(`${document.name} téléchargé`);
   };
 
@@ -104,6 +104,27 @@ const Documents = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
+          <div className="mb-4 flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Button>
+            <Link to="/">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Accueil
+              </Button>
+            </Link>
+          </div>
           <CardTitle>Documents</CardTitle>
           <CardDescription>Gérez vos ordonnances et documents médicaux</CardDescription>
         </div>
@@ -197,7 +218,6 @@ const Documents = () => {
         </ScrollArea>
       </CardContent>
 
-      {/* Modal de signature */}
       <Dialog open={signatureDialogOpen} onOpenChange={setSignatureDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>

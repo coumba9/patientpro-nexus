@@ -67,9 +67,9 @@ export const BookAppointment = () => {
     name: doctorName || "Dr. Non spécifié",
     specialty: specialty || "Non spécifié",
     fees: {
-      consultation: 50,
-      followup: 35,
-      urgent: 70,
+      consultation: 25000,
+      followup: 15000,
+      urgent: 35000,
     },
     languages: ["Français", "Anglais"],
     experience: "15 ans",

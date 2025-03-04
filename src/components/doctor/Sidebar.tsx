@@ -10,6 +10,8 @@ import {
   Settings,
   Video,
   LogOut,
+  Home,
+  ArrowLeft,
 } from "lucide-react";
 
 export const DoctorSidebar = () => {
@@ -23,6 +25,27 @@ export const DoctorSidebar = () => {
 
   return (
     <div className="space-y-4">
+      <div className="flex space-x-2 mb-4">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => navigate(-1)}
+          className="flex-1 justify-start"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour
+        </Button>
+        <Link to="/">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="flex items-center justify-center"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+      
       <Link to="/doctor">
         <Button variant="ghost" className="w-full justify-start" size="lg">
           <Calendar className="mr-2 h-5 w-5" />
