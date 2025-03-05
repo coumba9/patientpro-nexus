@@ -39,112 +39,118 @@ export const MedicalInformationForm = ({
     },
   });
 
+  const handleSubmit = (data: MedicalInfoFormValues) => {
+    onSave(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="consultationReason"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Motif de consultation
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Décrivez la raison de votre consultation" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Veuillez décrire la raison principale de votre rendez-vous
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="consultationReason"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                <FileText className="h-4 w-4 mr-2" />
+                Motif de consultation
+              </FormLabel>
+              <FormControl>
+                <Textarea placeholder="Décrivez la raison de votre consultation" {...field} />
+              </FormControl>
+              <FormDescription>
+                Veuillez décrire la raison principale de votre rendez-vous
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="currentSymptoms"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Symptômes actuels
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Décrivez vos symptômes actuels (facultatif)" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="currentSymptoms"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                <Heart className="h-4 w-4 mr-2" />
+                Symptômes actuels
+              </FormLabel>
+              <FormControl>
+                <Textarea placeholder="Décrivez vos symptômes actuels (facultatif)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="knownAllergies"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Allergies connues
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Listez vos allergies connues (facultatif)" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="knownAllergies"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Allergies connues
+              </FormLabel>
+              <FormControl>
+                <Textarea placeholder="Listez vos allergies connues (facultatif)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="currentMedications"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center">
-                  <Pill className="h-4 w-4 mr-2" />
-                  Médicaments actuels
-                </FormLabel>
-                <FormControl>
-                  <Textarea placeholder="Listez les médicaments que vous prenez actuellement (facultatif)" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <FormField
+          control={form.control}
+          name="currentMedications"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                <Pill className="h-4 w-4 mr-2" />
+                Médicaments actuels
+              </FormLabel>
+              <FormControl>
+                <Textarea placeholder="Listez les médicaments que vous prenez actuellement (facultatif)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          <FormField
-            control={form.control}
-            name="medicalDocuments"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center">
-                  <Paperclip className="h-4 w-4 mr-2" />
-                  Documents médicaux
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    type="file" 
-                    multiple 
-                    accept=".pdf,.jpg,.jpeg,.png" 
-                    onChange={(e) => field.onChange(e.target.files)}
-                    className="cursor-pointer"
-                  />
-                </FormControl>
-                <FormDescription>
-                  Vous pouvez joindre des documents pertinents pour votre rendez-vous (facultatif)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="medicalDocuments"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center">
+                <Paperclip className="h-4 w-4 mr-2" />
+                Documents médicaux
+              </FormLabel>
+              <FormControl>
+                <Input 
+                  type="file" 
+                  multiple 
+                  accept=".pdf,.jpg,.jpeg,.png" 
+                  onChange={(e) => field.onChange(e.target.files)}
+                  className="cursor-pointer"
+                />
+              </FormControl>
+              <FormDescription>
+                Vous pouvez joindre des documents pertinents pour votre rendez-vous (facultatif)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
 
-        <Button type="submit" className="w-full">
-          Enregistrer mes informations médicales
-        </Button>
-      </form>
+      <Button 
+        type="button" 
+        className="w-full mt-4" 
+        onClick={form.handleSubmit(handleSubmit)}
+      >
+        Enregistrer mes informations médicales
+      </Button>
     </Form>
   );
 };

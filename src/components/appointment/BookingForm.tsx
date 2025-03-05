@@ -115,7 +115,7 @@ export const BookingForm = ({
       ) : null}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <div className="space-y-6">
           <ConsultationTypeSelector
             form={form}
             doctorFees={doctorFees}
@@ -190,7 +190,15 @@ export const BookingForm = ({
             consultationType={consultationType}
             doctorFees={doctorFees}
           />
-        </form>
+          
+          <Button 
+            type="button" 
+            className="w-full"
+            onClick={form.handleSubmit(handleFormSubmit)}
+          >
+            Confirmer le rendez-vous
+          </Button>
+        </div>
       </Form>
     </>
   );

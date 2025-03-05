@@ -1,4 +1,3 @@
-
 import { BookingFormValues } from "./types";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -68,10 +67,15 @@ export const AppointmentHandler = ({
         if (paymentResponse.success && paymentResponse.redirect_url) {
           toast.loading("Redirection vers la plateforme de paiement PayTech...");
           
-          // Rediriger vers la page de paiement PayTech après un court délai
-          setTimeout(() => {
-            window.location.href = paymentResponse.redirect_url!;
-          }, 1000);
+          // En mode DEV, nous utilisons la simulation qui renvoie directement à success_url
+          // En mode production, nous redirigeons vers la page de paiement PayTech
+          if (paymentResponse.redirect_url.includes(window.location.origin)) {
+            // C'est une simulation, naviguer en interne
+            navigate("/payment-confirmation?token=" + paymentResponse.token);
+          } else {
+            // Redirection externe
+            window.location.href = paymentResponse.redirect_url;
+          }
         } else {
           toast.error(paymentResponse.message || "Erreur lors de l'initialisation du paiement");
         }

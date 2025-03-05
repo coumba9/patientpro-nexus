@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { checkPaymentStatus } from "@/services/paytech";
+import { checkPaymentStatus, getPaymentDetails } from "@/services/paytech";
 import { Button } from "@/components/ui/button";
 
 export const PaymentConfirmation = () => {
@@ -11,6 +11,7 @@ export const PaymentConfirmation = () => {
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(true);
   const [paymentSuccess, setPaymentSuccess] = useState<boolean | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
   
   useEffect(() => {
     const token = searchParams.get("token");
@@ -28,12 +29,29 @@ export const PaymentConfirmation = () => {
         const isSuccess = await checkPaymentStatus(token);
         
         if (isSuccess) {
+          // Récupérer les détails du paiement
+          const details = await getPaymentDetails(token);
+          setPaymentDetails(details);
+          
           setPaymentSuccess(true);
           toast.success("Paiement confirmé! Votre rendez-vous a été enregistré.");
+          
+          // Enregistrer le rendez-vous comme confirmé
+          const appointmentData = JSON.parse(pendingAppointment);
+          const confirmedAppointments = JSON.parse(localStorage.getItem("confirmedAppointments") || "[]");
+          confirmedAppointments.push({
+            ...appointmentData,
+            paymentToken: token,
+            paymentDetails: details,
+            status: "confirmed",
+            confirmedAt: new Date().toISOString()
+          });
+          localStorage.setItem("confirmedAppointments", JSON.stringify(confirmedAppointments));
+          
+          // Supprimer le rendez-vous en attente après un délai
           setTimeout(() => {
             localStorage.removeItem("pendingAppointment");
-            navigate("/patient");
-          }, 3000);
+          }, 2000);
         } else {
           setPaymentSuccess(false);
           toast.error("Échec de la vérification du paiement");
@@ -74,8 +92,22 @@ export const PaymentConfirmation = () => {
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-semibold mb-2">Paiement réussi!</h2>
             <p className="mb-6">
-              Votre rendez-vous a été confirmé. Vous serez redirigé vers votre tableau de bord.
+              Votre rendez-vous a été confirmé. Un récapitulatif vous a été envoyé par email.
             </p>
+            {paymentDetails && (
+              <div className="bg-gray-50 p-4 rounded-md mb-6 text-left">
+                <h3 className="font-medium mb-2">Détails du paiement</h3>
+                <p className="text-sm mb-1">
+                  <span className="font-medium">Montant:</span> {paymentDetails.amount} {paymentDetails.currency}
+                </p>
+                <p className="text-sm mb-1">
+                  <span className="font-medium">Date:</span> {new Date(paymentDetails.date).toLocaleString()}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Statut:</span> <span className="text-green-600">Complété</span>
+                </p>
+              </div>
+            )}
             <Button onClick={handleReturn} className="w-full">
               Aller au tableau de bord
             </Button>
