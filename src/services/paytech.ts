@@ -20,20 +20,43 @@ interface PayTechResponse {
   message?: string;
 }
 
-// In production, these would be stored in environment variables
-// or fetched from a secure backend
+// En production, ces valeurs seraient stockées dans des variables d'environnement
+// ou récupérées depuis un backend sécurisé
 const PAYTECH_API_KEY = "YOUR_PAYTECH_API_KEY";
 const PAYTECH_API_SECRET = "YOUR_PAYTECH_API_SECRET";
 
+// Option pour simuler un paiement réussi en mode développement
+const DEV_MODE = true;
+
 export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Promise<PayTechResponse> => {
   try {
-    // Generate a unique reference if not provided
+    // Générer une référence unique si non fournie
     if (!config.reference) {
       config.reference = `APPOINTMENT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
     
-    // For demonstration purposes only - in production, never expose API keys in frontend code
-    // This should be handled by a secure backend service
+    // Mode développement: simuler une redirection vers PayTech sans appeler l'API réelle
+    if (DEV_MODE) {
+      console.log("DEV MODE: Simulation de paiement PayTech", config);
+      
+      // Sauvegarder le token dans localStorage pour la simulation
+      const mockToken = `mock-${Date.now()}`;
+      localStorage.setItem("paytech_last_token", mockToken);
+      
+      // Construire l'URL de retour avec le token
+      const successUrl = new URL(config.success_url);
+      successUrl.searchParams.append("token", mockToken);
+      
+      return {
+        success: true,
+        token: mockToken,
+        redirect_url: successUrl.toString()
+      };
+    }
+    
+    // En production, appeler l'API PayTech
+    // Attention: ne jamais exposer les clés API dans le frontend en production
+    // Cette logique devrait être gérée par un service backend sécurisé
     const response = await fetch("https://paytech.sn/api/payment/request-payment", {
       method: "POST",
       headers: {
@@ -73,15 +96,75 @@ export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Prom
   }
 };
 
-// Function to check payment status (typically called by the success_url handler)
+// Fonction pour vérifier l'état du paiement (généralement appelée par le gestionnaire de success_url)
 export const checkPaymentStatus = async (token: string): Promise<boolean> => {
   try {
-    // In a real implementation, this would call PayTech's status API
-    // For demo purposes, we'll just return true
-    console.log("Checking payment status for token:", token);
-    return true;
+    // Si en mode développement, simulons une vérification réussie
+    if (DEV_MODE) {
+      console.log("DEV MODE: Vérification du paiement pour le token:", token);
+      const storedToken = localStorage.getItem("paytech_last_token");
+      
+      // Vérifier si le token correspond
+      if (storedToken === token) {
+        // Simuler un délai réseau
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return true;
+      }
+      return false;
+    }
+    
+    // En production, appeler l'API de vérification de PayTech
+    const response = await fetch(`https://paytech.sn/api/payment/check-status/${token}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": PAYTECH_API_KEY,
+        "X-API-SECRET": PAYTECH_API_SECRET
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`PayTech status check error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.success && data.status === "completed";
   } catch (error) {
     console.error("Error checking payment status:", error);
     return false;
+  }
+};
+
+// Fonction pour récupérer les détails d'un paiement
+export const getPaymentDetails = async (token: string): Promise<any> => {
+  try {
+    if (DEV_MODE) {
+      console.log("DEV MODE: Récupération des détails de paiement pour le token:", token);
+      return {
+        amount: 15000,
+        currency: "XOF",
+        status: "completed",
+        date: new Date().toISOString()
+      };
+    }
+    
+    // En production, appeler l'API PayTech
+    const response = await fetch(`https://paytech.sn/api/payment/details/${token}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": PAYTECH_API_KEY,
+        "X-API-SECRET": PAYTECH_API_SECRET
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`PayTech details error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error getting payment details:", error);
+    throw error;
   }
 };

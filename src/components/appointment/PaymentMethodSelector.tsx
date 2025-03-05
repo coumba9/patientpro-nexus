@@ -19,6 +19,7 @@ import {
   Euro,
   Phone,
   Wallet,
+  CheckCircle,
 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { BookingFormValues } from "./types";
@@ -44,10 +45,16 @@ export const PaymentMethodSelector = ({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="paytech">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-blue-700" />
-                  PayTech
+              <SelectItem value="paytech" className="border-l-4 border-blue-500 pl-2 mb-1 bg-blue-50">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-blue-700" />
+                    <span className="font-medium">PayTech</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full mr-1">Recommandé</span>
+                    <CheckCircle className="h-3 w-3 text-blue-700" />
+                  </div>
                 </div>
               </SelectItem>
               <SelectItem value="card">
