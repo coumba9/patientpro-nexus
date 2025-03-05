@@ -44,6 +44,12 @@ export const PaymentMethodSelector = ({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
+              <SelectItem value="paytech">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-blue-700" />
+                  PayTech
+                </div>
+              </SelectItem>
               <SelectItem value="card">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />

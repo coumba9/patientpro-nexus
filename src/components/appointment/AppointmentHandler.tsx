@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BookingForm } from "./BookingForm";
 import { DoctorInfo } from "./doctorTypes";
+import { initiatePayTechPayment } from "@/services/paytech";
 
 interface AppointmentHandlerProps {
   doctorName: string | null;
@@ -18,7 +19,7 @@ export const AppointmentHandler = ({
 }: AppointmentHandlerProps) => {
   const navigate = useNavigate();
 
-  const handleSubmit = (data: BookingFormValues) => {
+  const handleSubmit = async (data: BookingFormValues) => {
     // Vérifier à nouveau si l'utilisateur est connecté avant de finaliser la réservation
     if (!localStorage.getItem("isLoggedIn")) {
       toast.error("Vous devez être connecté pour finaliser la réservation");
@@ -28,54 +29,65 @@ export const AppointmentHandler = ({
     
     console.log("Booking data:", { ...data, doctorName, specialty });
     
-    // Redirection en fonction du mode de paiement
-    if (data.paymentMethod === "wave") {
-      // Simuler une redirection vers Wave
-      toast.info("Redirection vers votre compte Wave...");
+    // Stocker les informations de réservation dans le localStorage pour pouvoir les récupérer après paiement
+    const appointmentData = {
+      ...data,
+      doctorName,
+      specialty,
+      timestamp: new Date().toISOString(),
+    };
+    
+    localStorage.setItem("pendingAppointment", JSON.stringify(appointmentData));
+    
+    // Traitement en fonction du mode de paiement
+    if (data.paymentMethod === "paytech") {
+      // Intégration PayTech
+      const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
       
-      // Stocker les informations de réservation dans le localStorage pour pouvoir les récupérer après paiement
-      localStorage.setItem("pendingAppointment", JSON.stringify({
-        ...data,
-        doctorName,
-        specialty,
-        timestamp: new Date().toISOString(),
-      }));
-      
-      // Simuler l'ouverture de l'application Wave (dans un environnement réel, cela pourrait être une URL de redirection)
-      setTimeout(() => {
-        window.open("https://wave.com/senegal", "_blank");
-        toast.success("Après avoir effectué votre paiement, revenez sur cette page pour confirmer votre rendez-vous.");
-      }, 1500);
+      try {
+        toast.info("Redirection vers la plateforme de paiement PayTech...");
+        
+        const paymentResponse = await initiatePayTechPayment({
+          amount: fee,
+          currency: "XOF",
+          description: `Rendez-vous médical avec ${doctorName || "Dr. Non spécifié"} - ${specialty || "Non spécifié"}`,
+          success_url: `${window.location.origin}/payment-confirmation`,
+          cancel_url: `${window.location.origin}/book-appointment`,
+          customField: {
+            appointmentId: `APPOINTMENT-${Date.now()}`,
+            patientId: "PATIENT-001", // Dans une vraie application, ceci viendrait du profil utilisateur
+            doctorName: doctorName || "Non spécifié",
+          }
+        });
+        
+        if (paymentResponse.success && paymentResponse.redirect_url) {
+          // Rediriger vers la page de paiement PayTech
+          window.location.href = paymentResponse.redirect_url;
+        } else {
+          toast.error(paymentResponse.message || "Erreur lors de l'initialisation du paiement");
+        }
+      } catch (error) {
+        console.error("PayTech error:", error);
+        toast.error("Une erreur est survenue lors de la connexion à PayTech");
+      }
       
       return;
-    } else if (data.paymentMethod === "orange-money") {
-      toast.info("Redirection vers Orange Money...");
+    } else if (["wave", "orange-money", "mobile-money"].includes(data.paymentMethod)) {
+      // Comportement existant pour les autres méthodes de paiement mobile
+      const paymentMethodName = 
+        data.paymentMethod === "wave" ? "Wave" : 
+        data.paymentMethod === "orange-money" ? "Orange Money" : "Mobile Money";
       
-      localStorage.setItem("pendingAppointment", JSON.stringify({
-        ...data,
-        doctorName,
-        specialty,
-        timestamp: new Date().toISOString(),
-      }));
+      toast.info(`Redirection vers ${paymentMethodName}...`);
       
-      setTimeout(() => {
-        window.open("https://orangemoney.orange.sn", "_blank");
-        toast.success("Après avoir effectué votre paiement, revenez sur cette page pour confirmer votre rendez-vous.");
-      }, 1500);
-      
-      return;
-    } else if (data.paymentMethod === "mobile-money") {
-      toast.info("Redirection vers Mobile Money...");
-      
-      localStorage.setItem("pendingAppointment", JSON.stringify({
-        ...data,
-        doctorName,
-        specialty,
-        timestamp: new Date().toISOString(),
-      }));
+      const redirectUrls = {
+        "wave": "https://wave.com/senegal",
+        "orange-money": "https://orangemoney.orange.sn",
+        "mobile-money": "https://mobilemoney.sn"
+      };
       
       setTimeout(() => {
-        window.open("https://mobilemoney.sn", "_blank");
+        window.open(redirectUrls[data.paymentMethod as keyof typeof redirectUrls], "_blank");
         toast.success("Après avoir effectué votre paiement, revenez sur cette page pour confirmer votre rendez-vous.");
       }, 1500);
       
@@ -84,12 +96,12 @@ export const AppointmentHandler = ({
     
     // Pour les autres méthodes de paiement
     let paymentMessage = "Rendez-vous pris avec succès !";
-    if (["wave", "orange-money", "mobile-money"].includes(data.paymentMethod)) {
-      paymentMessage = `Merci de compléter votre paiement avec ${
-        data.paymentMethod === "wave" ? "Wave" : 
-        data.paymentMethod === "orange-money" ? "Orange Money" : 
-        "Mobile Money"
-      }. Vous allez recevoir des instructions par SMS.`;
+    if (["card", "thirdparty", "cash"].includes(data.paymentMethod)) {
+      paymentMessage = `Rendez-vous confirmé. ${
+        data.paymentMethod === "card" ? "Votre carte a été débitée." : 
+        data.paymentMethod === "thirdparty" ? "Votre tiers payant a été informé." : 
+        "Veuillez prévoir un paiement en espèces lors de votre visite."
+      }`;
     }
     
     toast.success(paymentMessage);

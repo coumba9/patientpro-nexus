@@ -14,7 +14,9 @@ export const PendingPaymentNotification = ({
   const getPaymentMethodName = () => {
     if (paymentMethod === "wave") return "Wave";
     if (paymentMethod === "orange-money") return "Orange Money";
-    return "Mobile Money";
+    if (paymentMethod === "mobile-money") return "Mobile Money";
+    if (paymentMethod === "paytech") return "PayTech";
+    return "Paiement mobile";
   };
 
   return (
