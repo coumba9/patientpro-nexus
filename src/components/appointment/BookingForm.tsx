@@ -1,4 +1,3 @@
-
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
@@ -189,15 +188,8 @@ export const BookingForm = ({
           <PaymentSummary
             consultationType={consultationType}
             doctorFees={doctorFees}
+            onSubmit={form.handleSubmit(handleFormSubmit)}
           />
-          
-          <Button 
-            type="button" 
-            className="w-full"
-            onClick={form.handleSubmit(handleFormSubmit)}
-          >
-            Confirmer le rendez-vous
-          </Button>
         </div>
       </Form>
     </>

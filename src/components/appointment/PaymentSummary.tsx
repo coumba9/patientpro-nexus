@@ -8,11 +8,13 @@ interface PaymentSummaryProps {
     followup: number;
     urgent: number;
   };
+  onSubmit?: () => void;
 }
 
 export const PaymentSummary = ({
   consultationType,
   doctorFees,
+  onSubmit,
 }: PaymentSummaryProps) => {
   return (
     <div className="pt-4 border-t">
@@ -22,7 +24,11 @@ export const PaymentSummary = ({
           {doctorFees[consultationType as keyof typeof doctorFees]} CFA
         </span>
       </div>
-      <Button type="submit" className="w-full">
+      <Button 
+        type="button" 
+        className="w-full"
+        onClick={onSubmit}
+      >
         Confirmer et payer
       </Button>
     </div>
