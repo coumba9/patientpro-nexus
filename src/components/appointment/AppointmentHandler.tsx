@@ -35,6 +35,8 @@ export const AppointmentHandler = ({
       doctorName,
       specialty,
       timestamp: new Date().toISOString(),
+      // Include medical information if provided
+      medicalInfo: data.medicalInfo || null
     };
     
     localStorage.setItem("pendingAppointment", JSON.stringify(appointmentData));
@@ -58,7 +60,8 @@ export const AppointmentHandler = ({
             patientId: "PATIENT-001", // Dans une vraie application, ceci viendrait du profil utilisateur
             doctorName: doctorName || "Non spécifié",
             specialty: specialty || "Non spécifié",
-            appointmentType: data.type
+            appointmentType: data.type,
+            hasMedicalInfo: data.medicalInfo ? "true" : "false"
           }
         });
         

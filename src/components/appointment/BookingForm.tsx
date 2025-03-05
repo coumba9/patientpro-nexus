@@ -12,6 +12,10 @@ import { TimeSelector } from "./TimeSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import { PaymentSummary } from "./PaymentSummary";
 import { PendingPaymentNotification } from "./PendingPaymentNotification";
+import { MedicalInformationForm, MedicalInfoFormValues } from "./MedicalInformationForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const BookingForm = ({
   doctorName,
@@ -23,6 +27,8 @@ export const BookingForm = ({
   const [consultationType, setConsultationType] = useState("consultation");
   const [isOnline, setIsOnline] = useState(false);
   const [isPendingPayment, setIsPendingPayment] = useState(false);
+  const [showMedicalInfo, setShowMedicalInfo] = useState(false);
+  const [medicalInfo, setMedicalInfo] = useState<MedicalInfoFormValues | null>(null);
   const navigate = useNavigate();
 
   const form = useForm<BookingFormValues>({
@@ -53,6 +59,11 @@ export const BookingForm = ({
           setConsultationType(appointmentData.type);
           setIsOnline(appointmentData.consultationType === "teleconsultation");
           setSelectedDate(new Date(appointmentData.date));
+
+          // Restore medical info if available
+          if (appointmentData.medicalInfo) {
+            setMedicalInfo(appointmentData.medicalInfo);
+          }
         }
       } catch (error) {
         console.error(
@@ -79,6 +90,21 @@ export const BookingForm = ({
     }
   };
 
+  const handleSaveMedicalInfo = (data: MedicalInfoFormValues) => {
+    setMedicalInfo(data);
+    setShowMedicalInfo(false);
+    toast.success("Vos informations médicales ont été enregistrées");
+  };
+
+  const handleFormSubmit = (data: BookingFormValues) => {
+    // Include medical info with the form data
+    const completeData = {
+      ...data,
+      medicalInfo
+    };
+    onSubmit(completeData);
+  };
+
   return (
     <>
       {isPendingPayment ? (
@@ -89,7 +115,7 @@ export const BookingForm = ({
       ) : null}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           <ConsultationTypeSelector
             form={form}
             doctorFees={doctorFees}
@@ -108,6 +134,55 @@ export const BookingForm = ({
           />
 
           <TimeSelector form={form} selectedDate={selectedDate} />
+
+          {/* Medical Information Card */}
+          <Card>
+            <CardHeader className="py-4 cursor-pointer" onClick={() => setShowMedicalInfo(!showMedicalInfo)}>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg flex items-center">
+                  Informations médicales
+                  {medicalInfo ? <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Renseigné</span> : null}
+                </CardTitle>
+                {showMedicalInfo ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </div>
+            </CardHeader>
+            
+            {showMedicalInfo && (
+              <CardContent>
+                <MedicalInformationForm 
+                  onSave={handleSaveMedicalInfo} 
+                  initialData={medicalInfo || {}}
+                />
+              </CardContent>
+            )}
+            
+            {!showMedicalInfo && medicalInfo && (
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-2">
+                  Vous avez renseigné vos informations médicales.
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setShowMedicalInfo(true)}
+                >
+                  Modifier mes informations médicales
+                </Button>
+              </CardContent>
+            )}
+            
+            {!showMedicalInfo && !medicalInfo && (
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setShowMedicalInfo(true)}
+                >
+                  Ajouter mes informations médicales
+                </Button>
+              </CardContent>
+            )}
+          </Card>
 
           <PaymentMethodSelector form={form} />
 

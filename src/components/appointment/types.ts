@@ -1,10 +1,13 @@
 
+import { MedicalInfoFormValues } from "./MedicalInformationForm";
+
 export interface BookingFormValues {
   date: Date;
   time: string;
   type: string;
   consultationType: "presentiel" | "teleconsultation";
   paymentMethod: string;
+  medicalInfo?: MedicalInfoFormValues;
 }
 
 export interface BookingFormProps {
