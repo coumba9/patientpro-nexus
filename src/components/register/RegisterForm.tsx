@@ -19,6 +19,7 @@ interface RegisterFormProps {
   isDoctor: boolean;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  handleSelectChange?: (name: string, value: string) => void;
 }
 
 export const RegisterForm = ({
@@ -26,6 +27,7 @@ export const RegisterForm = ({
   isDoctor,
   handleChange,
   handleSubmit,
+  handleSelectChange,
 }: RegisterFormProps) => {
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -68,7 +70,11 @@ export const RegisterForm = ({
         </div>
 
         {isDoctor && (
-          <DoctorFields formData={formData} handleChange={handleChange} />
+          <DoctorFields 
+            formData={formData} 
+            handleChange={handleChange} 
+            handleSelectChange={handleSelectChange}
+          />
         )}
 
         <div>

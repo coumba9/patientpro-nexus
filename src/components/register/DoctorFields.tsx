@@ -1,6 +1,13 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DoctorFieldsProps {
   formData: {
@@ -9,21 +16,47 @@ interface DoctorFieldsProps {
     yearsOfExperience?: string;
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSelectChange?: (name: string, value: string) => void;
 }
 
-export const DoctorFields = ({ formData, handleChange }: DoctorFieldsProps) => {
+// Liste des spécialités médicales
+const SPECIALITIES = [
+  "Médecine générale",
+  "Cardiologie",
+  "Dermatologie",
+  "Gastro-entérologie",
+  "Gynécologie",
+  "Neurologie",
+  "Ophtalmologie",
+  "ORL",
+  "Pédiatrie",
+  "Psychiatrie",
+  "Radiologie",
+  "Rhumatologie",
+  "Urologie"
+];
+
+export const DoctorFields = ({ formData, handleChange, handleSelectChange }: DoctorFieldsProps) => {
   return (
     <>
       <div>
         <Label htmlFor="speciality">Spécialité</Label>
-        <Input
-          id="speciality"
+        <Select 
           name="speciality"
-          type="text"
-          value={formData.speciality}
-          onChange={handleChange}
-          required
-        />
+          value={formData.speciality || ""}
+          onValueChange={(value) => handleSelectChange && handleSelectChange("speciality", value)}
+        >
+          <SelectTrigger id="speciality">
+            <SelectValue placeholder="Sélectionnez votre spécialité" />
+          </SelectTrigger>
+          <SelectContent>
+            {SPECIALITIES.map((speciality) => (
+              <SelectItem key={speciality} value={speciality}>
+                {speciality}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label htmlFor="licenseNumber">Numéro de licence</Label>

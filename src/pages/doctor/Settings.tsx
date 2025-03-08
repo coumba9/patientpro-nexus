@@ -9,6 +9,9 @@ import { DoctorPersonalInfo } from "@/components/settings/DoctorPersonalInfo";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { TeleconsultationSettings } from "@/components/settings/TeleconsultationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { AvailabilitySettings } from "@/components/settings/AvailabilitySettings";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PatientRecord } from "@/components/doctor/PatientRecord";
 
 interface DoctorSettings {
   firstName: string;
@@ -30,6 +33,7 @@ interface DoctorSettings {
 
 const Settings = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("general");
   const [settings, setSettings] = useState<DoctorSettings>({
     firstName: "Thomas",
     lastName: "Martin",
@@ -68,36 +72,63 @@ const Settings = () => {
         </Button>
       </div>
 
-      <div className="space-y-6">
-        <DoctorPersonalInfo settings={settings} setSettings={setSettings} />
-        
-        <Separator />
-        
-        <NotificationSettings 
-          notifications={settings.notifications}
-          setSettings={setSettings}
-        />
-        
-        <Separator />
-        
-        <TeleconsultationSettings
-          teleconsultation={settings.teleconsultation}
-          setSettings={setSettings}
-        />
-        
-        <Separator />
-        
-        <SecuritySettings />
-        
-        <Separator />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="availability">Disponibilités</TabsTrigger>
+          <TabsTrigger value="patients">Dossiers patients</TabsTrigger>
+        </TabsList>
 
-        <div className="flex justify-end gap-4">
-          <Button onClick={handleSaveSettings}>
-            <Save className="h-4 w-4 mr-2" />
-            Enregistrer les modifications
-          </Button>
-        </div>
-      </div>
+        <TabsContent value="general">
+          <div className="space-y-6">
+            <DoctorPersonalInfo settings={settings} setSettings={setSettings} />
+            
+            <Separator />
+            
+            <NotificationSettings 
+              notifications={settings.notifications}
+              setSettings={setSettings}
+            />
+            
+            <Separator />
+            
+            <TeleconsultationSettings
+              teleconsultation={settings.teleconsultation}
+              setSettings={setSettings}
+            />
+            
+            <Separator />
+            
+            <SecuritySettings />
+            
+            <Separator />
+
+            <div className="flex justify-end gap-4">
+              <Button onClick={handleSaveSettings}>
+                <Save className="h-4 w-4 mr-2" />
+                Enregistrer les modifications
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="availability">
+          <AvailabilitySettings />
+          
+          <Separator className="my-6" />
+          
+          <div className="flex justify-end gap-4">
+            <Button onClick={handleSaveSettings}>
+              <Save className="h-4 w-4 mr-2" />
+              Enregistrer les modifications
+            </Button>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="patients">
+          <PatientRecord />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
