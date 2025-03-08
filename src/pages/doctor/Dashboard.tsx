@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DoctorSidebar } from "@/components/doctor/Sidebar";
 import { StatsCards } from "@/components/doctor/StatsCards";
 import { AppointmentsList } from "@/components/doctor/AppointmentsList";
-import { Home, ArrowLeft, UserCircle } from "lucide-react";
+import { ConsultationAnalytics } from "@/components/doctor/ConsultationAnalytics";
+import { Home, ArrowLeft, UserCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -60,21 +60,19 @@ const DoctorDashboard = () => {
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>(appointments);
   const [userEmail, setUserEmail] = useState<string>("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
-    // Vérifier l'état de connexion au chargement
     const loginStatus = localStorage.getItem("isLoggedIn") === "true";
     const userRole = localStorage.getItem("userRole");
     
     setIsLoggedIn(loginStatus);
     
-    // Si l'utilisateur n'est pas connecté ou n'est pas un médecin, rediriger vers la connexion
     if (!loginStatus || userRole !== "doctor") {
       toast.error("Veuillez vous connecter en tant que médecin");
       navigate("/login");
     }
     
-    // Récupérer l'email stocké (si disponible)
     const email = localStorage.getItem("userEmail");
     if (email) {
       setUserEmail(email);
@@ -104,7 +102,7 @@ const DoctorDashboard = () => {
   };
 
   if (!isLoggedIn) {
-    return null; // Ne rien afficher pendant la redirection
+    return null;
   }
 
   return (
@@ -158,6 +156,24 @@ const DoctorDashboard = () => {
 
           <div className="md:col-span-4">
             <StatsCards />
+            
+            <div className="mb-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAnalytics(!showAnalytics)}
+                className="w-full flex justify-between items-center"
+              >
+                <span>Statistiques détaillées et suivi des consultations</span>
+                {showAnalytics ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+              
+              {showAnalytics && (
+                <div className="mt-4 animate-fade-in">
+                  <ConsultationAnalytics />
+                </div>
+              )}
+            </div>
+            
             <AppointmentsList
               appointments={upcomingAppointments}
               onConfirm={handleConfirm}
