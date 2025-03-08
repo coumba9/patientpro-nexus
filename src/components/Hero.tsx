@@ -6,14 +6,17 @@ import { useEffect, useState } from "react";
 
 export const Hero = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Utilisation d'une fonction pour vérifier l'état de connexion
     const checkLoginStatus = () => {
       const status = localStorage.getItem("isLoggedIn") === "true";
-      console.log("Hero component - checking login status:", status);
+      const role = localStorage.getItem("userRole");
+      console.log("Hero component - checking login status:", status, "role:", role);
       setIsLoggedIn(status);
+      setUserRole(role);
     };
     
     // Vérifier au chargement
@@ -66,10 +69,18 @@ export const Hero = () => {
             </>
           )}
           
-          {isLoggedIn && (
+          {isLoggedIn && userRole === "patient" && (
             <Link to="/patient">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                 Mon espace patient
+              </Button>
+            </Link>
+          )}
+
+          {isLoggedIn && userRole === "doctor" && (
+            <Link to="/doctor">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                Mon espace médecin
               </Button>
             </Link>
           )}
@@ -82,4 +93,4 @@ export const Hero = () => {
       </div>
     </div>
   );
-};
+}
