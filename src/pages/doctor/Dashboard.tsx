@@ -1,11 +1,13 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DoctorSidebar } from "@/components/doctor/Sidebar";
 import { StatsCards } from "@/components/doctor/StatsCards";
 import { AppointmentsList } from "@/components/doctor/AppointmentsList";
-import { Home, ArrowLeft } from "lucide-react";
+import { Home, ArrowLeft, UserCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Appointment {
   id: number;
@@ -56,6 +58,28 @@ const DoctorDashboard = () => {
   const location = useLocation();
   const isHomePage = location.pathname === "/doctor";
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>(appointments);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Vérifier l'état de connexion au chargement
+    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
+    const userRole = localStorage.getItem("userRole");
+    
+    setIsLoggedIn(loginStatus);
+    
+    // Si l'utilisateur n'est pas connecté ou n'est pas un médecin, rediriger vers la connexion
+    if (!loginStatus || userRole !== "doctor") {
+      toast.error("Veuillez vous connecter en tant que médecin");
+      navigate("/login");
+    }
+    
+    // Récupérer l'email stocké (si disponible)
+    const email = localStorage.getItem("userEmail");
+    if (email) {
+      setUserEmail(email);
+    }
+  }, [navigate]);
 
   const handleConfirm = (appointmentId: number) => {
     setUpcomingAppointments(prev =>
@@ -79,31 +103,52 @@ const DoctorDashboard = () => {
     toast.success("Rendez-vous annulé");
   };
 
+  if (!isLoggedIn) {
+    return null; // Ne rien afficher pendant la redirection
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
-        <div className="mb-6 flex items-center gap-4">
-          {!isHomePage && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-          )}
-          <Link to="/doctor">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Accueil
-            </Button>
-          </Link>
+        <div className="mb-6">
+          <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-2xl">
+                <div className="flex items-center gap-2">
+                  <UserCircle className="h-8 w-8 text-primary" />
+                  <span>Bienvenue sur votre espace médecin</span>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                {userEmail ? `Connecté avec: ${userEmail}` : "Vous êtes connecté en tant que médecin"}
+              </p>
+              <div className="flex gap-4 mt-4">
+                {!isHomePage && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Retour
+                  </Button>
+                )}
+                <Link to="/">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Home className="h-4 w-4" />
+                    Accueil
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">

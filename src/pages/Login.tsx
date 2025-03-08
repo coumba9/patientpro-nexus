@@ -27,6 +27,7 @@ export default function Login() {
     // Simuler une connexion réussie
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userRole", isDoctorLogin ? "doctor" : "patient");
+    localStorage.setItem("userEmail", email);
     toast.success("Connexion réussie");
     
     // Redirection en fonction du choix de type d'utilisateur
