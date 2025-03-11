@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { 
   CalendarDays, 
   Video, 
@@ -14,7 +14,8 @@ import {
   Clock,
   Euro,
   Wallet,
-  Phone
+  Phone,
+  Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
@@ -154,83 +155,146 @@ const AppointmentTickets = () => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return new Date(dateString).toLocaleDateString('fr-FR', options);
+  };
+
   return (
     <div className="px-4 py-6 md:px-6 md:py-8 max-w-7xl mx-auto">
       <NavigationHeader isHomePage={false} onBack={() => navigate(-1)} />
       <div className="space-y-6">
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold mb-6">Mes Tickets de Rendez-vous</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <Ticket className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-bold">Mes Tickets de Rendez-vous</h2>
+          </div>
           {appointments.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              Aucun ticket disponible. Les tickets sont créés une fois les rendez-vous confirmés.
-            </p>
+            <div className="bg-blue-50 text-blue-700 rounded-lg p-8 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <Ticket className="h-12 w-12 text-blue-400" />
+                <p className="text-lg">
+                  Aucun ticket disponible. Les tickets sont créés une fois les rendez-vous confirmés.
+                </p>
+              </div>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {appointments.map((appointment) => (
-                <Card key={appointment.id} className="relative">
+                <Card key={appointment.id} className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
                   <div 
                     ref={(el) => (ticketRefs.current[appointment.id] = el)}
-                    className="p-4 bg-white rounded-lg border-dashed border-2 border-gray-200 relative"
+                    className="p-6 bg-white relative"
                   >
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex justify-between items-center mb-4 pb-4 border-b">
                       <div className="flex flex-col">
-                        <h3 className="text-xl font-bold">{appointment.doctor}</h3>
-                        <p className="text-gray-600">{appointment.specialty}</p>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold text-gray-800">{appointment.doctor}</h3>
+                          <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">
+                            {appointment.id}
+                          </Badge>
+                        </div>
+                        <p className="text-primary font-medium">{appointment.specialty}</p>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-sm font-bold">{appointment.id}</span>
-                        <span className={`text-sm px-3 py-1 rounded-full ${getStatusBadgeColor(appointment.status)}`}>
+                        <Badge className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          appointment.status === "confirmed" 
+                            ? "bg-green-100 text-green-800 border-green-200" 
+                            : "bg-blue-100 text-blue-800 border-blue-200"
+                        }`}>
                           {appointment.status === "confirmed" ? "Confirmé" : "Terminé"}
+                        </Badge>
+                        <span className="text-sm text-gray-500 mt-1">
+                          {appointment.type === "teleconsultation" ? "Téléconsultation" : "Consultation en personne"}
                         </span>
                       </div>
                     </div>
                     
-                    <div className="border-t border-dashed border-gray-200 pt-4 mt-2">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <CalendarDays className="h-4 w-4" />
-                            <span>Date: {appointment.date}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            <CalendarDays className="h-5 w-5 text-primary" />
                           </div>
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Clock className="h-4 w-4" />
-                            <span>Heure: {appointment.time}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-600">
-                            {appointment.type === "teleconsultation" ? (
-                              <Video className="h-4 w-4 text-blue-500" />
-                            ) : (
-                              <MapPin className="h-4 w-4" />
-                            )}
-                            <span>Lieu: {appointment.location}</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Date</p>
+                            <p className="font-medium">{formatDate(appointment.date)}</p>
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Euro className="h-4 w-4" />
-                            <span>Prix: {appointment.price}€</span>
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            <Clock className="h-5 w-5 text-primary" />
                           </div>
-                          <div className="flex items-center gap-2 text-gray-600">
+                          <div>
+                            <p className="text-sm text-gray-500">Heure</p>
+                            <p className="font-medium">{appointment.time}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            {appointment.type === "teleconsultation" ? (
+                              <Video className="h-5 w-5 text-primary" />
+                            ) : (
+                              <MapPin className="h-5 w-5 text-primary" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Lieu</p>
+                            <p className="font-medium">{appointment.location}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            <Euro className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Prix</p>
+                            <p className="font-medium">{appointment.price}€</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <div className="bg-blue-100 p-2 rounded-full">
                             {getPaymentMethodIcon(appointment.paymentMethod)}
-                            <span>Paiement: {getPaymentMethodName(appointment.paymentMethod)}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <span className={`px-2 py-1 rounded text-xs ${appointment.paymentStatus === "paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                          <div>
+                            <p className="text-sm text-gray-500">Méthode de paiement</p>
+                            <p className="font-medium">{getPaymentMethodName(appointment.paymentMethod)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="bg-blue-100 p-2 rounded-full">
+                            <Wallet className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Statut du paiement</p>
+                            <Badge className={`mt-1 ${
+                              appointment.paymentStatus === "paid" 
+                                ? "bg-green-100 text-green-800 border-green-200" 
+                                : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            }`}>
                               {appointment.paymentStatus === "paid" ? "Payé" : "En attente"}
-                            </span>
+                            </Badge>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-4 bg-gray-50 border-t">
                     <div className="flex justify-end">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleDownloadTicket(appointment)}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 bg-white hover:bg-blue-50 text-primary hover:text-primary-foreground transition-all"
                       >
                         <Download className="h-4 w-4" />
                         Télécharger en PDF
