@@ -7,13 +7,88 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Statistics } from "@/components/Statistics";
 import { Testimonials } from "@/components/Testimonials";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, Heart } from "lucide-react";
+import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const Index = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Vérifier l'état de connexion
+    const checkLoginStatus = () => {
+      const status = localStorage.getItem("isLoggedIn") === "true";
+      const role = localStorage.getItem("userRole");
+      console.log("Index component - checking login status:", status, "role:", role);
+      setIsLoggedIn(status);
+      setUserRole(role);
+    };
+    
+    // Vérifier au chargement
+    checkLoginStatus();
+    
+    // Configurer un événement pour détecter les changements de localStorage
+    window.addEventListener('storage', checkLoginStatus);
+    
+    // Nettoyage
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <EmergencyBanner />
+      
+      {/* Navigation */}
+      <div className="bg-white py-4 border-b sticky top-0 z-10">
+        <div className="container flex justify-between items-center">
+          <Link to="/" className="text-2xl font-bold text-primary">MediConnect</Link>
+          
+          <div className="flex items-center gap-4">
+            {!isLoggedIn ? (
+              <>
+                <Link to="/register">
+                  <Button variant="outline" className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    S'inscrire
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button className="gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Connexion
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                {userRole === "patient" && (
+                  <Link to="/patient">
+                    <Button>Mon espace patient</Button>
+                  </Link>
+                )}
+                
+                {userRole === "doctor" && (
+                  <Link to="/doctor">
+                    <Button>Mon espace médecin</Button>
+                  </Link>
+                )}
+                
+                {userRole === "admin" && (
+                  <Link to="/admin">
+                    <Button>Administration</Button>
+                  </Link>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      
       <main className="flex-grow">
         <Hero />
         
