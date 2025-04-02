@@ -11,6 +11,7 @@ import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,15 +41,17 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col dark:bg-background">
       <EmergencyBanner />
       
       {/* Navigation */}
-      <div className="bg-white py-4 border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="container flex justify-between items-center">
           <Link to="/" className="text-2xl font-bold text-primary">MediConnect</Link>
           
           <div className="flex items-center gap-4">
+            <ThemeToggle />
+            
             {!isLoggedIn ? (
               <>
                 <Link to="/register">
@@ -93,9 +96,9 @@ const Index = () => {
         <Hero />
         
         {/* Banner de confiance */}
-        <div className="bg-white py-8 border-y">
+        <div className="bg-white dark:bg-gray-900 py-8 border-y dark:border-gray-800">
           <div className="container">
-            <div className="flex flex-wrap justify-center items-center gap-8 text-gray-600">
+            <div className="flex flex-wrap justify-center items-center gap-8 text-gray-600 dark:text-gray-300">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-primary" />
                 100% sécurisé
@@ -123,7 +126,7 @@ const Index = () => {
             <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
               Rejoignez les milliers de patients qui font confiance à MediConnect pour leur santé.
             </p>
-            <Button size="lg" variant="secondary" className="text-primary hover:text-primary/90">
+            <Button size="lg" variant="secondary" className="text-primary hover:text-primary/90 dark:bg-gray-200">
               Commencer maintenant
             </Button>
           </div>

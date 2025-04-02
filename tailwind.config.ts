@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -27,6 +28,7 @@ export default {
         primary: {
           DEFAULT: "#0284C7",
           foreground: "#FFFFFF",
+          dark: "#0369a1",
         },
         secondary: {
           DEFAULT: "#64748B",
@@ -39,6 +41,8 @@ export default {
         muted: {
           DEFAULT: "#F1F5F9",
           foreground: "#64748B",
+          dark: "#1e293b",
+          "dark-foreground": "#94a3b8",
         },
         accent: {
           DEFAULT: "#22C55E",
@@ -47,10 +51,14 @@ export default {
         popover: {
           DEFAULT: "#FFFFFF",
           foreground: "#0F172A",
+          dark: "#0f172a",
+          "dark-foreground": "#e2e8f0",
         },
         card: {
           DEFAULT: "#FFFFFF",
           foreground: "#0F172A",
+          dark: "#1e293b",
+          "dark-foreground": "#e2e8f0",
         },
       },
       borderRadius: {
