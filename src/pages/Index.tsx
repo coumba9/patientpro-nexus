@@ -6,7 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Statistics } from "@/components/Statistics";
 import { Testimonials } from "@/components/Testimonials";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus, FileText } from "lucide-react";
+import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -19,7 +19,6 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Vérifier l'état de connexion
     const checkLoginStatus = () => {
       const status = localStorage.getItem("isLoggedIn") === "true";
       const role = localStorage.getItem("userRole");
@@ -28,13 +27,10 @@ const Index = () => {
       setUserRole(role);
     };
     
-    // Vérifier au chargement
     checkLoginStatus();
     
-    // Configurer un événement pour détecter les changements de localStorage
     window.addEventListener('storage', checkLoginStatus);
     
-    // Nettoyage
     return () => {
       window.removeEventListener('storage', checkLoginStatus);
     };
@@ -44,7 +40,6 @@ const Index = () => {
     <div className="min-h-screen flex flex-col dark:bg-background">
       <EmergencyBanner />
       
-      {/* Navigation */}
       <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="container flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -93,7 +88,6 @@ const Index = () => {
             )}
           </div>
 
-          {/* Mobile Theme Toggle */}
           <div className="md:hidden">
             <ThemeToggle />
           </div>
@@ -103,7 +97,6 @@ const Index = () => {
       <main className="flex-grow">
         <Hero />
         
-        {/* Banner de confiance */}
         <div className="bg-white dark:bg-gray-900 py-8 border-y dark:border-gray-800">
           <div className="container">
             <div className="flex flex-wrap justify-center items-center gap-8 text-gray-600 dark:text-gray-300">
@@ -119,17 +112,12 @@ const Index = () => {
                 <Heart className="w-5 h-5 text-primary" />
                 Données protégées
               </span>
-              <Link to="/uml-diagrams" className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                Diagrammes UML
-              </Link>
             </div>
           </div>
         </div>
 
         <HowItWorks />
         
-        {/* Call to Action */}
         <section className="py-24 bg-gradient-to-r from-primary to-blue-600">
           <div className="container text-center text-white">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">

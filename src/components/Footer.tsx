@@ -23,6 +23,11 @@ export const Footer = () => {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link to="/uml-diagrams" className="text-gray-600 hover:text-primary opacity-50 text-sm">
+                  Diagrammes UML
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
