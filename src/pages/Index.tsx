@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { MobileNavigation } from "@/components/MobileNavigation";
 
 const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -47,9 +48,12 @@ const Index = () => {
       {/* Navigation */}
       <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="container flex justify-between items-center">
-          <Link to="/" className="text-2xl font-bold text-primary">MediConnect</Link>
+          <div className="flex items-center gap-2">
+            <MobileNavigation isLoggedIn={isLoggedIn} userRole={userRole} />
+            <Link to="/" className="text-2xl font-bold text-primary">MediConnect</Link>
+          </div>
           
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             <ThemeToggle />
             
             {!isLoggedIn ? (
@@ -88,6 +92,11 @@ const Index = () => {
                 )}
               </>
             )}
+          </div>
+
+          {/* Mobile Theme Toggle */}
+          <div className="md:hidden">
+            <ThemeToggle />
           </div>
         </div>
       </div>
