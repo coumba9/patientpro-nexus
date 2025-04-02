@@ -32,6 +32,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Legal from "./pages/Legal";
 import { BookAppointment } from "./pages/BookAppointment";
+import UmlDiagrams from "./pages/UmlDiagrams";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/legal" element={<Legal />} />
+            <Route path="/uml-diagrams" element={<UmlDiagrams />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

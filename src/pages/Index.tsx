@@ -1,4 +1,3 @@
-
 import { EmergencyBanner } from "@/components/EmergencyBanner";
 import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
@@ -7,7 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Statistics } from "@/components/Statistics";
 import { Testimonials } from "@/components/Testimonials";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
+import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -120,6 +119,10 @@ const Index = () => {
                 <Heart className="w-5 h-5 text-primary" />
                 Données protégées
               </span>
+              <Link to="/uml-diagrams" className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Diagrammes UML
+              </Link>
             </div>
           </div>
         </div>
