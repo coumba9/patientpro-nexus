@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,10 +29,10 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Updated with your actual EmailJS service ID
+    // Updated with your actual EmailJS details
     const serviceId = "service_2h9eyav"; // Your EmailJS service ID
-    const templateId = "template_id"; // Get this from EmailJS dashboard
-    const userId = "user_id"; // Get this from EmailJS dashboard
+    const templateId = "template_5mp3537"; // Your EmailJS template ID
+    const userId = "zakYNLHVHM_Z1S9WF"; // Your EmailJS user ID
     
     const templateParams = {
       from_name: formData.name,
