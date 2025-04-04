@@ -45,78 +45,78 @@ const UmlDiagrams = () => {
                 <div ref={classDiagramRef} className="mermaid">
                   {`
                     classDiagram
-                      class User {
-                        +string id
-                        +string name
-                        +string email
-                        +string phone
-                        +authenticate()
+                      class Utilisateur {
+                        +String id
+                        +String nom
+                        +String email
+                        +String telephone
+                        +authentifier()
                       }
                       
                       class Patient {
-                        +string[] medicalHistory
-                        +Appointment[] appointments
-                        +bookAppointment()
-                        +viewMedicalRecords()
+                        +String[] antecedentsMedicaux
+                        +RendezVous[] rendezVous
+                        +prendreRendezVous()
+                        +consulterDossierMedical()
                       }
                       
-                      class Doctor {
-                        +string specialty
-                        +string[] qualifications
-                        +Appointment[] schedule
-                        +manageAppointments()
-                        +createPrescription()
+                      class Medecin {
+                        +String specialite
+                        +String[] qualifications
+                        +RendezVous[] agenda
+                        +gererRendezVous()
+                        +creerOrdonnance()
                       }
                       
-                      class Appointment {
-                        +string id
-                        +Doctor doctor
+                      class RendezVous {
+                        +String id
+                        +Medecin medecin
                         +Patient patient
                         +DateTime date
-                        +string type
-                        +string status
-                        +string location
-                        +number price
-                        +reschedule()
-                        +cancel()
-                        +confirm()
+                        +String type
+                        +String statut
+                        +String lieu
+                        +Number prix
+                        +reprogrammer()
+                        +annuler()
+                        +confirmer()
                       }
                       
-                      class MedicalRecord {
-                        +string id
+                      class DossierMedical {
+                        +String id
                         +Patient patient
-                        +Doctor doctor
-                        +string[] diagnoses
+                        +Medecin medecin
+                        +String[] diagnostics
                         +DateTime date
-                        +string notes
+                        +String notes
                       }
                       
-                      class Prescription {
-                        +string id
+                      class Ordonnance {
+                        +String id
                         +Patient patient
-                        +Doctor doctor
-                        +string[] medications
-                        +string dosage
+                        +Medecin medecin
+                        +String[] medicaments
+                        +String posologie
                         +DateTime date
-                        +string instructions
+                        +String instructions
                       }
                       
                       class Ticket {
-                        +string id
-                        +Appointment appointment
-                        +string paymentStatus
-                        +string paymentMethod
+                        +String id
+                        +RendezVous rendezVous
+                        +String statutPaiement
+                        +String methodePaiement
                       }
 
-                      User <|-- Patient
-                      User <|-- Doctor
-                      Patient "1" -- "*" Appointment
-                      Doctor "1" -- "*" Appointment
-                      Patient "1" -- "*" MedicalRecord
-                      Doctor "1" -- "*" MedicalRecord
-                      Doctor "1" -- "*" Prescription
-                      Patient "1" -- "*" Prescription
-                      Appointment "1" -- "1" Ticket
+                      Utilisateur <|-- Patient
+                      Utilisateur <|-- Medecin
+                      Patient "1" -- "*" RendezVous
+                      Medecin "1" -- "*" RendezVous
+                      Patient "1" -- "*" DossierMedical
+                      Medecin "1" -- "*" DossierMedical
+                      Medecin "1" -- "*" Ordonnance
+                      Patient "1" -- "*" Ordonnance
+                      RendezVous "1" -- "1" Ticket
                   `}
                 </div>
               </div>
@@ -133,7 +133,7 @@ const UmlDiagrams = () => {
                   {`
                     graph TD
                       Patient(["Patient"])
-                      Doctor(["Médecin"])
+                      Medecin(["Médecin"])
                       Admin(["Administrateur"])
                       
                       UC1[S'inscrire/Se connecter]
@@ -147,7 +147,7 @@ const UmlDiagrams = () => {
                       UC8[Gérer les rendez-vous]
                       UC9[Consulter dossier patient]
                       UC10[Faire des téléconsultations]
-                      UC11[Rédiger prescriptions]
+                      UC11[Rédiger ordonnances]
                       UC12[Gérer disponibilité]
                       
                       UC13[Gérer utilisateurs]
@@ -162,12 +162,12 @@ const UmlDiagrams = () => {
                       Patient --- UC6
                       Patient --- UC7
                       
-                      Doctor --- UC1
-                      Doctor --- UC8
-                      Doctor --- UC9
-                      Doctor --- UC10
-                      Doctor --- UC11
-                      Doctor --- UC12
+                      Medecin --- UC1
+                      Medecin --- UC8
+                      Medecin --- UC9
+                      Medecin --- UC10
+                      Medecin --- UC11
+                      Medecin --- UC12
                       
                       Admin --- UC1
                       Admin --- UC13
@@ -190,7 +190,7 @@ const UmlDiagrams = () => {
                     sequenceDiagram
                       participant P as Patient
                       participant S as Système
-                      participant D as Docteur
+                      participant M as Médecin
                       
                       P->>S: Se connecte
                       S->>P: Authentification réussie
@@ -203,8 +203,8 @@ const UmlDiagrams = () => {
                       P->>S: Sélectionne mode paiement
                       P->>S: Confirme et paie
                       S->>P: Génère ticket RDV
-                      S->>D: Notifie nouveau RDV
-                      D->>S: Confirme RDV
+                      S->>M: Notifie nouveau RDV
+                      M->>S: Confirme RDV
                       S->>P: Envoie confirmation
                   `}
                 </div>
