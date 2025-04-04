@@ -7,7 +7,8 @@ export const ClassDiagram = () => {
   
   useEffect(() => {
     if (diagramRef.current) {
-      mermaid.renderAll();
+      // Using the correct method: render instead of renderAll
+      mermaid.contentLoaded();
     }
   }, [diagramRef]);
 

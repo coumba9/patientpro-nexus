@@ -7,7 +7,8 @@ export const SequenceDiagram = () => {
   
   useEffect(() => {
     if (diagramRef.current) {
-      mermaid.renderAll();
+      // Using the correct method: contentLoaded instead of renderAll
+      mermaid.contentLoaded();
     }
   }, [diagramRef]);
 
