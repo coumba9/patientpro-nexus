@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +30,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-interface Document {
+interface DocItem {
   id: number;
   name: string;
   type: string;
@@ -44,7 +43,7 @@ interface Document {
 
 const Documents = () => {
   const navigate = useNavigate();
-  const [documents, setDocuments] = useState<Document[]>([
+  const [documents, setDocuments] = useState<DocItem[]>([
     {
       id: 1,
       name: "Ordonnance - Marie Dubois",
@@ -77,7 +76,7 @@ const Documents = () => {
   ]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocItem | null>(null);
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -94,8 +93,8 @@ const Documents = () => {
     doc.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSignDocument = (document: Document) => {
-    setSelectedDocument(document);
+  const handleSignDocument = (doc: DocItem) => {
+    setSelectedDocument(doc);
     setSignatureDialogOpen(true);
   };
 
@@ -115,25 +114,23 @@ const Documents = () => {
     toast.success("Document signé avec succès");
   };
 
-  const handleDownload = (document: Document) => {
-    // Logique simulée de téléchargement
-    console.log("Téléchargement du document:", document.name);
+  const handleDownload = (doc: DocItem) => {
+    console.log("Téléchargement du document:", doc.name);
     
-    // Création d'un blob pour simuler un téléchargement
-    const blob = new Blob([document.content || "Contenu du document"], { type: 'text/plain' });
+    const blob = new Blob([doc.content || "Contenu du document"], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = window.document.createElement('a');
     link.href = url;
-    link.download = document.name + '.txt';
-    document.body.appendChild(link);
+    link.download = doc.name + '.txt';
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
     
-    toast.success(`${document.name} téléchargé`);
+    toast.success(`${doc.name} téléchargé`);
   };
 
-  const handleShare = (document: Document) => {
-    setSelectedDocument(document);
+  const handleShare = (doc: DocItem) => {
+    setSelectedDocument(doc);
     setShareDialogOpen(true);
   };
 
@@ -145,17 +142,15 @@ const Documents = () => {
   };
 
   const handleAddDocument = () => {
-    // Vérifier si tous les champs sont remplis
     if (!newDocument.name || !newDocument.patient || !newDocument.content) {
       toast.error("Veuillez remplir tous les champs");
       return;
     }
 
-    // Créer un nouveau document
     const now = new Date();
     const formattedDate = now.toISOString().split('T')[0];
     
-    const newDoc: Document = {
+    const newDoc: DocItem = {
       id: documents.length + 1,
       name: newDocument.name,
       type: newDocument.type,
@@ -169,7 +164,6 @@ const Documents = () => {
     setDocuments([...documents, newDoc]);
     setAddDocumentOpen(false);
     
-    // Réinitialiser le formulaire
     setNewDocument({
       name: "",
       type: "Ordonnance",
@@ -362,7 +356,6 @@ const Documents = () => {
         </ScrollArea>
       </CardContent>
 
-      {/* Dialog de signature */}
       <Dialog open={signatureDialogOpen} onOpenChange={setSignatureDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -380,7 +373,6 @@ const Documents = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de partage */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
