@@ -1,17 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
 import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle } from "lucide-react";
 
 interface Patient {
@@ -39,7 +32,11 @@ interface PatientNote {
   content: string;
 }
 
-export const PatientRecord = () => {
+interface PatientRecordProps {
+  initialPatientName?: string;
+}
+
+export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedTab, setSelectedTab] = useState("info");
@@ -84,6 +81,17 @@ export const PatientRecord = () => {
     ]
   };
 
+  // Si un nom de patient est fourni, sélectionner ce patient au chargement
+  useEffect(() => {
+    if (initialPatientName) {
+      const patient = patients.find(p => p.name.includes(initialPatientName));
+      if (patient) {
+        setSelectedPatient(patient);
+        setSelectedTab("info");
+      }
+    }
+  }, [initialPatientName]);
+
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -103,18 +111,20 @@ export const PatientRecord = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-          <Input
-            type="search"
-            placeholder="Rechercher un patient..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {!selectedPatient && (
+        <div className="flex items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="Rechercher un patient..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {!selectedPatient ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -145,9 +155,11 @@ export const PatientRecord = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Dossier de {selectedPatient.name}</h2>
-            <Button variant="outline" onClick={() => setSelectedPatient(null)}>
-              Retour à la liste
-            </Button>
+            {!initialPatientName && (
+              <Button variant="outline" onClick={() => setSelectedPatient(null)}>
+                Retour à la liste
+              </Button>
+            )}
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>

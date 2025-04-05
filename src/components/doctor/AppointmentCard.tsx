@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import {
   Video,
   Clock,
@@ -113,14 +114,16 @@ export const AppointmentCard = ({
                   Commencer
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 md:flex-initial"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Dossier
-              </Button>
+              <Link to={`/doctor/patients/${encodeURIComponent(appointment.patient)}`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 md:flex-initial"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Dossier
+                </Button>
+              </Link>
             </>
           )
         )}

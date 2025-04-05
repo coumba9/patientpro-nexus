@@ -2,6 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { PatientRecord } from "@/components/doctor/PatientRecord";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Patients = () => {
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ const Patients = () => {
 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-2xl font-bold mb-6">Mes patients</h2>
-        <p className="text-gray-600">Aucun patient pour le moment.</p>
+        <PatientRecord />
       </div>
     </div>
   );

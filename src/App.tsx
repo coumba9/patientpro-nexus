@@ -17,6 +17,7 @@ import DoctorDocuments from "./pages/doctor/Documents";
 import DoctorSettings from "./pages/doctor/Settings";
 import DoctorPatients from "./pages/doctor/Patients";
 import DoctorTeleconsultation from "./pages/doctor/Teleconsultation";
+import PatientDetails from "./pages/doctor/PatientDetails";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminModeration from "./pages/admin/Moderation";
 import AdminSettings from "./pages/admin/Settings";
@@ -33,6 +34,7 @@ import Privacy from "./pages/Privacy";
 import Legal from "./pages/Legal";
 import { BookAppointment } from "./pages/BookAppointment";
 import UmlDiagrams from "./pages/UmlDiagrams";
+import Prescriptions from "./pages/patient/Prescriptions";
 
 const queryClient = new QueryClient();
 
@@ -50,11 +52,13 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/patient/*" element={<PatientDashboard />} />
+            <Route path="/patient/prescriptions" element={<Prescriptions />} />
             <Route path="/doctor" element={<DoctorDashboard />} />
             <Route path="/doctor/messages" element={<DoctorMessages />} />
             <Route path="/doctor/documents" element={<DoctorDocuments />} />
             <Route path="/doctor/settings" element={<DoctorSettings />} />
             <Route path="/doctor/patients" element={<DoctorPatients />} />
+            <Route path="/doctor/patients/:patientName" element={<PatientDetails />} />
             <Route path="/doctor/teleconsultation" element={<DoctorTeleconsultation />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/moderation" element={<AdminModeration />} />
