@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,36 +11,21 @@ import {
 } from "@/components/ui/card";
 import {
   FileText,
-  Upload,
-  Download,
-  Search,
-  File,
   Filter,
-  FileSignature,
-  Share2,
   ArrowLeft,
   Home,
   Plus,
+  Search,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { SignaturePad } from "@/components/doctor/SignaturePad";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link, useNavigate } from "react-router-dom";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-
-interface DocItem {
-  id: number;
-  name: string;
-  type: string;
-  date: string;
-  size: string;
-  patient: string;
-  signed: boolean;
-  content?: string;
-}
+import { DocumentItem } from "@/components/doctor/DocumentItem";
+import { DocumentForm } from "@/components/doctor/DocumentForm";
+import { ShareDocumentDialog } from "@/components/doctor/ShareDocumentDialog";
+import { SignatureDialog } from "@/components/doctor/SignatureDialog";
+import { DocItem, DocFormValues } from "@/components/doctor/types";
 
 const Documents = () => {
   const navigate = useNavigate();
@@ -80,12 +66,6 @@ const Documents = () => {
   const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
   const [addDocumentOpen, setAddDocumentOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [newDocument, setNewDocument] = useState({
-    name: "",
-    type: "Ordonnance",
-    patient: "",
-    content: ""
-  });
 
   const filteredDocuments = documents.filter(doc => 
     doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,8 +121,8 @@ const Documents = () => {
     setSelectedDocument(null);
   };
 
-  const handleAddDocument = () => {
-    if (!newDocument.name || !newDocument.patient || !newDocument.content) {
+  const handleAddDocument = (values: DocFormValues) => {
+    if (!values.name || !values.patient || !values.content) {
       toast.error("Veuillez remplir tous les champs");
       return;
     }
@@ -152,25 +132,17 @@ const Documents = () => {
     
     const newDoc: DocItem = {
       id: documents.length + 1,
-      name: newDocument.name,
-      type: newDocument.type,
+      name: values.name,
+      type: values.type,
       date: formattedDate,
-      size: Math.floor(newDocument.content.length / 10) + " KB",
-      patient: newDocument.patient,
+      size: Math.floor(values.content.length / 10) + " KB",
+      patient: values.patient,
       signed: false,
-      content: newDocument.content
+      content: values.content
     };
 
     setDocuments([...documents, newDoc]);
     setAddDocumentOpen(false);
-    
-    setNewDocument({
-      name: "",
-      type: "Ordonnance",
-      patient: "",
-      content: ""
-    });
-    
     toast.success("Document ajouté avec succès");
   };
 
@@ -218,53 +190,7 @@ const Documents = () => {
               <DialogHeader>
                 <DialogTitle>Ajouter un nouveau document</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nom du document</Label>
-                  <Input 
-                    id="name" 
-                    value={newDocument.name} 
-                    onChange={(e) => setNewDocument({...newDocument, name: e.target.value})} 
-                    placeholder="Ex: Ordonnance - Nom du patient"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Type de document</Label>
-                  <select 
-                    id="type" 
-                    className="w-full p-2 border rounded-md"
-                    value={newDocument.type}
-                    onChange={(e) => setNewDocument({...newDocument, type: e.target.value})}
-                  >
-                    <option value="Ordonnance">Ordonnance</option>
-                    <option value="Compte-rendu">Compte-rendu</option>
-                    <option value="Certificat">Certificat médical</option>
-                    <option value="Autre">Autre</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="patient">Nom du patient</Label>
-                  <Input 
-                    id="patient" 
-                    value={newDocument.patient} 
-                    onChange={(e) => setNewDocument({...newDocument, patient: e.target.value})} 
-                    placeholder="Nom du patient"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content">Contenu</Label>
-                  <Textarea 
-                    id="content" 
-                    value={newDocument.content} 
-                    onChange={(e) => setNewDocument({...newDocument, content: e.target.value})} 
-                    placeholder="Contenu du document"
-                    rows={5}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleAddDocument}>Ajouter le document</Button>
-              </DialogFooter>
+              <DocumentForm onSubmit={handleAddDocument} />
             </DialogContent>
           </Dialog>
         </div>
@@ -284,68 +210,13 @@ const Documents = () => {
           <div className="space-y-4">
             {filteredDocuments.length > 0 ? (
               filteredDocuments.map((doc) => (
-                <div
+                <DocumentItem 
                   key={doc.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-start gap-4">
-                    <File className="h-8 w-8 text-primary" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{doc.name}</h3>
-                        {doc.signed && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700">
-                            <FileSignature className="h-3 w-3 mr-1" />
-                            Signé
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                        <span>{doc.date}</span>
-                        <span>{doc.type}</span>
-                        <span>{doc.size}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">Patient: {doc.patient}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {doc.type === "Ordonnance" && !doc.signed && (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" onClick={() => setSelectedDocument(doc)}>
-                            <FileSignature className="h-4 w-4 mr-2" />
-                            Signer
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[600px]">
-                          <DialogHeader>
-                            <DialogTitle>Aperçu et signature du document</DialogTitle>
-                          </DialogHeader>
-                          <div className="bg-gray-50 p-4 rounded-md mb-4 whitespace-pre-line">
-                            <h3 className="font-semibold mb-2">{doc.name}</h3>
-                            <p className="text-sm text-gray-700">{doc.content}</p>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            className="mb-4"
-                            onClick={() => handleSignDocument(doc)}
-                          >
-                            <FileSignature className="h-4 w-4 mr-2" />
-                            Signer cette ordonnance
-                          </Button>
-                        </DialogContent>
-                      </Dialog>
-                    )}
-                    <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Télécharger
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleShare(doc)}>
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Partager
-                    </Button>
-                  </div>
-                </div>
+                  doc={doc}
+                  onSignDocument={handleSignDocument}
+                  onDownload={handleDownload}
+                  onShare={handleShare}
+                />
               ))
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -356,44 +227,19 @@ const Documents = () => {
         </ScrollArea>
       </CardContent>
 
-      <Dialog open={signatureDialogOpen} onOpenChange={setSignatureDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Signer le document</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              En tant que médecin, votre signature valide médicalement ce document pour le patient "{selectedDocument?.patient}".
-            </p>
-            <SignaturePad 
-              onSave={saveSignature} 
-              onCancel={() => setSignatureDialogOpen(false)} 
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SignatureDialog 
+        isOpen={signatureDialogOpen}
+        setIsOpen={setSignatureDialogOpen}
+        document={selectedDocument}
+        onSaveSignature={saveSignature}
+      />
 
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Partager le document</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p>Partager <strong>{selectedDocument?.name}</strong> avec :</p>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="Adresse email du destinataire" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Message (optionnel)</Label>
-              <Textarea id="message" placeholder="Message à inclure avec le document" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={confirmShare}>Envoyer</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ShareDocumentDialog
+        isOpen={shareDialogOpen}
+        setIsOpen={setShareDialogOpen}
+        document={selectedDocument}
+        onShare={confirmShare}
+      />
     </Card>
   );
 };
