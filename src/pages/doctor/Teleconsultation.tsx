@@ -13,19 +13,24 @@ import {
   Calendar, 
   Settings, 
   FileSignature, 
-  Link as LinkIcon 
+  Link as LinkIcon,
+  ArrowLeft,
+  Home 
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Teleconsultation = () => {
   const [meetLink, setMeetLink] = useState("");
   const [activeTab, setActiveTab] = useState("upcoming");
   const [currentConsultation, setCurrentConsultation] = useState<any>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const upcomingConsultations = [
     {
@@ -54,6 +59,32 @@ const Teleconsultation = () => {
     }
   ];
 
+  useEffect(() => {
+    // Check if there's state from navigation
+    if (location.state && location.state.patient) {
+      // Find the consultation in the list or create one if it doesn't exist
+      const existingConsultation = upcomingConsultations.find(
+        c => c.patient === location.state.patient
+      );
+      
+      if (existingConsultation) {
+        startConsultation(existingConsultation);
+      } else {
+        // Create a new consultation object based on the navigation state
+        const newConsultation = {
+          id: Date.now(),
+          patient: location.state.patient,
+          date: location.state.date || "Aujourd'hui",
+          time: location.state.time || new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}),
+          reason: location.state.reason || "Consultation",
+          meetLink: ""
+        };
+        
+        startConsultation(newConsultation);
+      }
+    }
+  }, [location.state]);
+
   const startConsultation = (consultation: any) => {
     setCurrentConsultation(consultation);
     setActiveTab("session");
@@ -79,8 +110,40 @@ const Teleconsultation = () => {
     toast.success("Lien copié dans le presse-papier");
   };
 
+  const goToPatientFile = () => {
+    if (currentConsultation && currentConsultation.patient) {
+      navigate(`/doctor/patients/${encodeURIComponent(currentConsultation.patient)}`);
+    }
+  };
+
+  const goToDocuments = () => {
+    navigate('/doctor/documents');
+  };
+
   return (
     <div className="grid gap-6">
+      <div className="mb-6 flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Link to="/doctor">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Accueil
+          </Button>
+        </Link>
+      </div>
+      
       <Card>
         <CardHeader>
           <CardTitle>Téléconsultation</CardTitle>
@@ -257,13 +320,21 @@ const Teleconsultation = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4">
-                          <Button variant="outline" className="justify-start">
+                          <Button 
+                            variant="outline" 
+                            className="justify-start"
+                            onClick={goToDocuments}
+                          >
                             <FileSignature className="h-4 w-4 mr-2" />
                             Signer ordonnance
                           </Button>
-                          <Button variant="outline" className="justify-start">
-                            <LinkIcon className="h-4 w-4 mr-2" />
-                            Partager document
+                          <Button 
+                            variant="outline" 
+                            className="justify-start"
+                            onClick={goToPatientFile}
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            Dossier patient
                           </Button>
                         </div>
                       </CardContent>

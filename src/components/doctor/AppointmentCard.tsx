@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Video,
   Clock,
@@ -12,6 +12,7 @@ import {
   XCircle,
   FileText,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Appointment {
   id: number;
@@ -35,6 +36,8 @@ export const AppointmentCard = ({
   onConfirm,
   onCancel,
 }: AppointmentCardProps) => {
+  const navigate = useNavigate();
+  
   const getStatusBadge = (status: Appointment["status"]) => {
     switch (status) {
       case "confirmed":
@@ -45,6 +48,32 @@ export const AppointmentCard = ({
         return <Badge className="bg-red-100 text-red-800">Annulé</Badge>;
       default:
         return null;
+    }
+  };
+
+  const handleStartAppointment = () => {
+    if (appointment.isOnline) {
+      // Navigate to teleconsultation page with patient info
+      navigate(`/doctor/teleconsultation`, { 
+        state: { 
+          patient: appointment.patient,
+          reason: appointment.reason,
+          time: appointment.time,
+          date: appointment.date
+        } 
+      });
+      toast.success(`Téléconsultation avec ${appointment.patient} démarrée`);
+    } else {
+      // Start in-person consultation
+      navigate(`/doctor/patients/${encodeURIComponent(appointment.patient)}`, {
+        state: {
+          appointmentStarted: true,
+          appointmentId: appointment.id,
+          appointmentTime: appointment.time,
+          appointmentReason: appointment.reason
+        }
+      });
+      toast.success(`Consultation avec ${appointment.patient} démarrée`);
     }
   };
 
@@ -103,17 +132,22 @@ export const AppointmentCard = ({
         ) : (
           appointment.status === "confirmed" && (
             <>
-              {appointment.isOnline ? (
-                <Button className="flex-1 md:flex-initial">
-                  <Video className="h-4 w-4 mr-2" />
-                  Démarrer
-                </Button>
-              ) : (
-                <Button className="flex-1 md:flex-initial">
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                  Commencer
-                </Button>
-              )}
+              <Button 
+                className="flex-1 md:flex-initial"
+                onClick={handleStartAppointment}
+              >
+                {appointment.isOnline ? (
+                  <>
+                    <Video className="h-4 w-4 mr-2" />
+                    Démarrer
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight className="h-4 w-4 mr-2" />
+                    Commencer
+                  </>
+                )}
+              </Button>
               <Link to={`/doctor/patients/${encodeURIComponent(appointment.patient)}`}>
                 <Button
                   variant="outline"
