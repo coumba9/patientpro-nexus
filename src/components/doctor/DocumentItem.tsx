@@ -1,20 +1,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { File, FileSignature, Download, Share2 } from "lucide-react";
+import { File, FileSignature, Download, Share2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
-interface DocItem {
-  id: number;
-  name: string;
-  type: string;
-  date: string;
-  size: string;
-  patient: string;
-  signed: boolean;
-  content?: string;
-}
+import { DocItem } from "./types";
 
 interface DocumentItemProps {
   doc: DocItem;
@@ -50,6 +40,29 @@ export const DocumentItem = ({ doc, onSignDocument, onDownload, onShare }: Docum
         </div>
       </div>
       <div className="flex gap-2">
+        {/* View document content button - for all document types */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Eye className="h-4 w-4 mr-2" />
+              Visualiser
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Contenu du document</DialogTitle>
+            </DialogHeader>
+            <div className="bg-gray-50 p-4 rounded-md mb-4 whitespace-pre-line">
+              <h3 className="font-semibold mb-2">{doc.name}</h3>
+              {doc.content ? (
+                <p className="text-sm text-gray-700">{doc.content}</p>
+              ) : (
+                <p className="text-sm text-gray-500 italic">Contenu non disponible pour ce document</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {doc.type === "Ordonnance" && !doc.signed && (
           <Dialog>
             <DialogTrigger asChild>
