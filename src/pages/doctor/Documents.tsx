@@ -225,7 +225,7 @@ const Documents = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Veuillez signer ci-dessous pour valider le document "{selectedDocument?.name}".
+              En tant que médecin, votre signature valide médicalement ce document pour le patient "{selectedDocument?.patient}".
             </p>
             <SignaturePad 
               onSave={saveSignature} 

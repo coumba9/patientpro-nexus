@@ -5,14 +5,10 @@ import { Download, FileSignature, ArrowLeft, Home } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { SignaturePad } from "@/components/doctor/SignaturePad";
 import { useState } from "react";
 
 const Prescriptions = () => {
   const navigate = useNavigate();
-  const [selectedPrescription, setSelectedPrescription] = useState<number | null>(null);
-  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
   const [prescriptions, setPrescriptions] = useState([
     {
       id: 1,
@@ -49,26 +45,6 @@ const Prescriptions = () => {
 
   const handleDownload = () => {
     toast.success("Ordonnance téléchargée");
-  };
-  
-  const handleSignature = (id: number) => {
-    setSelectedPrescription(id);
-    setSignatureDialogOpen(true);
-  };
-  
-  const saveSignature = (signatureData: string) => {
-    if (selectedPrescription === null) return;
-    
-    // Mise à jour de l'ordonnance avec la signature
-    setPrescriptions(prescriptions.map(prescription => 
-      prescription.id === selectedPrescription 
-        ? { ...prescription, signed: true } 
-        : prescription
-    ));
-    
-    setSignatureDialogOpen(false);
-    setSelectedPrescription(null);
-    toast.success("Ordonnance signée avec succès");
   };
 
   return (
@@ -107,25 +83,15 @@ const Prescriptions = () => {
                     {prescription.signed ? (
                       <Badge variant="outline" className="bg-green-50 text-green-700">
                         <FileSignature className="h-3 w-3 mr-1" />
-                        Signée
+                        Signée par {prescription.doctor}
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        En attente de signature
+                        En attente de signature du médecin
                       </Badge>
                     )}
                   </div>
                   <div className="flex space-x-2">
-                    {!prescription.signed && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleSignature(prescription.id)}
-                      >
-                        <FileSignature className="h-4 w-4 mr-2" />
-                        Signer
-                      </Button>
-                    )}
                     <Button variant="outline" size="sm" onClick={handleDownload}>
                       <Download className="h-4 w-4 mr-2" />
                       Télécharger
@@ -150,24 +116,6 @@ const Prescriptions = () => {
           ))}
         </div>
       </div>
-      
-      {/* Modal de signature */}
-      <Dialog open={signatureDialogOpen} onOpenChange={setSignatureDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Signer l'ordonnance</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Veuillez signer ci-dessous pour valider l'ordonnance.
-            </p>
-            <SignaturePad 
-              onSave={saveSignature} 
-              onCancel={() => setSignatureDialogOpen(false)} 
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
