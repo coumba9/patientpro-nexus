@@ -27,8 +27,8 @@ const reports = [
   {
     id: 1,
     type: "Commentaire inapproprié",
-    reporter: "Jean Dupont",
-    reported: "Dr. Marie Lambert",
+    reporter: "Seynabou Seye",
+    reported: "Dr. Ahmadou Fall",
     date: "2024-02-19",
     status: "En attente",
     content: "Contenu offensant dans un commentaire...",
@@ -36,8 +36,8 @@ const reports = [
   {
     id: 2,
     type: "Comportement suspect",
-    reporter: "Sophie Martin",
-    reported: "Dr. Pierre Dumont",
+    reporter: "Sophie Ndiaye",
+    reported: "Dr. Amadou Faye",
     date: "2024-02-18",
     status: "En attente",
     content: "Activité suspecte détectée...",
@@ -45,8 +45,8 @@ const reports = [
   {
     id: 3,
     type: "Information erronée",
-    reporter: "Lucas Bernard",
-    reported: "Dr. Julie Petit",
+    reporter: "Ansou Fall",
+    reported: "Dr. Marie Fall",
     date: "2024-02-17",
     status: "En attente",
     content: "Diffusion d'informations médicales incorrectes...",
