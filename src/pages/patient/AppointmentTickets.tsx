@@ -10,7 +10,7 @@ const AppointmentTickets = () => {
   const [appointments] = useState<AppointmentTicket[]>([
     {
       id: "RDV-002",
-      doctor: "Dr. Thomas Bernard",
+      doctor: "Dr. Ahmadou Fall",
       specialty: "Dermatologue",
       date: "2024-03-01",
       time: "10:00",
@@ -23,7 +23,7 @@ const AppointmentTickets = () => {
     },
     {
       id: "RDV-003",
-      doctor: "Dr. Marie Dupont",
+      doctor: "Dr. Marie Faye",
       specialty: "Généraliste",
       date: "2024-03-15",
       time: "14:30",
