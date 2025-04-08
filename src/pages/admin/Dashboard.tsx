@@ -17,13 +17,13 @@ import { toast } from "sonner";
 const pendingDoctors = [
   {
     id: 1,
-    name: "Dr. Marie Lambert",
+    name: "Dr. Marie Faye",
     specialty: "Cardiologue",
     registrationDate: "2024-02-18",
   },
   {
     id: 2,
-    name: "Dr. Pierre Dumont",
+    name: "Dr. Ibrahima Sarr",
     specialty: "Pédiatre",
     registrationDate: "2024-02-19",
   },
