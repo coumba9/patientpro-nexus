@@ -18,9 +18,17 @@ import {
   CheckCircle,
   XCircle,
   Eye,
+  FileText,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // Données simulées pour les signalements
 const reports = [
@@ -31,7 +39,7 @@ const reports = [
     reported: "Dr. Ahmadou Fall",
     date: "2024-02-19",
     status: "En attente",
-    content: "Contenu offensant dans un commentaire...",
+    content: "Contenu offensant dans un commentaire sur une question médicale. L'utilisateur a utilisé un langage agressif et des termes inappropriés envers un autre membre.",
   },
   {
     id: 2,
@@ -40,7 +48,7 @@ const reports = [
     reported: "Dr. Amadou Faye",
     date: "2024-02-18",
     status: "En attente",
-    content: "Activité suspecte détectée...",
+    content: "Activité suspecte détectée. Le médecin a demandé des informations personnelles qui ne semblent pas nécessaires au contexte médical et a proposé un échange hors plateforme.",
   },
   {
     id: 3,
@@ -49,12 +57,14 @@ const reports = [
     reported: "Dr. Marie Fall",
     date: "2024-02-17",
     status: "En attente",
-    content: "Diffusion d'informations médicales incorrectes...",
+    content: "Diffusion d'informations médicales potentiellement incorrectes concernant un traitement non validé scientifiquement, ce qui pourrait représenter un danger pour les patients.",
   },
 ];
 
 const ModrationPage = () => {
   const [activeReports, setActiveReports] = useState(reports);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const handleApprove = (reportId: number) => {
     setActiveReports(reports.filter((report) => report.id !== reportId));
@@ -69,6 +79,11 @@ const ModrationPage = () => {
   const handleBan = (reportId: number) => {
     setActiveReports(reports.filter((report) => report.id !== reportId));
     toast.success("L'utilisateur a été banni");
+  };
+
+  const handleViewReport = (report) => {
+    setSelectedReport(report);
+    setOpenDialog(true);
   };
 
   return (
@@ -91,7 +106,7 @@ const ModrationPage = () => {
             <Link to="/admin/moderation">
               <Button
                 variant="ghost"
-                className="w-full justify-start"
+                className="w-full justify-start bg-gray-100"
                 size="lg"
               >
                 <Shield className="mr-2 h-5 w-5" />
@@ -147,10 +162,8 @@ const ModrationPage = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex items-center"
-                            onClick={() => {
-                              toast.info(report.content);
-                            }}
+                            className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-600"
+                            onClick={() => handleViewReport(report)}
                           >
                             <Eye className="h-4 w-4 mr-1" />
                             Voir
@@ -197,6 +210,76 @@ const ModrationPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Dialog pour afficher les détails du signalement */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Détails du signalement
+            </DialogTitle>
+            <DialogDescription>
+              {selectedReport && (
+                <div className="mt-2">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Type</p>
+                      <p className="font-medium">{selectedReport.type}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Date</p>
+                      <p>{selectedReport.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Signalé par</p>
+                      <p>{selectedReport.reporter}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Utilisateur signalé</p>
+                      <p>{selectedReport.reported}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-500 mb-2">Description</p>
+                    <div className="p-4 bg-gray-50 rounded-md text-sm">
+                      {selectedReport.content}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>
+              Fermer
+            </Button>
+            {selectedReport && (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="text-red-600 hover:text-red-700"
+                  onClick={() => {
+                    handleReject(selectedReport.id);
+                    setOpenDialog(false);
+                  }}
+                >
+                  Rejeter
+                </Button>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    handleApprove(selectedReport.id);
+                    setOpenDialog(false);
+                  }}
+                >
+                  Résoudre
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
