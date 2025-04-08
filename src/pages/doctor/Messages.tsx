@@ -1,11 +1,13 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Send, Clock, Check, MessageCircle, User } from "lucide-react";
+import { Search, Send, Clock, Check, MessageCircle, User, Home, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Link, useNavigate } from "react-router-dom";
 
 interface Message {
   id: number;
@@ -17,7 +19,8 @@ interface Message {
 }
 
 const Messages = () => {
-  const [messages] = useState<Message[]>([
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       patient: "Marie Dubois",
@@ -41,8 +44,28 @@ const Messages = () => {
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
+      // Add new message to the messages state
+      const newMessageObj: Message = {
+        id: messages.length + 1,
+        patient: "Patient actuel", // This would be replaced with the actual selected patient
+        content: newMessage,
+        timestamp: new Date().toLocaleString("fr-FR"),
+        read: true,
+        sender: "doctor"
+      };
+      
+      setMessages([...messages, newMessageObj]);
       setNewMessage("");
       toast.success("Message envoyé");
+    } else {
+      toast.error("Veuillez écrire un message");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -60,6 +83,27 @@ const Messages = () => {
             <Badge variant="secondary">
               {messages.filter(m => !m.read).length} non lu(s)
             </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Button>
+            <Link to="/">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Accueil
+              </Button>
+            </Link>
           </div>
         </div>
         <div className="relative">
@@ -120,6 +164,7 @@ const Messages = () => {
             placeholder="Écrivez votre message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
             className="resize-none"
             rows={2}
           />

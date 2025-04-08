@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Send, Clock, Check, MessageCircle } from "lucide-react";
+import { Search, Send, Clock, Check, MessageCircle, ArrowLeft, Home } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface Message {
   id: number;
@@ -16,7 +18,8 @@ interface Message {
 }
 
 const Messages = () => {
-  const [messages] = useState<Message[]>([
+  const navigate = useNavigate();
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       doctor: "Dr. Sarah Martin",
@@ -40,8 +43,28 @@ const Messages = () => {
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
+      // Add new message to the messages state
+      const newMessageObj: Message = {
+        id: messages.length + 1,
+        doctor: "Dr. actuel", // This would be replaced with the actual selected doctor
+        content: newMessage,
+        timestamp: new Date().toLocaleString("fr-FR"),
+        read: true,
+        sender: "patient"
+      };
+      
+      setMessages([...messages, newMessageObj]);
       setNewMessage("");
-      // Logique d'envoi du message
+      toast.success("Message envoyé");
+    } else {
+      toast.error("Veuillez écrire un message");
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -53,11 +76,34 @@ const Messages = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm h-[calc(100vh-8rem)]">
       <div className="p-6 border-b">
-        <div className="flex items-center gap-4 mb-4">
-          <h2 className="text-2xl font-bold">Messages</h2>
-          <span className="bg-primary px-2 py-1 rounded-full text-xs text-white">
-            {messages.filter(m => !m.read).length} non lu(s)
-          </span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold">Messages</h2>
+            <span className="bg-primary px-2 py-1 rounded-full text-xs text-white">
+              {messages.filter(m => !m.read).length} non lu(s)
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Button>
+            <Link to="/">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Accueil
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -106,6 +152,7 @@ const Messages = () => {
             placeholder="Écrivez votre message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
             className="resize-none"
             rows={2}
           />

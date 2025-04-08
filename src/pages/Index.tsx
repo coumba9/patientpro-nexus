@@ -1,3 +1,4 @@
+
 import { EmergencyBanner } from "@/components/EmergencyBanner";
 import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
@@ -35,6 +36,20 @@ const Index = () => {
       window.removeEventListener('storage', checkLoginStatus);
     };
   }, []);
+
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      if (userRole === "doctor") {
+        navigate("/doctor");
+      } else if (userRole === "patient") {
+        navigate("/patient");
+      } else if (userRole === "admin") {
+        navigate("/admin");
+      }
+    } else {
+      navigate("/register");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-background">
@@ -116,25 +131,34 @@ const Index = () => {
           </div>
         </div>
 
-        <HowItWorks />
+        {!(isLoggedIn && userRole === "doctor") && <HowItWorks />}
         
         <section className="py-24 bg-gradient-to-r from-primary to-blue-600">
           <div className="container text-center text-white">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Prêt à prendre soin de votre santé ?
+              {isLoggedIn 
+                ? "Gérez votre santé avec MediConnect" 
+                : "Prêt à prendre soin de votre santé ?"}
             </h2>
             <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-              Rejoignez les milliers de patients qui font confiance à MediConnect pour leur santé.
+              {isLoggedIn && userRole === "doctor"
+                ? "Optimisez votre pratique médicale et suivez vos patients"
+                : "Rejoignez les milliers de patients qui font confiance à MediConnect pour leur santé."}
             </p>
-            <Button size="lg" variant="secondary" className="text-primary hover:text-primary/90 dark:bg-gray-200">
-              Commencer maintenant
+            <Button 
+              size="lg" 
+              variant="secondary" 
+              className="text-primary hover:text-primary/90 dark:bg-gray-200"
+              onClick={handleGetStarted}
+            >
+              {isLoggedIn ? "Accéder à mon espace" : "Commencer maintenant"}
             </Button>
           </div>
         </section>
 
         <Features />
         <Statistics />
-        <Testimonials />
+        {!(isLoggedIn && userRole === "doctor") && <Testimonials />}
       </main>
       <Footer />
     </div>

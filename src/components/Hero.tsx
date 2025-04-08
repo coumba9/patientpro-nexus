@@ -32,7 +32,12 @@ export const Hero = () => {
   }, []);
 
   const handleBookAppointment = () => {
-    // Naviguer directement vers la page "Trouver un médecin" sans vérification de connexion
+    // Si connecté en tant que médecin, afficher un message d'erreur
+    if (isLoggedIn && userRole === "doctor") {
+      navigate("/doctor");
+      return;
+    }
+    // Sinon, naviguer vers la page "Trouver un médecin"
     navigate("/find-doctor");
   };
 
@@ -40,17 +45,22 @@ export const Hero = () => {
     <div className="relative bg-gradient-to-b from-sky-50 to-white py-20 md:py-32 px-4 md:px-6">
       <div className="container mx-auto text-center">
         <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6">
-          Trouvez votre médecin en quelques clics
+          {isLoggedIn && userRole === "doctor" 
+            ? "Bienvenue dans votre espace médecin" 
+            : "Trouvez votre médecin en quelques clics"}
         </h1>
         <p className="text-lg md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto">
-          Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et
-          7j/7
+          {isLoggedIn && userRole === "doctor"
+            ? "Gérez vos rendez-vous, vos patients et vos consultations en toute simplicité"
+            : "Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et 7j/7"}
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
-          <Button size="lg" className="w-full sm:w-auto" onClick={handleBookAppointment}>
-            <Search className="mr-2 h-5 w-5" />
-            Trouver un médecin
-          </Button>
+          {!(isLoggedIn && userRole === "doctor") && (
+            <Button size="lg" className="w-full sm:w-auto" onClick={handleBookAppointment}>
+              <Search className="mr-2 h-5 w-5" />
+              Trouver un médecin
+            </Button>
+          )}
           
           {!isLoggedIn && (
             <>
@@ -85,11 +95,13 @@ export const Hero = () => {
             </Link>
           )}
         </div>
-        <div className="mt-4">
-          <Link to="/register?type=doctor" className="text-primary hover:text-primary/90">
-            Vous êtes médecin ? Rejoignez-nous
-          </Link>
-        </div>
+        {!(isLoggedIn && userRole === "doctor") && (
+          <div className="mt-4">
+            <Link to="/register?type=doctor" className="text-primary hover:text-primary/90">
+              Vous êtes médecin ? Rejoignez-nous
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
