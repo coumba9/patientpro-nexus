@@ -7,16 +7,16 @@
 export const getCoordinatesFromLocation = (location: string): [number, number] => {
   // Simulation de coordonnées pour les villes françaises
   switch (location.toLowerCase()) {
-    case 'paris': return [48.8566, 2.3522];
-    case 'lyon': return [45.7640, 4.8357];
-    case 'marseille': return [43.2965, 5.3698];
-    case 'toulouse': return [43.6047, 1.4437];
-    case 'nice': return [43.7102, 7.2620];
-    case 'nantes': return [47.2184, -1.5534];
-    case 'strasbourg': return [48.5734, 7.7521];
-    case 'montpellier': return [43.6108, 3.8767];
-    case 'bordeaux': return [44.8378, -0.5792];
-    case 'lille': return [50.6292, 3.0573];
+    case 'dakar': return [48.8566, 2.3522];
+    case 'saint-louis': return [45.7640, 4.8357];
+    case 'thies': return [43.2965, 5.3698];
+    case 'tambacounda': return [43.6047, 1.4437];
+    case 'diourbel': return [43.7102, 7.2620];
+    case 'fatick': return [47.2184, -1.5534];
+    case 'matam': return [48.5734, 7.7521];
+    case 'podor': return [43.6108, 3.8767];
+    case 'kaffrine': return [44.8378, -0.5792];
+    case 'kedougou': return [50.6292, 3.0573];
     default: 
       // Coordonnées aléatoires autour de la France pour les autres lieux
       const baseCoords = [46.227638, 2.213749]; // Centre de la France
