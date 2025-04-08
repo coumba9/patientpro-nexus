@@ -43,10 +43,10 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
 
   // Données de démonstration
   const patients: Patient[] = [
-    { id: "1", name: "Marie Dupont", age: 45, gender: "Femme", contact: "marie@example.com", lastVisit: "15/03/2024" },
-    { id: "2", name: "Jean Martin", age: 62, gender: "Homme", contact: "jean@example.com", lastVisit: "02/04/2024" },
-    { id: "3", name: "Sophie Laurent", age: 38, gender: "Femme", contact: "sophie@example.com", lastVisit: "24/03/2024" },
-    { id: "4", name: "Lucas Bernard", age: 28, gender: "Homme", contact: "lucas@example.com", lastVisit: "10/04/2024" },
+    { id: "1", name: "Seynabou Seye", age: 45, gender: "Femme", contact: "seyna@example.com", lastVisit: "15/03/2024" },
+    { id: "2", name: "Ansou Faye", age: 62, gender: "Homme", contact: "ansou@example.com", lastVisit: "02/04/2024" },
+    { id: "3", name: "Sophie Ndiaye", age: 38, gender: "Femme", contact: "sophie@example.com", lastVisit: "24/03/2024" },
+    { id: "4", name: "Badara Sene", age: 28, gender: "Homme", contact: "bada@example.com", lastVisit: "10/04/2024" },
   ];
 
   const medicalRecords: Record<string, MedicalRecord[]> = {
