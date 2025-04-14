@@ -9,6 +9,7 @@ import {
   Mail,
   Lock,
   Globe,
+  UserCheck,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
@@ -65,6 +66,16 @@ const AdminSettings = () => {
               >
                 <Settings className="mr-2 h-5 w-5" />
                 Paramètres
+              </Button>
+            </Link>
+            <Link to="/admin/doctors">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                size="lg"
+              >
+                <UserCheck className="mr-2 h-5 w-5" />
+                Gestion des médecins
               </Button>
             </Link>
           </div>

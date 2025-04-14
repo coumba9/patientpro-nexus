@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminModeration from "./pages/admin/Moderation";
 import AdminSettings from "./pages/admin/Settings";
 import AdminAnalytics from "./pages/admin/Analytics";
+import DoctorManagement from "./pages/admin/DoctorManagement";
 import About from "./pages/About";
 import Values from "./pages/Values";
 import Contact from "./pages/Contact";
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/admin/moderation" element={<AdminModeration />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/doctors" element={<DoctorManagement />} />
             <Route path="/about" element={<About />} />
             <Route path="/values" element={<Values />} />
             <Route path="/contact" element={<Contact />} />
