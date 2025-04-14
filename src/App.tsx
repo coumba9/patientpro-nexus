@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,6 +35,7 @@ import Legal from "./pages/Legal";
 import { BookAppointment } from "./pages/BookAppointment";
 import UmlDiagrams from "./pages/UmlDiagrams";
 import Prescriptions from "./pages/patient/Prescriptions";
+import Users from "./pages/admin/Users";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +62,7 @@ const App = () => (
             <Route path="/doctor/patients/:patientName" element={<PatientDetails />} />
             <Route path="/doctor/teleconsultation" element={<DoctorTeleconsultation />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<Users />} />
             <Route path="/admin/moderation" element={<AdminModeration />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
