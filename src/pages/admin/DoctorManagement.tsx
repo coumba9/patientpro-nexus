@@ -2,19 +2,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Users,
-  Shield,
-  BarChart,
-  Settings,
-  Search,
   UserCheck,
   UserX,
   Filter,
   MoreHorizontal,
   CheckCircle,
   XCircle,
+  Search
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -46,10 +41,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 // Données factices pour les médecins
 const mockDoctors = [
@@ -145,180 +140,121 @@ const DoctorManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
-            <h2 className="font-semibold text-lg mb-4">Administration</h2>
-            <Link to="/admin">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                size="lg"
-              >
-                <Users className="mr-2 h-5 w-5" />
-                Utilisateurs
-              </Button>
-            </Link>
-            <Link to="/admin/moderation">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                size="lg"
-              >
-                <Shield className="mr-2 h-5 w-5" />
-                Modération
-              </Button>
-            </Link>
-            <Link to="/admin/analytics">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                size="lg"
-              >
-                <BarChart className="mr-2 h-5 w-5" />
-                Statistiques
-              </Button>
-            </Link>
-            <Link to="/admin/settings">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                size="lg"
-              >
-                <Settings className="mr-2 h-5 w-5" />
-                Paramètres
-              </Button>
-            </Link>
-            <Link to="/admin/doctors">
-              <Button
-                variant="ghost"
-                className="w-full justify-start bg-gray-100"
-                size="lg"
-              >
-                <UserCheck className="mr-2 h-5 w-5" />
-                Gestion des médecins
-              </Button>
-            </Link>
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+      <div className="flex-1 p-8">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-2xl font-bold mb-6">Gestion des médecins</h2>
+
+          {/* Filtres et recherche */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Rechercher un médecin..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="active">Actifs</SelectItem>
+                  <SelectItem value="pending">En attente</SelectItem>
+                  <SelectItem value="suspended">Suspendus</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Spécialité" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes spécialités</SelectItem>
+                  <SelectItem value="Cardiologie">Cardiologie</SelectItem>
+                  <SelectItem value="Dermatologie">Dermatologie</SelectItem>
+                  <SelectItem value="Pédiatrie">Pédiatrie</SelectItem>
+                  <SelectItem value="Psychiatrie">Psychiatrie</SelectItem>
+                  <SelectItem value="Ophtalmologie">Ophtalmologie</SelectItem>
+                  <SelectItem value="Neurologie">Neurologie</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Main Content */}
-          <div className="md:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-2xl font-bold mb-6">Gestion des médecins</h2>
-
-              {/* Filtres et recherche */}
-              <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <div className="relative flex-grow">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Rechercher un médecin..."
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="active">Actifs</SelectItem>
-                      <SelectItem value="pending">En attente</SelectItem>
-                      <SelectItem value="suspended">Suspendus</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Spécialité" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Toutes spécialités</SelectItem>
-                      <SelectItem value="Cardiologie">Cardiologie</SelectItem>
-                      <SelectItem value="Dermatologie">Dermatologie</SelectItem>
-                      <SelectItem value="Pédiatrie">Pédiatrie</SelectItem>
-                      <SelectItem value="Psychiatrie">Psychiatrie</SelectItem>
-                      <SelectItem value="Ophtalmologie">Ophtalmologie</SelectItem>
-                      <SelectItem value="Neurologie">Neurologie</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Tableau des médecins */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Spécialité</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Patients</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDoctors.map((doctor) => (
+                  <TableRow key={doctor.id}>
+                    <TableCell className="font-medium">{doctor.name}</TableCell>
+                    <TableCell>{doctor.specialty}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={
+                          doctor.status === "active" ? "success" : 
+                          doctor.status === "pending" ? "warning" : 
+                          "destructive"
+                        }
+                      >
+                        {doctor.status === "active" && "Actif"}
+                        {doctor.status === "pending" && "En attente"}
+                        {doctor.status === "suspended" && "Suspendu"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{doctor.patients}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => showDoctorDetails(doctor)}>
+                            Voir les détails
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {doctor.status !== "active" && (
+                            <DropdownMenuItem onClick={() => changeStatus(doctor.id, "active")}>
+                              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                              Activer
+                            </DropdownMenuItem>
+                          )}
+                          {doctor.status !== "suspended" && (
+                            <DropdownMenuItem onClick={() => changeStatus(doctor.id, "suspended")}>
+                              <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                              Suspendre
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            {filteredDoctors.length === 0 && (
+              <div className="text-center py-10 text-gray-500">
+                Aucun médecin trouvé avec les filtres sélectionnés
               </div>
-
-              {/* Tableau des médecins */}
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nom</TableHead>
-                      <TableHead>Spécialité</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead>Patients</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredDoctors.map((doctor) => (
-                      <TableRow key={doctor.id}>
-                        <TableCell className="font-medium">{doctor.name}</TableCell>
-                        <TableCell>{doctor.specialty}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={
-                              doctor.status === "active" ? "success" : 
-                              doctor.status === "pending" ? "warning" : 
-                              "destructive"
-                            }
-                          >
-                            {doctor.status === "active" && "Actif"}
-                            {doctor.status === "pending" && "En attente"}
-                            {doctor.status === "suspended" && "Suspendu"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{doctor.patients}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => showDoctorDetails(doctor)}>
-                                Voir les détails
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              {doctor.status !== "active" && (
-                                <DropdownMenuItem onClick={() => changeStatus(doctor.id, "active")}>
-                                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                                  Activer
-                                </DropdownMenuItem>
-                              )}
-                              {doctor.status !== "suspended" && (
-                                <DropdownMenuItem onClick={() => changeStatus(doctor.id, "suspended")}>
-                                  <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                                  Suspendre
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                
-                {filteredDoctors.length === 0 && (
-                  <div className="text-center py-10 text-gray-500">
-                    Aucun médecin trouvé avec les filtres sélectionnés
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
