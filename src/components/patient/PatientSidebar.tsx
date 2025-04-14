@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -11,7 +12,6 @@ import {
   User,
   Heart,
   Pill,
-  Home,
   LogOut,
 } from "lucide-react";
 
@@ -20,6 +20,7 @@ export const PatientSidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userRole");
     toast.success("Déconnexion réussie");
     navigate("/login");
   };
