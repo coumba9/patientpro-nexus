@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,7 +67,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-// Données simulées pour les signalements
 const reports = [
   {
     id: 1,
@@ -99,7 +97,6 @@ const reports = [
   },
 ];
 
-// Données simulées pour les utilisateurs et leurs rôles
 const users = [
   {
     id: 1,
@@ -139,7 +136,6 @@ const users = [
   },
 ];
 
-// Schéma de validation pour le formulaire de rôle
 const roleFormSchema = z.object({
   name: z.string().min(2, {
     message: "Le nom du rôle doit contenir au moins 2 caractères",
@@ -149,7 +145,6 @@ const roleFormSchema = z.object({
   }),
 });
 
-// Données simulées des rôles
 const roles = [
   {
     id: 1,
@@ -181,7 +176,6 @@ const roles = [
   },
 ];
 
-// Liste des permissions disponibles
 const availablePermissions = [
   { id: "view_users", label: "Voir les utilisateurs" },
   { id: "edit_users", label: "Modifier les utilisateurs" },
@@ -209,7 +203,6 @@ const ModrationPage = () => {
   const [filteredUsers, setFilteredUsers] = useState(users);
   const [roleFilter, setRoleFilter] = useState("");
 
-  // Initialiser le formulaire
   const form = useForm({
     resolver: zodResolver(roleFormSchema),
     defaultValues: {
@@ -280,7 +273,6 @@ const ModrationPage = () => {
     setRoleDialogOpen(false);
   };
 
-  // Filtrer les utilisateurs basé sur la recherche
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (!query) {
@@ -296,7 +288,6 @@ const ModrationPage = () => {
     }
   };
 
-  // Filtrer par rôle
   const handleRoleFilter = (role) => {
     setRoleFilter(role);
     if (!role) {
@@ -311,7 +302,6 @@ const ModrationPage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Sidebar */}
           <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
             <h2 className="font-semibold text-lg mb-4">Administration</h2>
             <Link to="/admin">
@@ -356,7 +346,6 @@ const ModrationPage = () => {
             </Link>
           </div>
 
-          {/* Main Content */}
           <div className="md:col-span-3">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -470,7 +459,7 @@ const ModrationPage = () => {
                           </div>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Tous les rôles</SelectItem>
+                          <SelectItem value="all">Tous les rôles</SelectItem>
                           <SelectItem value="Admin">Admin</SelectItem>
                           <SelectItem value="Modérateur">Modérateur</SelectItem>
                           <SelectItem value="Support">Support</SelectItem>
@@ -607,7 +596,6 @@ const ModrationPage = () => {
         </div>
       </div>
 
-      {/* Dialog pour afficher les détails du signalement */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -677,7 +665,6 @@ const ModrationPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog pour afficher les détails de l'utilisateur */}
       <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -772,7 +759,6 @@ const ModrationPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog pour créer/modifier un rôle */}
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

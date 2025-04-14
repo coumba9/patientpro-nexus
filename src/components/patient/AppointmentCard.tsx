@@ -47,6 +47,7 @@ export const AppointmentCard = ({
 }: AppointmentCardProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [rescheduleReason, setRescheduleReason] = useState("");
+  const [selectedReason, setSelectedReason] = useState("schedule_conflict");
 
   return (
     <div className="border rounded-lg p-4">
@@ -124,7 +125,10 @@ export const AppointmentCard = ({
               <div className="space-y-4 mt-4">
                 <div className="space-y-2">
                   <Label>Motif du report</Label>
-                  <Select>
+                  <Select 
+                    value={selectedReason} 
+                    onValueChange={setSelectedReason}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionnez un motif" />
                     </SelectTrigger>
