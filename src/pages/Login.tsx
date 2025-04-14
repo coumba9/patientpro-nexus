@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Eye, EyeOff, LogIn, ArrowLeft, Home } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isDoctorLogin, setIsDoctorLogin] = useState(false);
+  const [userType, setUserType] = useState("patient");
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
@@ -24,17 +24,22 @@ export default function Login() {
       return;
     }
 
-    // Simuler une connexion réussie
+    // Simulate login - Dans un cas réel, vérifiez les identifiants
     localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userRole", isDoctorLogin ? "doctor" : "patient");
+    localStorage.setItem("userRole", userType);
     localStorage.setItem("userEmail", email);
     toast.success("Connexion réussie");
     
-    // Redirection en fonction du choix de type d'utilisateur
-    if (isDoctorLogin) {
-      navigate("/doctor");
-    } else {
-      navigate("/patient");
+    // Redirection basée sur le type d'utilisateur
+    switch(userType) {
+      case "admin":
+        navigate("/admin");
+        break;
+      case "doctor":
+        navigate("/doctor");
+        break;
+      default:
+        navigate("/patient");
     }
   };
 
@@ -99,14 +104,30 @@ export default function Login() {
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="doctor-mode"
-                  checked={isDoctorLogin}
-                  onCheckedChange={setIsDoctorLogin}
-                />
-                <Label htmlFor="doctor-mode">Je suis médecin</Label>
+              
+              <div className="space-y-2">
+                <Label>Type de compte</Label>
+                <RadioGroup
+                  defaultValue="patient"
+                  value={userType}
+                  onValueChange={setUserType}
+                  className="flex flex-col space-y-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="patient" id="patient" />
+                    <Label htmlFor="patient">Patient</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="doctor" id="doctor" />
+                    <Label htmlFor="doctor">Médecin</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="admin" id="admin" />
+                    <Label htmlFor="admin">Administrateur</Label>
+                  </div>
+                </RadioGroup>
               </div>
+
               <Button type="submit" className="w-full">
                 <LogIn className="mr-2 h-4 w-4" />
                 Se connecter
