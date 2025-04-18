@@ -36,6 +36,7 @@ import { BookAppointment } from "./pages/BookAppointment";
 import UmlDiagrams from "./pages/UmlDiagrams";
 import Prescriptions from "./pages/patient/Prescriptions";
 import Users from "./pages/admin/Users";
+import PatientsPage from "./pages/admin/PatientsPage";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/doctors" element={<DoctorManagement />} />
+            <Route path="/admin/patients" element={<PatientsPage />} />
             <Route path="/about" element={<About />} />
             <Route path="/values" element={<Values />} />
             <Route path="/contact" element={<Contact />} />
