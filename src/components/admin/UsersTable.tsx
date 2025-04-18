@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, UserX, UserCheck, Mail } from "lucide-react";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -43,15 +44,43 @@ const mockUsers: User[] = [
     registeredDate: "2024-02-20",
     lastLogin: "2024-03-28",
   },
+  {
+    id: "3",
+    name: "Pierre Leroy",
+    email: "pierre.leroy@example.com",
+    status: "active",
+    registeredDate: "2023-11-05",
+    lastLogin: "2024-04-15",
+  },
+  {
+    id: "4",
+    name: "Sophie Dubois",
+    email: "sophie.dubois@example.com",
+    status: "active",
+    registeredDate: "2024-03-10",
+    lastLogin: "2024-04-12",
+  },
+  {
+    id: "5",
+    name: "Lucas Bernard",
+    email: "lucas.bernard@example.com",
+    status: "blocked",
+    registeredDate: "2023-12-08",
+    lastLogin: "2024-02-25",
+  },
 ];
 
 export const UsersTable = () => {
   const handleStatusChange = (userId: string, newStatus: "active" | "blocked") => {
+    // In a real application, this would make an API call
     console.log(`Changing status for user ${userId} to ${newStatus}`);
+    toast.success(`Le statut de l'utilisateur a été modifié avec succès`);
   };
 
   const handleContactUser = (email: string) => {
+    // In a real application, this would open an email interface
     console.log(`Contacting user at ${email}`);
+    toast.success(`Un email va être envoyé à ${email}`);
   };
 
   return (

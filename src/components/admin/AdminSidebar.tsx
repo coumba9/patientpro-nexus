@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,7 @@ export const AdminSidebar = () => {
   const location = useLocation();
   
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
+    <div className="bg-white p-4 rounded-lg shadow-sm space-y-2 h-screen">
       <h2 className="font-semibold text-lg mb-4">Administration</h2>
       <Link to="/admin/users">
         <Button
