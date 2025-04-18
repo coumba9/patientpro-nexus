@@ -1,12 +1,12 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Eye, Filter, Edit } from "lucide-react";
+import { Eye, Filter, Edit, UserPlus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserDetailsDialog } from "./UserDetailsDialog";
+import { CreateUserDialog } from "./CreateUserDialog";
 
 interface User {
   id: number;
@@ -54,6 +54,7 @@ export const UsersManagementTab = () => {
   const [filteredUsers, setFilteredUsers] = useState(users);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -90,6 +91,13 @@ export const UsersManagementTab = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Gestion des utilisateurs</h2>
         <div className="flex space-x-2">
+          <Button 
+            onClick={() => setCreateDialogOpen(true)}
+            className="flex items-center bg-green-600 hover:bg-green-700 text-white"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Nouveau compte
+          </Button>
           <div className="relative">
             <Input
               type="text"
@@ -111,9 +119,10 @@ export const UsersManagementTab = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les rôles</SelectItem>
-              <SelectItem value="Admin">Admin</SelectItem>
-              <SelectItem value="Modérateur">Modérateur</SelectItem>
-              <SelectItem value="Support">Support</SelectItem>
+              <SelectItem value="patient">Patients</SelectItem>
+              <SelectItem value="doctor">Médecins</SelectItem>
+              <SelectItem value="secretary">Secrétaires</SelectItem>
+              <SelectItem value="admin">Administrateurs</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -176,6 +185,11 @@ export const UsersManagementTab = () => {
         open={userDialogOpen}
         onOpenChange={setUserDialogOpen}
         user={selectedUser}
+      />
+
+      <CreateUserDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
       />
     </>
   );
