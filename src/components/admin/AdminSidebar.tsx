@@ -7,6 +7,7 @@ import {
   BarChart,
   Settings,
   UserCheck,
+  User
 } from "lucide-react";
 
 export const AdminSidebar = () => {
@@ -23,6 +24,16 @@ export const AdminSidebar = () => {
         >
           <Users className="mr-2 h-5 w-5" />
           Utilisateurs
+        </Button>
+      </Link>
+      <Link to="/admin/patients">
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${location.pathname === "/admin/patients" ? "bg-gray-100" : ""}`}
+          size="lg"
+        >
+          <User className="mr-2 h-5 w-5" />
+          Patients
         </Button>
       </Link>
       <Link to="/admin/moderation">

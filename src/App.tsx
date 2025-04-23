@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,7 +37,7 @@ import { BookAppointment } from "./pages/BookAppointment";
 import UmlDiagrams from "./pages/UmlDiagrams";
 import Prescriptions from "./pages/patient/Prescriptions";
 import Users from "./pages/admin/Users";
-import PatientsPage from "./pages/admin/PatientsPage";
+import PatientsPage from "./pages/admin/Patients";
 
 const queryClient = new QueryClient();
 
