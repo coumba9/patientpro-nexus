@@ -1,202 +1,52 @@
 
-import { EmergencyBanner } from "@/components/EmergencyBanner";
-import { Features } from "@/components/Features";
-import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/Hero";
+import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
-import { Statistics } from "@/components/Statistics";
 import { Testimonials } from "@/components/Testimonials";
-import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
-import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Footer } from "@/components/Footer";
+import { Statistics } from "@/components/Statistics";
+import { EmergencyBanner } from "@/components/EmergencyBanner";
+import { AdminQuickAccess } from "@/components/AdminQuickAccess";
 import { useEffect, useState } from "react";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { MobileNavigation } from "@/components/MobileNavigation";
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkLoginStatus = () => {
-      const status = localStorage.getItem("isLoggedIn") === "true";
-      const role = localStorage.getItem("userRole");
-      console.log("Index component - checking login status:", status, "role:", role);
-      setIsLoggedIn(status);
-      setUserRole(role);
+    // Simulation de vérification du rôle administrateur
+    // Dans une application réelle, cela viendrait d'un système d'authentification
+    const checkIfAdmin = () => {
+      // Ceci est une simulation, à remplacer par votre logique réelle
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+      const userRole = localStorage.getItem("userRole");
+      
+      console.info("Index component - checking login status:", isLoggedIn, "role:", userRole);
+      
+      if (isLoggedIn === "true" && userRole === "admin") {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
     };
-    
-    checkLoginStatus();
-    
-    window.addEventListener('storage', checkLoginStatus);
-    
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
+
+    checkIfAdmin();
   }, []);
 
-  const handleGetStarted = () => {
-    if (isLoggedIn) {
-      if (userRole === "doctor") {
-        navigate("/doctor");
-      } else if (userRole === "patient") {
-        navigate("/patient");
-      } else if (userRole === "admin") {
-        navigate("/admin");
-      }
-    } else {
-      navigate("/register");
-    }
-  };
-
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col dark:bg-background">
+    <div className="flex flex-col min-h-screen">
       <EmergencyBanner />
+      <Hero />
       
-      <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-50 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 transition-all duration-200">
-        <div className="container flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <MobileNavigation isLoggedIn={isLoggedIn} userRole={userRole} />
-            <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">MediConnect</Link>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-4">
-            <nav className="mr-4">
-              <ul className="flex items-center gap-6">
-                <li><Link to="/how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">Comment ça marche</Link></li>
-                <li><Link to="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">Tarifs</Link></li>
-                <li><Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">À propos</Link></li>
-              </ul>
-            </nav>
-            
-            <ThemeToggle />
-            
-            {!isLoggedIn ? (
-              <>
-                <Link to="/register">
-                  <Button variant="outline" className="gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    S'inscrire
-                  </Button>
-                </Link>
-                <Link to="/login">
-                  <Button className="gap-2">
-                    <LogIn className="h-4 w-4" />
-                    Connexion
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                {userRole === "patient" && (
-                  <Link to="/patient">
-                    <Button className="gap-2">
-                      Mon espace patient
-                    </Button>
-                  </Link>
-                )}
-                
-                {userRole === "doctor" && (
-                  <Link to="/doctor">
-                    <Button className="gap-2">
-                      Mon espace médecin
-                    </Button>
-                  </Link>
-                )}
-                
-                {userRole === "admin" && (
-                  <Link to="/admin">
-                    <Button className="gap-2">
-                      Administration
-                    </Button>
-                  </Link>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="md:hidden">
-            <ThemeToggle />
-          </div>
+      {isAdmin && (
+        <div className="container mx-auto px-4 mb-8">
+          <AdminQuickAccess />
         </div>
-      </div>
+      )}
       
-      <main className="flex-grow">
-        <Hero />
-        
-        <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          variants={fadeIn}
-          className="bg-white dark:bg-gray-900 py-8 border-y dark:border-gray-800"
-        >
-          <div className="container">
-            <div className="flex flex-wrap justify-center items-center gap-8 text-gray-600 dark:text-gray-300">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-primary" />
-                100% sécurisé
-              </span>
-              <span className="flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-primary" />
-                Disponible 24h/24
-              </span>
-              <span className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-primary" />
-                Données protégées
-              </span>
-            </div>
-          </div>
-        </motion.div>
-
-        {!(isLoggedIn && userRole === "doctor") && <HowItWorks />}
-        
-        <motion.section 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          variants={fadeIn}
-          className="py-24 bg-gradient-to-r from-primary to-blue-600 relative overflow-hidden"
-        >
-          <div className="container relative z-10 text-center text-white">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {isLoggedIn 
-                ? "Gérez votre santé avec MediConnect" 
-                : "Prêt à prendre soin de votre santé ?"}
-            </h2>
-            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-              {isLoggedIn && userRole === "doctor"
-                ? "Optimisez votre pratique médicale et suivez vos patients"
-                : "Rejoignez les milliers de patients qui font confiance à MediConnect pour leur santé."}
-            </p>
-            <Button 
-              size="lg" 
-              variant="secondary" 
-              className="text-primary hover:text-primary/90 dark:bg-gray-200 shadow-lg hover:shadow-xl transition-all"
-              onClick={handleGetStarted}
-            >
-              {isLoggedIn ? "Accéder à mon espace" : "Commencer maintenant"}
-            </Button>
-          </div>
-          
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-        </motion.section>
-
-        <Features />
-        <Statistics />
-        {!(isLoggedIn && userRole === "doctor") && <Testimonials />}
-      </main>
+      <Features />
+      <HowItWorks />
+      <Statistics />
+      <Testimonials />
       <Footer />
     </div>
   );
