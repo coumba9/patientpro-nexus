@@ -38,6 +38,7 @@ import UmlDiagrams from "./pages/UmlDiagrams";
 import Prescriptions from "./pages/patient/Prescriptions";
 import Users from "./pages/admin/Users";
 import PatientsPage from "./pages/admin/Patients";
+import Specialties from "./pages/admin/Specialties";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/doctors" element={<DoctorManagement />} />
             <Route path="/admin/patients" element={<PatientsPage />} />
+            <Route path="/admin/specialties" element={<Specialties />} />
             <Route path="/about" element={<About />} />
             <Route path="/values" element={<Values />} />
             <Route path="/contact" element={<Contact />} />

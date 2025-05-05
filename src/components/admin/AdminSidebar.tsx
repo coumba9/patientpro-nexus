@@ -7,7 +7,8 @@ import {
   BarChart,
   Settings,
   UserCheck,
-  User
+  User,
+  Stethoscope
 } from "lucide-react";
 
 export const AdminSidebar = () => {
@@ -34,6 +35,16 @@ export const AdminSidebar = () => {
         >
           <User className="mr-2 h-5 w-5" />
           Patients
+        </Button>
+      </Link>
+      <Link to="/admin/specialties">
+        <Button
+          variant="ghost"
+          className={`w-full justify-start ${location.pathname === "/admin/specialties" ? "bg-gray-100" : ""}`}
+          size="lg"
+        >
+          <Stethoscope className="mr-2 h-5 w-5" />
+          Spécialités
         </Button>
       </Link>
       <Link to="/admin/moderation">
