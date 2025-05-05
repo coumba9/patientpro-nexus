@@ -16,16 +16,6 @@ export const AdminSidebar = () => {
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm space-y-2 h-screen">
       <h2 className="font-semibold text-lg mb-4">Administration</h2>
-      <Link to="/admin">
-        <Button
-          variant="ghost"
-          className={`w-full justify-start ${location.pathname === "/admin" ? "bg-gray-100" : ""}`}
-          size="lg"
-        >
-          <Users className="mr-2 h-5 w-5" />
-          Tableau de bord
-        </Button>
-      </Link>
       <Link to="/admin/users">
         <Button
           variant="ghost"

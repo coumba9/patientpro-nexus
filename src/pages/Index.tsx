@@ -14,7 +14,9 @@ const Index = () => {
 
   useEffect(() => {
     // Simulation de vérification du rôle administrateur
+    // Dans une application réelle, cela viendrait d'un système d'authentification
     const checkIfAdmin = () => {
+      // Ceci est une simulation, à remplacer par votre logique réelle
       const isLoggedIn = localStorage.getItem("isLoggedIn");
       const userRole = localStorage.getItem("userRole");
       

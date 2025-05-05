@@ -10,13 +10,11 @@ const PatientsPage = () => {
     <div className="flex min-h-screen bg-gray-100">
       <AdminSidebar />
       <div className="flex-1 p-8 space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">Gestion des Patients</h1>
-        
         <PatientStats />
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-2xl font-bold">Liste des Patients</CardTitle>
+            <CardTitle className="text-2xl font-bold">Gestion des Patients</CardTitle>
             <ExportButton />
           </CardHeader>
           <CardContent>
