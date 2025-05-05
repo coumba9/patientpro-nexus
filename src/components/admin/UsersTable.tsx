@@ -14,28 +14,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, UserX, UserCheck, Mail, Filter } from "lucide-react";
+import { MoreVertical, UserX, UserCheck, Mail, Shield, Eye, PenSquare, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface User {
   id: string;
   name: string;
   email: string;
-  status: "active" | "blocked";
+  status: "active" | "blocked" | "pending";
   registeredDate: string;
   lastLogin: string;
   type: "patient" | "doctor" | "admin";
+  avatar?: string;
 }
 
 const mockUsers: User[] = [
@@ -46,7 +40,8 @@ const mockUsers: User[] = [
     status: "active",
     registeredDate: "2024-01-15",
     lastLogin: "2024-04-10",
-    type: "patient"
+    type: "patient",
+    avatar: "/placeholder.svg"
   },
   {
     id: "2",
@@ -64,7 +59,8 @@ const mockUsers: User[] = [
     status: "active",
     registeredDate: "2023-11-05",
     lastLogin: "2024-04-15",
-    type: "doctor"
+    type: "doctor",
+    avatar: "/placeholder.svg"
   },
   {
     id: "4",
@@ -78,20 +74,43 @@ const mockUsers: User[] = [
   {
     id: "5",
     name: "Lucas Bernard",
-    email: "lucas.bernard@example.com",
-    status: "blocked",
+    email: "admin@example.com",
+    status: "active",
     registeredDate: "2023-12-08",
-    lastLogin: "2024-02-25",
-    type: "admin"
+    lastLogin: "2024-04-15",
+    type: "admin",
+    avatar: "/placeholder.svg"
+  },
+  {
+    id: "6",
+    name: "Camille Richard",
+    email: "camille.richard@example.com",
+    status: "pending",
+    registeredDate: "2024-04-01",
+    lastLogin: "2024-04-01",
+    type: "doctor"
   },
 ];
 
 export const UsersTable = () => {
-  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [users] = useState<User[]>(mockUsers);
   
-  const filteredUsers = selectedType === "all" 
-    ? mockUsers 
-    : mockUsers.filter(user => user.type === selectedType);
+  const handleSelectUser = (userId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedUsers([...selectedUsers, userId]);
+    } else {
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+    }
+  };
+  
+  const handleSelectAll = (isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedUsers(users.map(user => user.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
 
   const handleStatusChange = (userId: string, newStatus: "active" | "blocked") => {
     console.log(`Changing status for user ${userId} to ${newStatus}`);
@@ -102,48 +121,70 @@ export const UsersTable = () => {
     console.log(`Contacting user at ${email}`);
     toast.success(`Un email va être envoyé à ${email}`);
   };
+  
+  const handleViewUser = (userId: string) => {
+    console.log(`Viewing user details ${userId}`);
+    toast.info(`Affichage des détails de l'utilisateur`);
+  };
+  
+  const handleEditUser = (userId: string) => {
+    console.log(`Editing user ${userId}`);
+    toast.info(`Édition de l'utilisateur en cours`);
+  };
+  
+  const handleDeleteUser = (userId: string) => {
+    console.log(`Deleting user ${userId}`);
+    toast.success(`L'utilisateur a été supprimé avec succès`);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-[200px]">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              {selectedType === "all" ? "Tous les utilisateurs" : 
-               selectedType === "patient" ? "Patients" :
-               selectedType === "doctor" ? "Médecins" : "Administrateurs"}
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Type d'utilisateur</SelectLabel>
-              <SelectItem value="all">Tous les utilisateurs</SelectItem>
-              <SelectItem value="patient">Patients</SelectItem>
-              <SelectItem value="doctor">Médecins</SelectItem>
-              <SelectItem value="admin">Administrateurs</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Email</TableHead>
+            <TableHead className="w-[40px]">
+              <Checkbox 
+                checked={selectedUsers.length === users.length && users.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
+            <TableHead>Utilisateur</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Date d'inscription</TableHead>
             <TableHead>Dernière connexion</TableHead>
-            <TableHead className="w-[70px]">Actions</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredUsers.map((user) => (
+          {users.map((user) => (
             <TableRow key={user.id}>
-              <TableCell>{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                <Checkbox 
+                  checked={selectedUsers.includes(user.id)}
+                  onCheckedChange={(checked) => handleSelectUser(user.id, !!checked)}
+                />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{user.name}</span>
+                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                  </div>
+                </div>
+              </TableCell>
               <TableCell>
                 <Badge 
                   variant={
@@ -156,39 +197,71 @@ export const UsersTable = () => {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={user.status === "active" ? "success" : "destructive"}>
-                  {user.status === "active" ? "Actif" : "Bloqué"}
+                <Badge 
+                  variant={
+                    user.status === "active" ? "outline" : 
+                    user.status === "blocked" ? "destructive" : "secondary"
+                  }
+                  className={
+                    user.status === "active" ? "border-green-500 text-green-600 bg-green-50" : 
+                    user.status === "blocked" ? "" : 
+                    "border-yellow-500 text-yellow-600 bg-yellow-50"
+                  }
+                >
+                  {user.status === "active" ? "Actif" : 
+                   user.status === "blocked" ? "Bloqué" : "En attente"}
                 </Badge>
               </TableCell>
               <TableCell>{user.registeredDate}</TableCell>
               <TableCell>{user.lastLogin}</TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.status === "active" ? "blocked" : "active")}>
-                      {user.status === "active" ? (
-                        <>
-                          <UserX className="mr-2 h-4 w-4" />
-                          <span>Bloquer</span>
-                        </>
-                      ) : (
-                        <>
-                          <UserCheck className="mr-2 h-4 w-4" />
-                          <span>Activer</span>
-                        </>
+                <div className="flex space-x-1">
+                  <Button variant="ghost" size="icon" onClick={() => handleViewUser(user.id)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleEditUser(user.id)}>
+                    <PenSquare className="h-4 w-4" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleStatusChange(user.id, user.status === "active" ? "blocked" : "active")}>
+                        {user.status === "active" ? (
+                          <>
+                            <UserX className="mr-2 h-4 w-4" />
+                            <span>Bloquer</span>
+                          </>
+                        ) : (
+                          <>
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            <span>Activer</span>
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleContactUser(user.email)}>
+                        <Mail className="mr-2 h-4 w-4" />
+                        <span>Contacter</span>
+                      </DropdownMenuItem>
+                      {user.type !== "admin" && (
+                        <DropdownMenuItem onClick={() => toast.success("Droits d'administrateur accordés")}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          <span>Promouvoir Admin</span>
+                        </DropdownMenuItem>
                       )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleContactUser(user.email)}>
-                      <Mail className="mr-2 h-4 w-4" />
-                      <span>Contacter</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Supprimer</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}
