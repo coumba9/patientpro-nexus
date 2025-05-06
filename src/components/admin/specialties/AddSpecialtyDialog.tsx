@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Specialty } from "./SpecialtiesTable";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AddSpecialtyDialogProps {
   open: boolean;
@@ -20,6 +22,7 @@ const AddSpecialtyDialog = ({ open, onOpenChange, onSuccess }: AddSpecialtyDialo
     status: "active"
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,15 +39,43 @@ const AddSpecialtyDialog = ({ open, onOpenChange, onSuccess }: AddSpecialtyDialo
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
-    // Simuler un appel API
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Insert into Supabase
+      const { data, error } = await supabase
+        .from('specialties')
+        .insert([
+          { 
+            name: formData.name, 
+            description: formData.description,
+            status: formData.status
+          }
+        ])
+        .select();
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Reset form
+      setFormData({
+        name: "",
+        description: "",
+        status: "active"
+      });
+      
       onSuccess();
-    }, 1000);
+    } catch (error: any) {
+      console.error('Error adding specialty:', error);
+      setError(error.message);
+      toast.error("Erreur lors de l'ajout de la spécialité");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,6 +87,12 @@ const AddSpecialtyDialog = ({ open, onOpenChange, onSuccess }: AddSpecialtyDialo
             Créez une nouvelle spécialité médicale sur la plateforme.
           </DialogDescription>
         </DialogHeader>
+        
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Specialty } from "./SpecialtiesTable";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditSpecialtyDialogProps {
   specialty: Specialty;
@@ -18,22 +19,23 @@ const EditSpecialtyDialog = ({ specialty, open, onOpenChange, onSuccess }: EditS
   const [formData, setFormData] = useState({
     id: specialty.id,
     name: specialty.name,
-    description: specialty.description,
+    description: specialty.description || "",
     status: specialty.status,
-    totalDoctors: specialty.totalDoctors,
-    createdAt: specialty.createdAt
+    total_doctors: specialty.total_doctors || 0,
+    created_at: specialty.created_at
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (specialty) {
       setFormData({
         id: specialty.id,
         name: specialty.name,
-        description: specialty.description,
+        description: specialty.description || "",
         status: specialty.status,
-        totalDoctors: specialty.totalDoctors,
-        createdAt: specialty.createdAt
+        total_doctors: specialty.total_doctors || 0,
+        created_at: specialty.created_at
       });
     }
   }, [specialty]);
@@ -53,15 +55,36 @@ const EditSpecialtyDialog = ({ specialty, open, onOpenChange, onSuccess }: EditS
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
-    // Simuler un appel API
-    setTimeout(() => {
+    try {
+      // Update in Supabase
+      const { data, error } = await supabase
+        .from('specialties')
+        .update({ 
+          name: formData.name, 
+          description: formData.description,
+          status: formData.status
+        })
+        .eq('id', specialty.id)
+        .select();
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data && data.length > 0) {
+        onSuccess(data[0] as Specialty);
+      }
+    } catch (error: any) {
+      console.error('Error updating specialty:', error);
+      setError(error.message);
+    } finally {
       setIsSubmitting(false);
-      onSuccess(formData as Specialty);
-    }, 1000);
+    }
   };
 
   return (
@@ -73,6 +96,12 @@ const EditSpecialtyDialog = ({ specialty, open, onOpenChange, onSuccess }: EditS
             Mettez à jour les informations de cette spécialité médicale.
           </DialogDescription>
         </DialogHeader>
+        
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid gap-4">

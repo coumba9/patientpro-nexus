@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,88 +10,21 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import EditSpecialtyDialog from "./EditSpecialtyDialog";
 import DeleteSpecialtyDialog from "./DeleteSpecialtyDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 // Types pour les spécialités
 export interface Specialty {
-  id: number;
+  id: string;
   name: string;
-  description: string;
-  totalDoctors: number;
+  description: string | null;
+  total_doctors: number | null;
   status: "active" | "inactive";
-  createdAt: string;
+  created_at: string;
 }
-
-// Données de spécialités fictives
-const mockSpecialties: Specialty[] = [
-  {
-    id: 1,
-    name: "Cardiologie",
-    description: "Traitement des maladies du cœur et des vaisseaux",
-    totalDoctors: 12,
-    status: "active",
-    createdAt: "2024-01-15"
-  },
-  {
-    id: 2,
-    name: "Dermatologie",
-    description: "Traitement des affections de la peau",
-    totalDoctors: 8,
-    status: "active",
-    createdAt: "2024-01-20"
-  },
-  {
-    id: 3,
-    name: "Pédiatrie",
-    description: "Soins médicaux pour les enfants",
-    totalDoctors: 15,
-    status: "active",
-    createdAt: "2024-01-05"
-  },
-  {
-    id: 4,
-    name: "Ophtalmologie",
-    description: "Traitement des maladies des yeux",
-    totalDoctors: 7,
-    status: "active",
-    createdAt: "2024-02-10"
-  },
-  {
-    id: 5,
-    name: "Psychiatrie",
-    description: "Traitement des troubles mentaux",
-    totalDoctors: 9,
-    status: "active",
-    createdAt: "2024-02-15"
-  },
-  {
-    id: 6,
-    name: "Radiologie",
-    description: "Imagerie médicale pour le diagnostic",
-    totalDoctors: 6,
-    status: "inactive",
-    createdAt: "2024-03-01"
-  },
-  {
-    id: 7,
-    name: "Orthopédie",
-    description: "Traitement des troubles musculo-squelettiques",
-    totalDoctors: 10,
-    status: "active",
-    createdAt: "2024-03-10"
-  },
-  {
-    id: 8,
-    name: "Neurologie",
-    description: "Étude et traitement des troubles du système nerveux",
-    totalDoctors: 8,
-    status: "active",
-    createdAt: "2024-03-15"
-  }
-];
 
 interface SpecialtiesTableProps {
   searchQuery: string;
@@ -100,13 +33,42 @@ interface SpecialtiesTableProps {
 const SpecialtiesTable = ({ searchQuery }: SpecialtiesTableProps) => {
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
   const [deletingSpecialty, setDeletingSpecialty] = useState<Specialty | null>(null);
-  const [specialties, setSpecialties] = useState<Specialty[]>(mockSpecialties);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch specialties from Supabase
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('specialties')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          throw error;
+        }
+        
+        setSpecialties(data as Specialty[]);
+      } catch (error: any) {
+        console.error('Error fetching specialties:', error);
+        setError(error.message);
+        toast.error("Erreur lors du chargement des spécialités");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSpecialties();
+  }, []);
   
   // Filtrer les spécialités en fonction de la recherche
   const filteredSpecialties = specialties.filter(
     (specialty) => 
       specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      specialty.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (specialty.description && specialty.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleEdit = (specialty: Specialty) => {
@@ -123,11 +85,28 @@ const SpecialtiesTable = ({ searchQuery }: SpecialtiesTableProps) => {
     toast.success(`Spécialité "${updatedSpecialty.name}" mise à jour avec succès`);
   };
 
-  const handleDeleteSuccess = (id: number) => {
+  const handleDeleteSuccess = (id: string) => {
     setSpecialties(specialties.filter(s => s.id !== id));
     setDeletingSpecialty(null);
     toast.success("Spécialité supprimée avec succès");
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Chargement des spécialités...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        Une erreur est survenue lors du chargement des données: {error}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -154,8 +133,8 @@ const SpecialtiesTable = ({ searchQuery }: SpecialtiesTableProps) => {
               filteredSpecialties.map((specialty) => (
                 <TableRow key={specialty.id}>
                   <TableCell className="font-medium">{specialty.name}</TableCell>
-                  <TableCell>{specialty.description}</TableCell>
-                  <TableCell>{specialty.totalDoctors}</TableCell>
+                  <TableCell>{specialty.description || ""}</TableCell>
+                  <TableCell>{specialty.total_doctors || 0}</TableCell>
                   <TableCell>
                     <Badge 
                       variant={specialty.status === "active" ? "default" : "secondary"}
@@ -164,7 +143,7 @@ const SpecialtiesTable = ({ searchQuery }: SpecialtiesTableProps) => {
                       {specialty.status === "active" ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{specialty.createdAt}</TableCell>
+                  <TableCell>{new Date(specialty.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button 

@@ -9,7 +9,104 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      doctors: {
+        Row: {
+          created_at: string
+          id: string
+          is_verified: boolean | null
+          license_number: string
+          specialty_id: string | null
+          updated_at: string
+          years_of_experience: number | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          is_verified?: boolean | null
+          license_number: string
+          specialty_id?: string | null
+          updated_at?: string
+          years_of_experience?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_verified?: boolean | null
+          license_number?: string
+          specialty_id?: string | null
+          updated_at?: string
+          years_of_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      specialties: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          total_doctors: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          total_doctors?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          total_doctors?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

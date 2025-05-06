@@ -3,25 +3,40 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Specialty } from "./SpecialtiesTable";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DeleteSpecialtyDialogProps {
   specialty: Specialty;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (id: number) => void;
+  onSuccess: (id: string) => void;
 }
 
 const DeleteSpecialtyDialog = ({ specialty, open, onOpenChange, onSuccess }: DeleteSpecialtyDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsDeleting(true);
+    setError(null);
     
-    // Simuler un appel API
-    setTimeout(() => {
-      setIsDeleting(false);
+    try {
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('specialties')
+        .delete()
+        .eq('id', specialty.id);
+        
+      if (error) {
+        throw error;
+      }
+      
       onSuccess(specialty.id);
-    }, 1000);
+    } catch (error: any) {
+      console.error('Error deleting specialty:', error);
+      setError(error.message);
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -35,11 +50,17 @@ const DeleteSpecialtyDialog = ({ specialty, open, onOpenChange, onSuccess }: Del
           </DialogDescription>
         </DialogHeader>
         
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+            {error}
+          </div>
+        )}
+        
         <div className="py-4">
           <p className="text-sm text-gray-500">
-            {specialty.totalDoctors > 0 ? (
+            {specialty.total_doctors && specialty.total_doctors > 0 ? (
               <span className="font-medium text-amber-600">
-                Attention : Cette spécialité est associée à {specialty.totalDoctors} médecin{specialty.totalDoctors > 1 ? "s" : ""}.
+                Attention : Cette spécialité est associée à {specialty.total_doctors} médecin{specialty.total_doctors > 1 ? "s" : ""}.
                 La suppression peut affecter leur profil.
               </span>
             ) : (
