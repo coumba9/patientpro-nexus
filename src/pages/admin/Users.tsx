@@ -11,11 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import UserStats from "@/components/admin/UserStats";
+import { CreateUserDialog } from "@/components/admin/moderation/CreateUserDialog";
 
 const Users = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState("all");
   const [selectedUserType, setSelectedUserType] = useState("all");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   
   const handleBulkAction = (action: string) => {
     toast.success(`Action ${action} appliquée avec succès`);
@@ -23,10 +25,6 @@ const Users = () => {
 
   const handleExportUsers = () => {
     toast.success("Export des utilisateurs en cours...");
-  };
-
-  const handleAddUser = () => {
-    toast.success("Ouverture du formulaire d'ajout d'utilisateur");
   };
 
   const handleRefreshData = () => {
@@ -59,7 +57,7 @@ const Users = () => {
                 <Download className="h-4 w-4 mr-1" />
                 Exporter
               </Button>
-              <Button size="sm" onClick={handleAddUser}>
+              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
                 <UserPlus className="h-4 w-4 mr-1" />
                 Ajouter
               </Button>
@@ -176,6 +174,12 @@ const Users = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogue pour ajouter un utilisateur */}
+      <CreateUserDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
     </div>
   );
 };
