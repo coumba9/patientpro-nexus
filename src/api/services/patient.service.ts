@@ -45,7 +45,7 @@ class PatientService extends BaseService<Patient> {
   async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
     // Récupérer d'abord les rendez-vous du médecin
     const { data: appointmentsData, error: appointmentsError } = await supabase
-      .from('appointments')
+      .from('appointments' as any)
       .select('patient_id')
       .eq('doctor_id', doctorId)
       .order('date', { ascending: false });
@@ -64,7 +64,7 @@ class PatientService extends BaseService<Patient> {
     
     // Récupérer les détails des patients
     const { data: patientsData, error: patientsError } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         profile:id (first_name, last_name, email)
