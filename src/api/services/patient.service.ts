@@ -8,50 +8,39 @@ class PatientService extends BaseService<Patient> {
     super('patients' as TableName);
   }
 
-  async getPatientsWithProfiles(): Promise<Patient[]> {
+  async getPatientsWithDetails(): Promise<Patient[]> {
     const { data, error } = await supabase
       .from(this.tableName as any)
       .select(`
         *,
-        profile:id (first_name, last_name, email, phone)
+        profile:id (first_name, last_name, email)
       `);
     
     if (error) {
-      console.error('Error fetching patients with profiles:', error);
+      console.error('Error fetching patients with details:', error);
       throw error;
     }
     
-    return data as Patient[];
+    return data as unknown as Patient[];
   }
 
-  async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
-    // Cette requête supposera une table de relation doctor_patients
-    // ou utilisera les rendez-vous pour déterminer les patients d'un médecin
+  async getPatientById(id: string): Promise<Patient | null> {
     const { data, error } = await supabase
-      .from('appointments' as any)
+      .from(this.tableName as any)
       .select(`
-        patient_id,
-        patient:patient_id (
-          *,
-          profile:id (first_name, last_name, email, phone)
-        )
+        *,
+        profile:id (first_name, last_name, email, created_at)
       `)
-      .eq('doctor_id', doctorId)
-      .limit(100);
+      .eq('id', id)
+      .single();
     
     if (error) {
-      console.error('Error fetching patients by doctor:', error);
-      throw error;
+      console.error('Error fetching patient by ID:', error);
+      return null;
     }
     
-    // Extraire les données de patient uniques
-    const uniquePatients = data
-      .map(item => item.patient)
-      .filter((patient, index, self) => 
-        index === self.findIndex(p => p.id === patient.id)
-      );
-    
-    return uniquePatients as Patient[];
+    // Safely access data properties with type assertion
+    return data as unknown as Patient;
   }
 }
 

@@ -1,6 +1,6 @@
 
-import { SpecialtiesTable } from "@/components/admin/specialties/SpecialtiesTable";
-import { SpecialtyStats } from "@/components/admin/specialties/SpecialtyStats"; 
+import SpecialtiesTable from "@/components/admin/specialties/SpecialtiesTable";
+import SpecialtyStats from "@/components/admin/specialties/SpecialtyStats"; 
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 const Specialties = () => {

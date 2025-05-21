@@ -190,3 +190,5 @@ export const SpecialtiesTable = () => {
     </div>
   );
 };
+
+export default SpecialtiesTable;

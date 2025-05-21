@@ -19,7 +19,7 @@ class SpecialtyService extends BaseService<Specialty> {
       throw error;
     }
     
-    return data as Specialty[];
+    return data as unknown as Specialty[];
   }
 
   async getSpecialtyWithDoctorsCount(): Promise<Specialty[]> {
@@ -32,7 +32,7 @@ class SpecialtyService extends BaseService<Specialty> {
       throw error;
     }
     
-    return data as Specialty[];
+    return data as unknown as Specialty[];
   }
 }
 

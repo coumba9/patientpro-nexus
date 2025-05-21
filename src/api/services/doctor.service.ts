@@ -22,7 +22,7 @@ class DoctorService extends BaseService<Doctor> {
       throw error;
     }
     
-    return data as Doctor[];
+    return data as unknown as Doctor[];
   }
 
   async getDoctorsBySpecialty(specialtyId: string): Promise<Doctor[]> {
@@ -39,7 +39,7 @@ class DoctorService extends BaseService<Doctor> {
       throw error;
     }
     
-    return data as Doctor[];
+    return data as unknown as Doctor[];
   }
 
   async verifyDoctor(id: string, verified: boolean): Promise<Doctor> {
