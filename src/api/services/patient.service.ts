@@ -1,11 +1,11 @@
 
-import { BaseService } from "../base/base.service";
+import { BaseService, TableName } from "../base/base.service";
 import { Patient } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
 
 class PatientService extends BaseService<Patient> {
   constructor() {
-    super('patients');
+    super('patients' as TableName);
   }
 
   async getPatientsWithProfiles(): Promise<Patient[]> {

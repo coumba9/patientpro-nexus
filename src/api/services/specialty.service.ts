@@ -1,11 +1,11 @@
 
-import { BaseService } from "../base/base.service";
+import { BaseService, TableName } from "../base/base.service";
 import { Specialty } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
 
 class SpecialtyService extends BaseService<Specialty> {
   constructor() {
-    super('specialties');
+    super('specialties' as TableName);
   }
 
   async getActiveSpecialties(): Promise<Specialty[]> {

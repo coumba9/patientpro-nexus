@@ -1,11 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { BaseEntity } from "../interfaces";
+import { PostgrestResponse } from '@supabase/supabase-js';
+
+export type TableName = 'doctors' | 'specialties' | 'profiles' | 'medical_records' | 'appointments';
 
 export abstract class BaseService<T extends BaseEntity> {
-  protected tableName: string;
+  protected tableName: TableName;
 
-  constructor(tableName: string) {
+  constructor(tableName: TableName) {
     this.tableName = tableName;
   }
 
@@ -19,7 +22,7 @@ export abstract class BaseService<T extends BaseEntity> {
       throw error;
     }
     
-    return data as T[];
+    return data as unknown as T[];
   }
 
   async getById(id: string): Promise<T | null> {
@@ -34,13 +37,13 @@ export abstract class BaseService<T extends BaseEntity> {
       throw error;
     }
     
-    return data as T;
+    return data as unknown as T;
   }
 
-  async create(entity: Omit<T, 'id'>): Promise<T> {
+  async create(entity: Omit<T, 'id' | 'created_at' | 'updated_at'>): Promise<T> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .insert(entity)
+      .insert(entity as any)
       .select()
       .single();
     
@@ -49,13 +52,13 @@ export abstract class BaseService<T extends BaseEntity> {
       throw error;
     }
     
-    return data as T;
+    return data as unknown as T;
   }
 
-  async update(id: string, entity: Partial<T>): Promise<T> {
+  async update(id: string, entity: Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>): Promise<T> {
     const { data, error } = await supabase
       .from(this.tableName)
-      .update(entity)
+      .update(entity as any)
       .eq('id', id)
       .select()
       .single();
@@ -65,7 +68,7 @@ export abstract class BaseService<T extends BaseEntity> {
       throw error;
     }
     
-    return data as T;
+    return data as unknown as T;
   }
 
   async delete(id: string): Promise<void> {

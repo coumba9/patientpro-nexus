@@ -1,11 +1,11 @@
 
-import { BaseService } from "../base/base.service";
+import { BaseService, TableName } from "../base/base.service";
 import { MedicalRecord } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
 
 class MedicalRecordService extends BaseService<MedicalRecord> {
   constructor() {
-    super('medical_records');
+    super('medical_records' as TableName);
   }
 
   async getRecordsByPatient(patientId: string): Promise<MedicalRecord[]> {

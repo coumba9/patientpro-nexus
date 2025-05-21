@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import DeleteSpecialtyDialog from "./DeleteSpecialtyDialog";
 import { specialtyService } from "@/api";
 import { Specialty } from "@/api/interfaces";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export { type Specialty } from "@/api/interfaces";
 
@@ -190,5 +190,3 @@ export const SpecialtiesTable = () => {
     </div>
   );
 };
-
-import { supabase } from "@/integrations/supabase/client";
