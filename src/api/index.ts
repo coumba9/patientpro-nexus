@@ -6,6 +6,8 @@ export * from './services/patient.service';
 export * from './services/appointment.service';
 export * from './services/medical-record.service';
 export * from './services/auth.service';
+export * from './services/note.service';
+export * from './services/profile.service';
 
 // Export interfaces
 export * from './interfaces';

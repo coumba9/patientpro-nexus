@@ -3,6 +3,11 @@ import { BaseService, TableName } from "../base/base.service";
 import { Patient } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define appointment interface to properly type the response
+interface AppointmentWithPatientId {
+  patient_id: string;
+}
+
 class PatientService extends BaseService<Patient> {
   constructor() {
     super('patients' as TableName);
@@ -43,11 +48,6 @@ class PatientService extends BaseService<Patient> {
   }
 
   async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
-    // Define appointment interface to properly type the response
-    interface AppointmentWithPatientId {
-      patient_id: string;
-    }
-    
     // Récupérer d'abord les rendez-vous du médecin
     const { data: appointmentsData, error: appointmentsError } = await supabase
       .from('appointments' as any)
