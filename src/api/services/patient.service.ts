@@ -43,6 +43,11 @@ class PatientService extends BaseService<Patient> {
   }
 
   async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
+    // Define appointment interface to properly type the response
+    interface AppointmentWithPatientId {
+      patient_id: string;
+    }
+    
     // Récupérer d'abord les rendez-vous du médecin
     const { data: appointmentsData, error: appointmentsError } = await supabase
       .from('appointments' as any)
@@ -55,8 +60,11 @@ class PatientService extends BaseService<Patient> {
       throw appointmentsError;
     }
     
+    // Explicitly type the returned data
+    const typedAppointmentsData = appointmentsData as AppointmentWithPatientId[];
+    
     // Extraire les IDs uniques des patients
-    const uniquePatientIds = [...new Set(appointmentsData.map(app => app.patient_id))];
+    const uniquePatientIds = [...new Set(typedAppointmentsData.map(app => app.patient_id))];
     
     if (uniquePatientIds.length === 0) {
       return [];
