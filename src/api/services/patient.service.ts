@@ -60,17 +60,22 @@ class PatientService extends BaseService<Patient> {
       throw appointmentsError;
     }
     
-    // Explicitly type the returned data
-    const typedAppointmentsData = appointmentsData as AppointmentWithPatientId[];
+    // Type check to ensure the data is available and cast properly
+    if (!appointmentsData) {
+      return [];
+    }
     
-    // Extraire les IDs uniques des patients
+    // First convert to unknown, then cast to our expected type to avoid TS errors
+    const typedAppointmentsData = appointmentsData as unknown as AppointmentWithPatientId[];
+    
+    // Extract unique patient IDs
     const uniquePatientIds = [...new Set(typedAppointmentsData.map(app => app.patient_id))];
     
     if (uniquePatientIds.length === 0) {
       return [];
     }
     
-    // Récupérer les détails des patients
+    // Retrieve patient details
     const { data: patientsData, error: patientsError } = await supabase
       .from(this.tableName as any)
       .select(`
