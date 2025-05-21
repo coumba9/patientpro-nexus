@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Specialty } from "./SpecialtiesTable";
-import { supabase } from "@/integrations/supabase/client";
+import { specialtyService } from "@/api";
 
 interface DeleteSpecialtyDialogProps {
   specialty: Specialty;
@@ -21,16 +21,7 @@ const DeleteSpecialtyDialog = ({ specialty, open, onOpenChange, onSuccess }: Del
     setError(null);
     
     try {
-      // Delete from Supabase
-      const { error } = await supabase
-        .from('specialties')
-        .delete()
-        .eq('id', specialty.id);
-        
-      if (error) {
-        throw error;
-      }
-      
+      await specialtyService.delete(specialty.id);
       onSuccess(specialty.id);
     } catch (error: any) {
       console.error('Error deleting specialty:', error);

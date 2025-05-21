@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Specialty } from "./SpecialtiesTable";
-import { supabase } from "@/integrations/supabase/client";
+import { specialtyService } from "@/api";
 import { toast } from "sonner";
 
 interface AddSpecialtyDialogProps {
@@ -45,21 +44,11 @@ const AddSpecialtyDialog = ({ open, onOpenChange, onSuccess }: AddSpecialtyDialo
     setError(null);
     
     try {
-      // Insert into Supabase
-      const { data, error } = await supabase
-        .from('specialties')
-        .insert([
-          { 
-            name: formData.name, 
-            description: formData.description,
-            status: formData.status
-          }
-        ])
-        .select();
-        
-      if (error) {
-        throw error;
-      }
+      await specialtyService.create({
+        name: formData.name,
+        description: formData.description,
+        status: formData.status as 'active' | 'inactive'
+      });
       
       // Reset form
       setFormData({

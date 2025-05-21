@@ -1,189 +1,189 @@
 
 import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, Plus, Search } from "lucide-react";
+import AddSpecialtyDialog from "./AddSpecialtyDialog";
 import EditSpecialtyDialog from "./EditSpecialtyDialog";
 import DeleteSpecialtyDialog from "./DeleteSpecialtyDialog";
-import { supabase } from "@/integrations/supabase/client";
+import { specialtyService } from "@/api";
+import { Specialty } from "@/api/interfaces";
+import { toast } from "sonner";
 
-// Types pour les spécialités
-export interface Specialty {
-  id: string;
-  name: string;
-  description: string | null;
-  total_doctors: number | null;
-  status: "active" | "inactive";
-  created_at: string;
-}
+export { type Specialty } from "@/api/interfaces";
 
-interface SpecialtiesTableProps {
-  searchQuery: string;
-}
-
-const SpecialtiesTable = ({ searchQuery }: SpecialtiesTableProps) => {
-  const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
-  const [deletingSpecialty, setDeletingSpecialty] = useState<Specialty | null>(null);
+export const SpecialtiesTable = () => {
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Fetch specialties from Supabase
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(null);
+
+  const fetchSpecialties = async () => {
+    try {
+      setIsLoading(true);
+      const data = await specialtyService.getSpecialtyWithDoctorsCount();
+      setSpecialties(data);
+    } catch (error) {
+      console.error("Error fetching specialties:", error);
+      toast.error("Erreur lors du chargement des spécialités");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSpecialties = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('specialties')
-          .select('*')
-          .order('name');
-        
-        if (error) {
-          throw error;
-        }
-        
-        setSpecialties(data as Specialty[]);
-      } catch (error: any) {
-        console.error('Error fetching specialties:', error);
-        setError(error.message);
-        toast.error("Erreur lors du chargement des spécialités");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchSpecialties();
+    
+    // Souscrire aux changements en temps réel
+    const channel = supabase
+      .channel('public:specialties')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'specialties' },
+        () => {
+          fetchSpecialties();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
-  
-  // Filtrer les spécialités en fonction de la recherche
-  const filteredSpecialties = specialties.filter(
-    (specialty) => 
-      specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (specialty.description && specialty.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
 
-  const handleEdit = (specialty: Specialty) => {
-    setEditingSpecialty(specialty);
+  const handleAddSuccess = () => {
+    setIsAddDialogOpen(false);
+    fetchSpecialties();
+    toast.success("Spécialité ajoutée avec succès");
   };
 
-  const handleDelete = (specialty: Specialty) => {
-    setDeletingSpecialty(specialty);
-  };
-
-  const handleEditSuccess = (updatedSpecialty: Specialty) => {
-    setSpecialties(specialties.map(s => s.id === updatedSpecialty.id ? updatedSpecialty : s));
-    setEditingSpecialty(null);
-    toast.success(`Spécialité "${updatedSpecialty.name}" mise à jour avec succès`);
+  const handleEditSuccess = () => {
+    setIsEditDialogOpen(false);
+    setSelectedSpecialty(null);
+    fetchSpecialties();
+    toast.success("Spécialité mise à jour avec succès");
   };
 
   const handleDeleteSuccess = (id: string) => {
-    setSpecialties(specialties.filter(s => s.id !== id));
-    setDeletingSpecialty(null);
+    setIsDeleteDialogOpen(false);
+    setSelectedSpecialty(null);
+    setSpecialties(specialties.filter(specialty => specialty.id !== id));
     toast.success("Spécialité supprimée avec succès");
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Chargement des spécialités...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-10 text-red-500">
-        Une erreur est survenue lors du chargement des données: {error}
-      </div>
-    );
-  }
+  const filteredSpecialties = specialties.filter((specialty) =>
+    specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (specialty.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nom</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Médecins</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Date de création</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredSpecialties.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  Aucune spécialité trouvée
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredSpecialties.map((specialty) => (
-                <TableRow key={specialty.id}>
-                  <TableCell className="font-medium">{specialty.name}</TableCell>
-                  <TableCell>{specialty.description || ""}</TableCell>
-                  <TableCell>{specialty.total_doctors || 0}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={specialty.status === "active" ? "default" : "secondary"}
-                      className={specialty.status === "active" ? "bg-green-500" : "bg-gray-500"}
-                    >
-                      {specialty.status === "active" ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{new Date(specialty.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleEdit(specialty)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDelete(specialty)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative w-full sm:w-96">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Rechercher des spécialités..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)} className="sm:w-auto w-full">
+          <Plus className="mr-2 h-4 w-4" /> Ajouter une spécialité
+        </Button>
       </div>
 
-      {/* Dialogs pour éditer et supprimer */}
-      {editingSpecialty && (
-        <EditSpecialtyDialog 
-          specialty={editingSpecialty} 
-          open={!!editingSpecialty}
-          onOpenChange={(open) => !open && setEditingSpecialty(null)}
+      {isLoading ? (
+        <div className="text-center py-10">Chargement des spécialités...</div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Médecins</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSpecialties.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10">
+                    Aucune spécialité trouvée
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredSpecialties.map((specialty) => (
+                  <TableRow key={specialty.id}>
+                    <TableCell className="font-medium">{specialty.name}</TableCell>
+                    <TableCell className="max-w-md truncate">{specialty.description}</TableCell>
+                    <TableCell>
+                      <Badge variant={specialty.status === "active" ? "success" : "secondary"}>
+                        {specialty.status === "active" ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{specialty.total_doctors || 0}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedSpecialty(specialty);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedSpecialty(specialty);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {isAddDialogOpen && (
+        <AddSpecialtyDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onSuccess={handleAddSuccess}
+        />
+      )}
+
+      {isEditDialogOpen && selectedSpecialty && (
+        <EditSpecialtyDialog
+          specialty={selectedSpecialty}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
           onSuccess={handleEditSuccess}
         />
       )}
-      {deletingSpecialty && (
-        <DeleteSpecialtyDialog 
-          specialty={deletingSpecialty} 
-          open={!!deletingSpecialty}
-          onOpenChange={(open) => !open && setDeletingSpecialty(null)}
+
+      {isDeleteDialogOpen && selectedSpecialty && (
+        <DeleteSpecialtyDialog
+          specialty={selectedSpecialty}
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
           onSuccess={handleDeleteSuccess}
         />
       )}
@@ -191,4 +191,4 @@ const SpecialtiesTable = ({ searchQuery }: SpecialtiesTableProps) => {
   );
 };
 
-export default SpecialtiesTable;
+import { supabase } from "@/integrations/supabase/client";
