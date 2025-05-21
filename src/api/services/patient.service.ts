@@ -43,34 +43,40 @@ class PatientService extends BaseService<Patient> {
   }
 
   async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
-    const { data, error } = await supabase
-      .from('appointments' as any)
-      .select(`
-        patient:patient_id (
-          id,
-          profile:id (first_name, last_name, email)
-        )
-      `)
+    // Récupérer d'abord les rendez-vous du médecin
+    const { data: appointmentsData, error: appointmentsError } = await supabase
+      .from('appointments')
+      .select('patient_id')
       .eq('doctor_id', doctorId)
       .order('date', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching patients by doctor:', error);
-      throw error;
+    if (appointmentsError) {
+      console.error('Error fetching appointments by doctor:', appointmentsError);
+      throw appointmentsError;
     }
     
-    // Extract unique patients
-    const uniquePatientIds = new Set();
-    const uniquePatients = [];
+    // Extraire les IDs uniques des patients
+    const uniquePatientIds = [...new Set(appointmentsData.map(app => app.patient_id))];
     
-    for (const item of data) {
-      if (item.patient && !uniquePatientIds.has(item.patient.id)) {
-        uniquePatientIds.add(item.patient.id);
-        uniquePatients.push(item.patient);
-      }
+    if (uniquePatientIds.length === 0) {
+      return [];
     }
     
-    return uniquePatients as unknown as Patient[];
+    // Récupérer les détails des patients
+    const { data: patientsData, error: patientsError } = await supabase
+      .from(this.tableName)
+      .select(`
+        *,
+        profile:id (first_name, last_name, email)
+      `)
+      .in('id', uniquePatientIds);
+    
+    if (patientsError) {
+      console.error('Error fetching patients details:', patientsError);
+      throw patientsError;
+    }
+    
+    return patientsData as unknown as Patient[];
   }
 }
 
