@@ -34,6 +34,18 @@ class SpecialtyService extends BaseService<Specialty> {
     
     return data as unknown as Specialty[];
   }
+
+  async createSpecialty(specialty: Omit<Specialty, 'id' | 'created_at' | 'updated_at'>): Promise<Specialty> {
+    return this.create({
+      ...specialty,
+      status: specialty.status || 'active',
+      total_doctors: specialty.total_doctors || 0
+    });
+  }
+
+  async updateSpecialtyStatus(id: string, status: 'active' | 'inactive'): Promise<Specialty> {
+    return this.update(id, { status });
+  }
 }
 
 export const specialtyService = new SpecialtyService();

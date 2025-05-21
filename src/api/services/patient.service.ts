@@ -39,8 +39,38 @@ class PatientService extends BaseService<Patient> {
       return null;
     }
     
-    // Safely access data properties with type assertion
     return data as unknown as Patient;
+  }
+
+  async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
+    const { data, error } = await supabase
+      .from('appointments' as any)
+      .select(`
+        patient:patient_id (
+          id,
+          profile:id (first_name, last_name, email)
+        )
+      `)
+      .eq('doctor_id', doctorId)
+      .order('date', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching patients by doctor:', error);
+      throw error;
+    }
+    
+    // Extract unique patients
+    const uniquePatientIds = new Set();
+    const uniquePatients = [];
+    
+    for (const item of data) {
+      if (item.patient && !uniquePatientIds.has(item.patient.id)) {
+        uniquePatientIds.add(item.patient.id);
+        uniquePatients.push(item.patient);
+      }
+    }
+    
+    return uniquePatients as unknown as Patient[];
   }
 }
 
