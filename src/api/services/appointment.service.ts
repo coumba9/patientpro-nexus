@@ -10,7 +10,7 @@ class AppointmentService extends BaseService<Appointment> {
 
   async getAppointmentsByDoctor(doctorId: string): Promise<Appointment[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         patient:patient_id (
@@ -32,7 +32,7 @@ class AppointmentService extends BaseService<Appointment> {
 
   async getAppointmentsByPatient(patientId: string): Promise<Appointment[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         doctor:doctor_id (
@@ -62,7 +62,7 @@ class AppointmentService extends BaseService<Appointment> {
     const fieldName = userRole === 'doctor' ? 'doctor_id' : 'patient_id';
     
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         doctor:doctor_id (

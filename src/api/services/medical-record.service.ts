@@ -10,7 +10,7 @@ class MedicalRecordService extends BaseService<MedicalRecord> {
 
   async getRecordsByPatient(patientId: string): Promise<MedicalRecord[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         doctor:doctor_id (

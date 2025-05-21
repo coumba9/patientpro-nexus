@@ -10,7 +10,7 @@ class SpecialtyService extends BaseService<Specialty> {
 
   async getActiveSpecialties(): Promise<Specialty[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select('*')
       .eq('status', 'active');
     
@@ -24,7 +24,7 @@ class SpecialtyService extends BaseService<Specialty> {
 
   async getSpecialtyWithDoctorsCount(): Promise<Specialty[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select('*, total_doctors');
     
     if (error) {

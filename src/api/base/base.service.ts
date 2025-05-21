@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BaseEntity } from "../interfaces";
 import { PostgrestResponse } from '@supabase/supabase-js';
 
+// Define the table names based on what's available in the Supabase types
 export type TableName = 'doctors' | 'specialties' | 'profiles' | 'medical_records' | 'appointments';
 
 export abstract class BaseService<T extends BaseEntity> {
@@ -14,7 +15,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async getAll(): Promise<T[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select('*');
     
     if (error) {
@@ -27,7 +28,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async getById(id: string): Promise<T | null> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -42,7 +43,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async create(entity: Omit<T, 'id' | 'created_at' | 'updated_at'>): Promise<T> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .insert(entity as any)
       .select()
       .single();
@@ -57,7 +58,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async update(id: string, entity: Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>): Promise<T> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .update(entity as any)
       .eq('id', id)
       .select()
@@ -73,7 +74,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .delete()
       .eq('id', id);
     
@@ -85,7 +86,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async count(): Promise<number> {
     const { count, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select('*', { count: 'exact', head: true });
     
     if (error) {

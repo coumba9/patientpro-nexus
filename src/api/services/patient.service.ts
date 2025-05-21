@@ -10,7 +10,7 @@ class PatientService extends BaseService<Patient> {
 
   async getPatientsWithProfiles(): Promise<Patient[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         profile:id (first_name, last_name, email, phone)
@@ -28,7 +28,7 @@ class PatientService extends BaseService<Patient> {
     // Cette requête supposera une table de relation doctor_patients
     // ou utilisera les rendez-vous pour déterminer les patients d'un médecin
     const { data, error } = await supabase
-      .from('appointments')
+      .from('appointments' as any)
       .select(`
         patient_id,
         patient:patient_id (

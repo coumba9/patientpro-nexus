@@ -10,7 +10,7 @@ class DoctorService extends BaseService<Doctor> {
 
   async getDoctorsWithDetails(): Promise<Doctor[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         specialty:specialty_id (id, name),
@@ -27,7 +27,7 @@ class DoctorService extends BaseService<Doctor> {
 
   async getDoctorsBySpecialty(specialtyId: string): Promise<Doctor[]> {
     const { data, error } = await supabase
-      .from(this.tableName)
+      .from(this.tableName as any)
       .select(`
         *,
         profile:id (first_name, last_name, email)
