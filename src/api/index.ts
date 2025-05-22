@@ -8,6 +8,8 @@ export * from './services/medical-record.service';
 export * from './services/auth.service';
 export * from './services/note.service';
 export * from './services/profile.service';
+export * from './services/moderation.service';
+export * from './services/admin-metrics.service';
 
 // Export interfaces
 export * from './interfaces';

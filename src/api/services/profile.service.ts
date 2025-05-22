@@ -43,6 +43,55 @@ class ProfileService extends BaseService<UserProfile> {
     
     return data as unknown as UserProfile[];
   }
+
+  async setUserRole(userId: string, role: 'doctor' | 'patient' | 'admin'): Promise<UserProfile> {
+    return this.update(userId, { role });
+  }
+
+  async countByRole(role: 'doctor' | 'patient' | 'admin'): Promise<number> {
+    const { count, error } = await supabase
+      .from(this.tableName as any)
+      .select('*', { count: 'exact', head: true })
+      .eq('role', role);
+    
+    if (error) {
+      console.error(`Error counting profiles with role ${role}:`, error);
+      throw error;
+    }
+    
+    return count || 0;
+  }
+  
+  async getActiveProfiles(): Promise<UserProfile[]> {
+    // Dans une implémentation réelle, vous pourriez avoir une colonne status
+    // Ici nous renvoyons simplement tous les profils comme exemple
+    return this.getAll();
+  }
+  
+  async getBlockedProfiles(): Promise<UserProfile[]> {
+    // Dans une implémentation réelle, vous auriez une colonne status
+    // Pour l'exemple, nous renvoyons un tableau vide
+    return [];
+  }
+
+  async getPendingProfiles(): Promise<UserProfile[]> {
+    // Pour les médecins en attente de vérification
+    const { data, error } = await supabase
+      .from('doctors')
+      .select(`
+        id,
+        profile:id (*)
+      `)
+      .eq('is_verified', false);
+    
+    if (error) {
+      console.error('Error fetching pending doctor profiles:', error);
+      throw error;
+    }
+    
+    // Extraire les profils de la réponse
+    return data.map((item: any) => item.profile) as unknown as UserProfile[];
+  }
 }
 
 export const profileService = new ProfileService();

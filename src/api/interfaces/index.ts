@@ -70,3 +70,23 @@ export interface Note extends BaseEntity {
   content: string;
   date: string;
 }
+
+export interface ModerationReport extends BaseEntity {
+  reporter_id?: string;
+  reported_id?: string;
+  reason: string;
+  details?: string;
+  status: 'pending' | 'investigating' | 'resolved' | 'rejected';
+  resolved_by?: string;
+  resolved_at?: string;
+  reporter?: Pick<UserProfile, 'first_name' | 'last_name' | 'email'>;
+  reported?: Pick<UserProfile, 'first_name' | 'last_name' | 'email'>;
+  resolver?: Pick<UserProfile, 'first_name' | 'last_name' | 'email'>;
+}
+
+export interface AdminMetric extends BaseEntity {
+  name: string;
+  value: number;
+  category: string;
+  period: string;
+}
