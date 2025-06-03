@@ -23,7 +23,8 @@ class AdminMetricsService extends BaseService<AdminMetric> {
   }
 
   async updateMetric(id: string, value: number): Promise<AdminMetric> {
-    return this.update(id, { value, updated_at: new Date().toISOString() });
+    // Utiliser seulement la valeur, pas updated_at car c'est exclu du type
+    return this.update(id, { value });
   }
 
   async createOrUpdateMetric(name: string, value: number, category: string, period: string): Promise<AdminMetric> {
@@ -42,8 +43,8 @@ class AdminMetricsService extends BaseService<AdminMetric> {
     }
     
     if (data) {
-      // Mettre à jour la métrique existante
-      return this.update(data.id, { value, updated_at: new Date().toISOString() });
+      // Mettre à jour la métrique existante - utiliser seulement value
+      return this.update((data as any).id, { value });
     } else {
       // Créer une nouvelle métrique
       return this.create({ name, value, category, period });

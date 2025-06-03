@@ -4,7 +4,7 @@ import { BaseEntity } from "../interfaces";
 import { PostgrestResponse } from '@supabase/supabase-js';
 
 // Define the table names based on what's available in the Supabase types
-export type TableName = 'doctors' | 'specialties' | 'profiles' | 'medical_records' | 'appointments' | 'patients' | 'notes';
+export type TableName = 'doctors' | 'specialties' | 'profiles' | 'medical_records' | 'appointments' | 'patients' | 'notes' | 'admin_metrics' | 'moderation_reports';
 
 export abstract class BaseService<T extends BaseEntity> {
   protected tableName: TableName;
