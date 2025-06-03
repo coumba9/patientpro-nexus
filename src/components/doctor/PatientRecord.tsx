@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle } from "lucide-react";
+import { AddMedicalRecordForm } from "./AddMedicalRecordForm";
 
 interface Patient {
   id: string;
@@ -40,6 +41,8 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedTab, setSelectedTab] = useState("info");
+  const [showAddRecordForm, setShowAddRecordForm] = useState(false);
+  const [refreshHistory, setRefreshHistory] = useState(0);
 
   // Données de démonstration
   const patients: Patient[] = [
@@ -99,6 +102,7 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
     setSelectedTab("info");
+    setShowAddRecordForm(false);
   };
 
   const getPatientRecords = (patientId: string) => {
@@ -107,6 +111,11 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
 
   const getPatientNotes = (patientId: string) => {
     return patientNotes[patientId] || [];
+  };
+
+  const handleRecordAdded = () => {
+    setRefreshHistory(prev => prev + 1);
+    // En pratique, ici on rechargerait les données depuis l'API
   };
 
   return (
@@ -205,55 +214,65 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
             </TabsContent>
 
             <TabsContent value="history" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Historique médical
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {getPatientRecords(selectedPatient.id).length > 0 ? (
-                    <div className="space-y-4">
-                      {getPatientRecords(selectedPatient.id).map(record => (
-                        <Card key={record.id} className="bg-background border">
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-md flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              {record.date} - {record.doctor}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-2">
-                            <div>
-                              <span className="font-medium flex items-center gap-1">
-                                <Activity className="h-4 w-4 text-red-500" />
-                                Diagnostic:
-                              </span> 
-                              <p>{record.diagnosis}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium flex items-center gap-1">
-                                <Pill className="h-4 w-4 text-blue-500" />
-                                Prescription:
-                              </span> 
-                              <p>{record.prescription}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium flex items-center gap-1">
-                                <MessageCircle className="h-4 w-4 text-green-500" />
-                                Notes:
-                              </span> 
-                              <p>{record.notes}</p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-muted-foreground py-4">Aucun historique médical disponible</p>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <AddMedicalRecordForm
+                  patientId={selectedPatient.id}
+                  doctorId="current-doctor-id" // TODO: Get from auth context
+                  onRecordAdded={handleRecordAdded}
+                  isVisible={showAddRecordForm}
+                  onToggleVisibility={() => setShowAddRecordForm(!showAddRecordForm)}
+                />
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Historique médical
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {getPatientRecords(selectedPatient.id).length > 0 ? (
+                      <div className="space-y-4">
+                        {getPatientRecords(selectedPatient.id).map(record => (
+                          <Card key={record.id} className="bg-background border">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-md flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                {record.date} - {record.doctor}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                              <div>
+                                <span className="font-medium flex items-center gap-1">
+                                  <Activity className="h-4 w-4 text-red-500" />
+                                  Diagnostic:
+                                </span> 
+                                <p>{record.diagnosis}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium flex items-center gap-1">
+                                  <Pill className="h-4 w-4 text-blue-500" />
+                                  Prescription:
+                                </span> 
+                                <p>{record.prescription}</p>
+                              </div>
+                              <div>
+                                <span className="font-medium flex items-center gap-1">
+                                  <MessageCircle className="h-4 w-4 text-green-500" />
+                                  Notes:
+                                </span> 
+                                <p>{record.notes}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground py-4">Aucun historique médical disponible</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             <TabsContent value="notes" className="mt-4">
