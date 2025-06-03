@@ -52,6 +52,22 @@ export interface Appointment extends BaseEntity {
   mode: 'in_person' | 'teleconsultation';
   location?: string;
   notes?: string;
+  cancelled_at?: string;
+  cancelled_by?: string;
+  cancellation_reason?: string;
+  cancellation_type?: 'doctor' | 'patient';
+}
+
+export interface CancellationPolicy extends BaseEntity {
+  user_type: 'doctor' | 'patient';
+  minimum_hours_before: number;
+}
+
+export interface CancellationRequest {
+  appointment_id: string;
+  reason: string;
+  cancelled_by: string;
+  cancellation_type: 'doctor' | 'patient';
 }
 
 export interface MedicalRecord extends BaseEntity {

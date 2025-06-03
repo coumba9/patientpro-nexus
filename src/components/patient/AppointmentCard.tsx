@@ -1,25 +1,22 @@
 
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Clock, MapPin, MessageCircle, CalendarDays, Check, X, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+  MessageCircle,
+  Calendar,
+  Clock,
+  MapPin,
+  Video,
+  CheckCircle,
+  User,
+  Stethoscope,
+  X,
+} from "lucide-react";
+import { MessageDialog } from "./MessageDialog";
+import { RescheduleDialog } from "./RescheduleDialog";
+import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 
 interface Appointment {
   id: number;
@@ -45,148 +42,137 @@ export const AppointmentCard = ({
   onReschedule,
   onConfirm,
 }: AppointmentCardProps) => {
-  const [newMessage, setNewMessage] = useState("");
-  const [rescheduleReason, setRescheduleReason] = useState("");
-  const [selectedReason, setSelectedReason] = useState("schedule_conflict");
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const userId = "patient-id"; // TODO: Get from auth context
+
+  const getStatusBadge = (status: string) => {
+    return status === "confirmed" ? (
+      <Badge className="bg-green-100 text-green-800">Confirmé</Badge>
+    ) : (
+      <Badge className="bg-yellow-100 text-yellow-800">En attente</Badge>
+    );
+  };
+
+  const isOnline = appointment.type.toLowerCase().includes('télé');
+
+  const handleCancelConfirmed = () => {
+    // This would trigger the parent component to refresh the appointment list
+    setIsCancelDialogOpen(false);
+  };
 
   return (
-    <div className="border rounded-lg p-4">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold">{appointment.doctor}</h3>
-            <span className={`text-sm px-2 py-0.5 rounded-full ${
-              appointment.status === 'confirmed' 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-yellow-100 text-yellow-800'
-            }`}>
-              {appointment.status === 'confirmed' ? 'Confirmé' : 'En attente'}
-            </span>
-          </div>
-          <p className="text-gray-600">{appointment.specialty}</p>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <Clock className="w-4 h-4" />
-            {appointment.date} à {appointment.time}
-          </div>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <MapPin className="w-4 h-4" />
-            {appointment.location}
-          </div>
-          <p className="text-sm text-primary">{appointment.type}</p>
-        </div>
-        <div className="space-y-2 md:space-y-0 md:space-x-2 flex flex-col md:flex-row">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Message
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Envoyer un message</DialogTitle>
-                <DialogDescription>
-                  Envoyer un message à {appointment.doctor}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <Textarea
-                  placeholder="Votre message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <Button 
-                  onClick={() => {
-                    onSendMessage(appointment.doctor, newMessage);
-                    setNewMessage("");
-                  }}
-                  className="w-full"
-                >
-                  Envoyer
-                </Button>
+    <>
+      <Card className="mb-4">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-lg">{appointment.doctor}</h3>
+                {getStatusBadge(appointment.status)}
               </div>
-            </DialogContent>
-          </Dialog>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Stethoscope className="h-4 w-4" />
+                  <span>{appointment.specialty}</span>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>{appointment.date}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{appointment.time}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {isOnline ? (
+                      <>
+                        <Video className="h-4 w-4" />
+                        <span>Téléconsultation</span>
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-4 w-4" />
+                        <span>{appointment.location}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <CalendarDays className="h-4 w-4 mr-2" />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMessageDialogOpen(true)}
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Contacter
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsRescheduleDialogOpen(true)}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
                 Reporter
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Reporter le rendez-vous</DialogTitle>
-                <DialogDescription>
-                  Veuillez indiquer la raison du report
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label>Motif du report</Label>
-                  <Select 
-                    value={selectedReason} 
-                    onValueChange={setSelectedReason}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez un motif" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="schedule_conflict">Conflit d'horaire</SelectItem>
-                      <SelectItem value="transportation">Problème de transport</SelectItem>
-                      <SelectItem value="health">Raison de santé</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Précisions (optionnel)</Label>
-                  <Textarea
-                    placeholder="Détails supplémentaires..."
-                    value={rescheduleReason}
-                    onChange={(e) => setRescheduleReason(e.target.value)}
-                  />
-                </div>
-                <Button 
-                  onClick={() => {
-                    onReschedule(appointment.id, rescheduleReason);
-                    setRescheduleReason("");
-                  }}
-                  className="w-full"
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-600"
+                onClick={() => setIsCancelDialogOpen(true)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Annuler
+              </Button>
+
+              {appointment.status === "pending" && (
+                <Button
+                  size="sm"
+                  onClick={() => onConfirm(appointment.id)}
                 >
-                  Confirmer le report
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Confirmer
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          {appointment.status === "pending" ? (
-            <Button 
-              variant="secondary" 
-              size="sm"
-              onClick={() => onConfirm(appointment.id)}
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Confirmer
-            </Button>
-          ) : (
-            <>
-              <Link to="/patient/tickets">
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Voir le ticket
-                </Button>
-              </Link>
-            </>
-          )}
+      <MessageDialog
+        isOpen={isMessageDialogOpen}
+        onClose={() => setIsMessageDialogOpen(false)}
+        doctorName={appointment.doctor}
+        onSendMessage={onSendMessage}
+      />
 
-          <Button variant="destructive" size="sm">
-            <X className="h-4 w-4 mr-2" />
-            Annuler
-          </Button>
-        </div>
-      </div>
-    </div>
+      <RescheduleDialog
+        isOpen={isRescheduleDialogOpen}
+        onClose={() => setIsRescheduleDialogOpen(false)}
+        appointment={appointment}
+        onReschedule={onReschedule}
+      />
+
+      <CancelAppointmentDialog
+        isOpen={isCancelDialogOpen}
+        onClose={() => setIsCancelDialogOpen(false)}
+        appointmentId={appointment.id.toString()}
+        doctorName={appointment.doctor}
+        appointmentTime={appointment.time}
+        appointmentDate={appointment.date}
+        userId={userId}
+        onCancel={handleCancelConfirmed}
+      />
+    </>
   );
 };

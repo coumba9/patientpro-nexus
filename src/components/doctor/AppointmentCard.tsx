@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,8 +12,10 @@ import {
   CheckCircle,
   XCircle,
   FileText,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
+import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 
 interface Appointment {
   id: number;
@@ -20,7 +23,7 @@ interface Appointment {
   date: string;
   time: string;
   type: "Consultation" | "Suivi" | "Téléconsultation";
-  status: "confirmed" | "pending" | "canceled";
+  status: "confirmed" | "pending" | "canceled" | "cancelled";
   reason: string;
   isOnline: boolean;
 }
@@ -37,6 +40,8 @@ export const AppointmentCard = ({
   onCancel,
 }: AppointmentCardProps) => {
   const navigate = useNavigate();
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const userId = "doctor-id"; // TODO: Get from auth context
   
   const getStatusBadge = (status: Appointment["status"]) => {
     switch (status) {
@@ -45,6 +50,7 @@ export const AppointmentCard = ({
       case "pending":
         return <Badge className="bg-yellow-100 text-yellow-800">En attente</Badge>;
       case "canceled":
+      case "cancelled":
         return <Badge className="bg-red-100 text-red-800">Annulé</Badge>;
       default:
         return null;
@@ -77,91 +83,122 @@ export const AppointmentCard = ({
     }
   };
 
+  const handleCancelAppointment = () => {
+    setIsCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirmed = () => {
+    onCancel(appointment.id);
+    setIsCancelDialogOpen(false);
+  };
+
   return (
-    <div className="border rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <User className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold">{appointment.patient}</h3>
-          {getStatusBadge(appointment.status)}
-          {appointment.isOnline && (
-            <Badge variant="outline" className="bg-blue-50">
-              <Video className="h-3 w-3 mr-1" />
-              Téléconsultation
-            </Badge>
-          )}
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm text-gray-600">{appointment.reason}</p>
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {appointment.time}
-            </span>
-            {!appointment.isOnline && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                Cabinet
-              </span>
+    <>
+      <div className="border rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <User className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold">{appointment.patient}</h3>
+            {getStatusBadge(appointment.status)}
+            {appointment.isOnline && (
+              <Badge variant="outline" className="bg-blue-50">
+                <Video className="h-3 w-3 mr-1" />
+                Téléconsultation
+              </Badge>
             )}
           </div>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">{appointment.reason}</p>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {appointment.time}
+              </span>
+              {!appointment.isOnline && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  Cabinet
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="flex gap-2 w-full md:w-auto">
-        {appointment.status === "pending" ? (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 md:flex-initial"
-              onClick={() => onConfirm(appointment.id)}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Confirmer
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 md:flex-initial text-red-600 hover:text-red-600"
-              onClick={() => onCancel(appointment.id)}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Refuser
-            </Button>
-          </>
-        ) : (
-          appointment.status === "confirmed" && (
+        <div className="flex gap-2 w-full md:w-auto">
+          {appointment.status === "pending" ? (
             <>
-              <Button 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex-1 md:flex-initial"
-                onClick={handleStartAppointment}
+                onClick={() => onConfirm(appointment.id)}
               >
-                {appointment.isOnline ? (
-                  <>
-                    <Video className="h-4 w-4 mr-2" />
-                    Démarrer
-                  </>
-                ) : (
-                  <>
-                    <ArrowRight className="h-4 w-4 mr-2" />
-                    Commencer
-                  </>
-                )}
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Confirmer
               </Button>
-              <Link to={`/doctor/patients/${encodeURIComponent(appointment.patient)}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 md:flex-initial text-red-600 hover:text-red-600"
+                onClick={() => onCancel(appointment.id)}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Refuser
+              </Button>
+            </>
+          ) : (
+            appointment.status === "confirmed" && (
+              <>
+                <Button 
+                  className="flex-1 md:flex-initial"
+                  onClick={handleStartAppointment}
+                >
+                  {appointment.isOnline ? (
+                    <>
+                      <Video className="h-4 w-4 mr-2" />
+                      Démarrer
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Commencer
+                    </>
+                  )}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 md:flex-initial"
+                  className="flex-1 md:flex-initial text-red-600 hover:text-red-600"
+                  onClick={handleCancelAppointment}
                 >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Dossier
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Annuler
                 </Button>
-              </Link>
-            </>
-          )
-        )}
+                <Link to={`/doctor/patients/${encodeURIComponent(appointment.patient)}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 md:flex-initial"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Dossier
+                  </Button>
+                </Link>
+              </>
+            )
+          )}
+        </div>
       </div>
-    </div>
+
+      <CancelAppointmentDialog
+        isOpen={isCancelDialogOpen}
+        onClose={() => setIsCancelDialogOpen(false)}
+        appointmentId={appointment.id.toString()}
+        patientName={appointment.patient}
+        appointmentTime={appointment.time}
+        appointmentDate={appointment.date}
+        userId={userId}
+        onCancel={handleCancelConfirmed}
+      />
+    </>
   );
 };

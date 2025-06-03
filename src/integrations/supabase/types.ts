@@ -41,6 +41,10 @@ export type Database = {
       }
       appointments: {
         Row: {
+          cancellation_reason: string | null
+          cancellation_type: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           date: string
           doctor_id: string
@@ -55,6 +59,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancellation_type?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           date: string
           doctor_id: string
@@ -69,6 +77,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancellation_type?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           date?: string
           doctor_id?: string
@@ -84,6 +96,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "appointments_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointments_doctor_id_fkey"
             columns: ["doctor_id"]
             isOneToOne: false
@@ -98,6 +117,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cancellation_policies: {
+        Row: {
+          created_at: string
+          id: string
+          minimum_hours_before: number
+          updated_at: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          minimum_hours_before?: number
+          updated_at?: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          minimum_hours_before?: number
+          updated_at?: string
+          user_type?: string
+        }
+        Relationships: []
       }
       doctors: {
         Row: {
@@ -403,6 +446,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_cancel_appointment: {
+        Args: { appointment_id: string; user_id: string; user_role: string }
+        Returns: boolean
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean

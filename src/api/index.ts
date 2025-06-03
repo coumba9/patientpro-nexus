@@ -10,6 +10,7 @@ export * from './services/note.service';
 export * from './services/profile.service';
 export * from './services/moderation.service';
 export * from './services/admin-metrics.service';
+export * from './services/cancellation.service';
 
 // Export interfaces
 export * from './interfaces';

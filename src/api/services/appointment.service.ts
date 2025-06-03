@@ -1,6 +1,6 @@
 
 import { BaseService, TableName } from "../base/base.service";
-import { Appointment } from "../interfaces";
+import { Appointment, CancellationRequest } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
 
 class AppointmentService extends BaseService<Appointment> {
@@ -55,6 +55,28 @@ class AppointmentService extends BaseService<Appointment> {
 
   async updateAppointmentStatus(id: string, status: Appointment['status']): Promise<Appointment> {
     return this.update(id, { status });
+  }
+
+  async cancelAppointment(cancellationRequest: CancellationRequest): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from(this.tableName as any)
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: cancellationRequest.cancelled_by,
+        cancellation_reason: cancellationRequest.reason,
+        cancellation_type: cancellationRequest.cancellation_type
+      })
+      .eq('id', cancellationRequest.appointment_id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error cancelling appointment:', error);
+      throw error;
+    }
+    
+    return data as unknown as Appointment;
   }
 
   async getUpcomingAppointments(userId: string, userRole: 'doctor' | 'patient'): Promise<Appointment[]> {
