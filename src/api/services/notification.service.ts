@@ -1,9 +1,8 @@
 
-import { BaseService } from "../base/base.service";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NotificationData {
-  id?: string;
+  id: string;
   type: "cancellation" | "reminder" | "queue" | "appointment";
   title: string;
   message: string;
@@ -12,10 +11,12 @@ interface NotificationData {
   priority: "high" | "medium" | "low";
   is_read: boolean;
   metadata?: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ReminderData {
-  id?: string;
+  id: string;
   appointment_id: string;
   patient_id: string;
   reminder_type: "24h" | "2h" | "manual";
@@ -23,14 +24,25 @@ interface ReminderData {
   scheduled_for: string;
   status: "pending" | "completed" | "failed";
   attempts: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
-class NotificationService extends BaseService<NotificationData> {
-  constructor() {
-    super('notifications' as any);
-  }
+interface QueueEntryData {
+  id: string;
+  patient_id: string;
+  requested_doctor_id?: string;
+  specialty_id?: string;
+  urgency: "urgent" | "normal" | "flexible";
+  preferred_dates?: string[];
+  notes?: string;
+  status: "waiting" | "assigned" | "cancelled";
+  created_at?: string;
+  updated_at?: string;
+}
 
-  async createNotification(notification: Omit<NotificationData, 'id'>): Promise<NotificationData> {
+class NotificationService {
+  async createNotification(notification: Omit<NotificationData, 'id' | 'created_at' | 'updated_at'>): Promise<NotificationData> {
     const { data, error } = await supabase
       .from('notifications')
       .insert(notification)
@@ -42,7 +54,7 @@ class NotificationService extends BaseService<NotificationData> {
       throw error;
     }
     
-    return data as unknown as NotificationData;
+    return data as NotificationData;
   }
 
   async getNotificationsByUser(userId: string): Promise<NotificationData[]> {
@@ -57,7 +69,7 @@ class NotificationService extends BaseService<NotificationData> {
       throw error;
     }
     
-    return data as unknown as NotificationData[];
+    return data as NotificationData[];
   }
 
   async markAsRead(notificationId: string): Promise<NotificationData> {
@@ -73,10 +85,10 @@ class NotificationService extends BaseService<NotificationData> {
       throw error;
     }
     
-    return data as unknown as NotificationData;
+    return data as NotificationData;
   }
 
-  async createReminder(reminder: Omit<ReminderData, 'id'>): Promise<ReminderData> {
+  async createReminder(reminder: Omit<ReminderData, 'id' | 'created_at' | 'updated_at'>): Promise<ReminderData> {
     const { data, error } = await supabase
       .from('reminders')
       .insert(reminder)
@@ -88,7 +100,7 @@ class NotificationService extends BaseService<NotificationData> {
       throw error;
     }
     
-    return data as unknown as ReminderData;
+    return data as ReminderData;
   }
 
   async getRemindersByDate(date: string): Promise<ReminderData[]> {
@@ -104,7 +116,7 @@ class NotificationService extends BaseService<NotificationData> {
       throw error;
     }
     
-    return data as unknown as ReminderData[];
+    return data as ReminderData[];
   }
 
   async updateReminderStatus(reminderId: string, status: ReminderData['status'], attempts?: number): Promise<ReminderData> {
@@ -125,7 +137,53 @@ class NotificationService extends BaseService<NotificationData> {
       throw error;
     }
     
-    return data as unknown as ReminderData;
+    return data as ReminderData;
+  }
+
+  async createQueueEntry(entry: Omit<QueueEntryData, 'id' | 'created_at' | 'updated_at'>): Promise<QueueEntryData> {
+    const { data, error } = await supabase
+      .from('queue_entries')
+      .insert(entry)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating queue entry:', error);
+      throw error;
+    }
+    
+    return data as QueueEntryData;
+  }
+
+  async getQueueEntries(): Promise<QueueEntryData[]> {
+    const { data, error } = await supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('status', 'waiting')
+      .order('created_at', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching queue entries:', error);
+      throw error;
+    }
+    
+    return data as QueueEntryData[];
+  }
+
+  async updateQueueEntryStatus(entryId: string, status: QueueEntryData['status']): Promise<QueueEntryData> {
+    const { data, error } = await supabase
+      .from('queue_entries')
+      .update({ status })
+      .eq('id', entryId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating queue entry status:', error);
+      throw error;
+    }
+    
+    return data as QueueEntryData;
   }
 
   async sendAppointmentCancellationNotification(appointmentId: string, cancelledBy: string): Promise<void> {
@@ -183,3 +241,4 @@ class NotificationService extends BaseService<NotificationData> {
 }
 
 export const notificationService = new NotificationService();
+export type { NotificationData, ReminderData, QueueEntryData };

@@ -340,6 +340,48 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          priority: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          priority?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          priority?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           allergies: string[] | null
@@ -407,6 +449,84 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      queue_entries: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          patient_id: string
+          preferred_dates: string[] | null
+          requested_doctor_id: string | null
+          specialty_id: string | null
+          status: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          preferred_dates?: string[] | null
+          requested_doctor_id?: string | null
+          specialty_id?: string | null
+          status?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          preferred_dates?: string[] | null
+          requested_doctor_id?: string | null
+          specialty_id?: string | null
+          status?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: []
+      }
+      reminders: {
+        Row: {
+          appointment_id: string
+          attempts: number
+          created_at: string
+          id: string
+          method: string
+          patient_id: string
+          reminder_type: string
+          scheduled_for: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          attempts?: number
+          created_at?: string
+          id?: string
+          method: string
+          patient_id: string
+          reminder_type: string
+          scheduled_for: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          attempts?: number
+          created_at?: string
+          id?: string
+          method?: string
+          patient_id?: string
+          reminder_type?: string
+          scheduled_for?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []

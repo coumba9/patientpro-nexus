@@ -1,81 +1,55 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Calendar, Clock, Search, Phone, Mail } from "lucide-react";
+import { Users, Calendar, Search, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
-
-interface QueueEntry {
-  id: string;
-  patientName: string;
-  patientEmail: string;
-  patientPhone: string;
-  requestedDoctor: string;
-  specialty: string;
-  urgency: "urgent" | "normal" | "flexible";
-  requestDate: string;
-  preferredDates: string[];
-  notes?: string;
-}
+import { notificationService, QueueEntryData } from "@/api/services/notification.service";
 
 export const WaitingQueue = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [urgencyFilter, setUrgencyFilter] = useState("all");
-  
-  const [queueEntries] = useState<QueueEntry[]>([
-    {
-      id: "1",
-      patientName: "Marie Dubois",
-      patientEmail: "marie.dubois@email.com",
-      patientPhone: "01 23 45 67 89",
-      requestedDoctor: "Dr. Martin",
-      specialty: "Cardiologie",
-      urgency: "urgent",
-      requestDate: "2024-04-15",
-      preferredDates: ["2024-04-20", "2024-04-21"],
-      notes: "Patient avec antécédents cardiaques"
-    },
-    {
-      id: "2",
-      patientName: "Jean Dupont",
-      patientEmail: "jean.dupont@email.com",
-      patientPhone: "01 23 45 67 90",
-      requestedDoctor: "Dr. Leroy",
-      specialty: "Dermatologie",
-      urgency: "normal",
-      requestDate: "2024-04-14",
-      preferredDates: ["2024-04-18", "2024-04-19", "2024-04-22"]
-    },
-    {
-      id: "3",
-      patientName: "Sophie Bernard",
-      patientEmail: "sophie.bernard@email.com",
-      patientPhone: "01 23 45 67 91",
-      requestedDoctor: "Tout médecin disponible",
-      specialty: "Médecine générale",
-      urgency: "flexible",
-      requestDate: "2024-04-13",
-      preferredDates: ["2024-04-25", "2024-04-26", "2024-04-27"]
+  const [queueEntries, setQueueEntries] = useState<QueueEntryData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadQueueEntries();
+  }, []);
+
+  const loadQueueEntries = async () => {
+    try {
+      setLoading(true);
+      const data = await notificationService.getQueueEntries();
+      setQueueEntries(data);
+    } catch (error) {
+      console.error('Error loading queue entries:', error);
+      toast.error('Erreur lors du chargement de la file d\'attente');
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  const filteredEntries = queueEntries.filter(entry => {
-    const matchesSearch = entry.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         entry.requestedDoctor.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesUrgency = urgencyFilter === "all" || entry.urgency === urgencyFilter;
-    return matchesSearch && matchesUrgency;
-  });
-
-  const handleAssignSlot = (patientName: string, entryId: string) => {
-    toast.success(`Recherche de créneaux disponibles pour ${patientName}`);
-    // Ici on ouvrirait un modal pour sélectionner un créneau
   };
 
-  const handleContactPatient = (patientName: string, method: "phone" | "email") => {
-    toast.success(`Contact ${method === "phone" ? "téléphonique" : "par email"} avec ${patientName}`);
+  const filteredEntries = queueEntries.filter(entry => {
+    const matchesUrgency = urgencyFilter === "all" || entry.urgency === urgencyFilter;
+    return matchesUrgency;
+  });
+
+  const handleAssignSlot = async (entryId: string) => {
+    try {
+      await notificationService.updateQueueEntryStatus(entryId, "assigned");
+      toast.success(`Créneau assigné avec succès`);
+      loadQueueEntries(); // Recharger les données
+    } catch (error) {
+      console.error('Error assigning slot:', error);
+      toast.error('Erreur lors de l\'assignation du créneau');
+    }
+  };
+
+  const handleContactPatient = (method: "phone" | "email") => {
+    toast.success(`Contact ${method === "phone" ? "téléphonique" : "par email"} initié`);
   };
 
   const getUrgencyColor = (urgency: string) => {
@@ -96,6 +70,16 @@ export const WaitingQueue = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Chargement de la file d'attente...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -109,7 +93,7 @@ export const WaitingQueue = () => {
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
-              placeholder="Rechercher un patient ou médecin..."
+              placeholder="Rechercher..."
               className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -135,7 +119,7 @@ export const WaitingQueue = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-medium">{entry.patientName}</h4>
+                      <h4 className="font-medium">Patient ID: {entry.patient_id}</h4>
                       <Badge variant={getUrgencyColor(entry.urgency)}>
                         {getUrgencyLabel(entry.urgency)}
                       </Badge>
@@ -143,14 +127,13 @@ export const WaitingQueue = () => {
                     
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p><span className="font-medium">Médecin souhaité:</span> {entry.requestedDoctor}</p>
-                        <p><span className="font-medium">Spécialité:</span> {entry.specialty}</p>
-                        <p><span className="font-medium">Demande du:</span> {entry.requestDate}</p>
+                        <p><span className="font-medium">Médecin souhaité:</span> {entry.requested_doctor_id || "N/A"}</p>
+                        <p><span className="font-medium">Spécialité:</span> {entry.specialty_id || "N/A"}</p>
+                        <p><span className="font-medium">Demande du:</span> {new Date(entry.created_at!).toLocaleDateString()}</p>
                       </div>
                       <div>
-                        <p><span className="font-medium">Téléphone:</span> {entry.patientPhone}</p>
-                        <p><span className="font-medium">Email:</span> {entry.patientEmail}</p>
-                        <p><span className="font-medium">Dates préférées:</span> {entry.preferredDates.join(", ")}</p>
+                        <p><span className="font-medium">Statut:</span> {entry.status}</p>
+                        <p><span className="font-medium">Dates préférées:</span> {entry.preferred_dates?.join(", ") || "N/A"}</p>
                       </div>
                     </div>
                     
@@ -162,15 +145,15 @@ export const WaitingQueue = () => {
                   </div>
                   
                   <div className="flex flex-col gap-2 ml-4">
-                    <Button size="sm" onClick={() => handleAssignSlot(entry.patientName, entry.id)}>
+                    <Button size="sm" onClick={() => handleAssignSlot(entry.id)}>
                       <Calendar className="h-3 w-3 mr-1" />
                       Assigner créneau
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleContactPatient(entry.patientName, "phone")}>
+                    <Button size="sm" variant="outline" onClick={() => handleContactPatient("phone")}>
                       <Phone className="h-3 w-3 mr-1" />
                       Appeler
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleContactPatient(entry.patientName, "email")}>
+                    <Button size="sm" variant="outline" onClick={() => handleContactPatient("email")}>
                       <Mail className="h-3 w-3 mr-1" />
                       Email
                     </Button>

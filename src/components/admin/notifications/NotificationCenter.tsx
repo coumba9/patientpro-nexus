@@ -6,90 +6,65 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bell, Phone, Mail, Calendar, Clock, UserX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
-
-interface Notification {
-  id: string;
-  type: "cancellation" | "reminder" | "queue";
-  title: string;
-  message: string;
-  appointmentId?: string;
-  patientName?: string;
-  doctorName?: string;
-  date: string;
-  time: string;
-  isRead: boolean;
-  priority: "high" | "medium" | "low";
-}
+import { notificationService, NotificationData } from "@/api/services/notification.service";
+import { useAuth } from "@/hooks/useAuth";
 
 export const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "cancellation",
-      title: "Rendez-vous annulé",
-      message: "Dr. Martin a annulé son rendez-vous avec Marie Dubois",
-      appointmentId: "apt-1",
-      patientName: "Marie Dubois",
-      doctorName: "Dr. Martin",
-      date: "2024-04-20",
-      time: "14:30",
-      isRead: false,
-      priority: "high"
-    },
-    {
-      id: "2",
-      type: "reminder",
-      title: "Rappel à effectuer",
-      message: "Rappeler Jean Dupont pour son RDV de demain",
-      appointmentId: "apt-2",
-      patientName: "Jean Dupont",
-      doctorName: "Dr. Leroy",
-      date: "2024-04-16",
-      time: "10:00",
-      isRead: false,
-      priority: "medium"
-    },
-    {
-      id: "3",
-      type: "queue",
-      title: "Patient en file d'attente",
-      message: "Sophie Bernard souhaite un RDV avec Dr. Martin",
-      patientName: "Sophie Bernard",
-      doctorName: "Dr. Martin",
-      date: "2024-04-18",
-      time: "16:00",
-      isRead: true,
-      priority: "low"
-    }
-  ]);
-
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [selectedTab, setSelectedTab] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.id) {
+      loadNotifications();
+    }
+  }, [user]);
+
+  const loadNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await notificationService.getNotificationsByUser(user!.id);
+      setNotifications(data);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      toast.error('Erreur lors du chargement des notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredNotifications = notifications.filter(notif => {
     if (selectedTab === "all") return true;
-    if (selectedTab === "unread") return !notif.isRead;
+    if (selectedTab === "unread") return !notif.is_read;
     return notif.type === selectedTab;
   });
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === id ? { ...notif, is_read: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      toast.error('Erreur lors du marquage de la notification');
+    }
   };
 
-  const handleCallPatient = (patientName: string, appointmentId: string) => {
-    toast.success(`Appel en cours vers ${patientName}`);
-    markAsRead(appointmentId);
+  const handleCallPatient = (notificationId: string) => {
+    toast.success(`Appel en cours`);
+    markAsRead(notificationId);
   };
 
-  const handleSendReminder = (patientName: string, type: "sms" | "email") => {
-    toast.success(`${type === "sms" ? "SMS" : "Email"} de rappel envoyé à ${patientName}`);
+  const handleSendReminder = (type: "sms" | "email") => {
+    toast.success(`${type === "sms" ? "SMS" : "Email"} de rappel envoyé`);
   };
 
-  const handleAssignFromQueue = (patientName: string) => {
-    toast.success(`Créneau proposé à ${patientName}`);
+  const handleAssignFromQueue = () => {
+    toast.success(`Créneau proposé`);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -110,6 +85,16 @@ export const NotificationCenter = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Chargement des notifications...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -125,7 +110,7 @@ export const NotificationCenter = () => {
               Toutes ({notifications.length})
             </TabsTrigger>
             <TabsTrigger value="unread">
-              Non lues ({notifications.filter(n => !n.isRead).length})
+              Non lues ({notifications.filter(n => !n.is_read).length})
             </TabsTrigger>
             <TabsTrigger value="cancellation">
               Annulations
@@ -141,7 +126,7 @@ export const NotificationCenter = () => {
           <TabsContent value={selectedTab} className="mt-4">
             <div className="space-y-4">
               {filteredNotifications.map((notification) => (
-                <Card key={notification.id} className={`border-l-4 ${!notification.isRead ? 'bg-blue-50' : ''}`}>
+                <Card key={notification.id} className={`border-l-4 ${!notification.is_read ? 'bg-blue-50' : ''}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
@@ -154,7 +139,7 @@ export const NotificationCenter = () => {
                             <Badge variant={getPriorityColor(notification.priority)}>
                               {notification.priority}
                             </Badge>
-                            {!notification.isRead && (
+                            {!notification.is_read && (
                               <Badge variant="default" className="bg-blue-500">
                                 Nouveau
                               </Badge>
@@ -164,18 +149,18 @@ export const NotificationCenter = () => {
                             {notification.message}
                           </p>
                           <div className="text-xs text-muted-foreground">
-                            {notification.date} à {notification.time}
+                            {new Date(notification.created_at!).toLocaleString()}
                           </div>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
                         {notification.type === "cancellation" && (
                           <>
-                            <Button size="sm" onClick={() => handleCallPatient(notification.patientName!, notification.id)}>
+                            <Button size="sm" onClick={() => handleCallPatient(notification.id)}>
                               <Phone className="h-3 w-3 mr-1" />
                               Appeler
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleAssignFromQueue(notification.patientName!)}>
+                            <Button size="sm" variant="outline" onClick={() => handleAssignFromQueue()}>
                               <Calendar className="h-3 w-3 mr-1" />
                               Réassigner
                             </Button>
@@ -183,23 +168,23 @@ export const NotificationCenter = () => {
                         )}
                         {notification.type === "reminder" && (
                           <>
-                            <Button size="sm" onClick={() => handleCallPatient(notification.patientName!, notification.id)}>
+                            <Button size="sm" onClick={() => handleCallPatient(notification.id)}>
                               <Phone className="h-3 w-3 mr-1" />
                               Appeler
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleSendReminder(notification.patientName!, "sms")}>
+                            <Button size="sm" variant="outline" onClick={() => handleSendReminder("sms")}>
                               <Mail className="h-3 w-3 mr-1" />
                               SMS
                             </Button>
                           </>
                         )}
                         {notification.type === "queue" && (
-                          <Button size="sm" onClick={() => handleAssignFromQueue(notification.patientName!)}>
+                          <Button size="sm" onClick={() => handleAssignFromQueue()}>
                             <UserCheck className="h-3 w-3 mr-1" />
                             Assigner
                           </Button>
                         )}
-                        {!notification.isRead && (
+                        {!notification.is_read && (
                           <Button size="sm" variant="ghost" onClick={() => markAsRead(notification.id)}>
                             Marquer lu
                           </Button>
