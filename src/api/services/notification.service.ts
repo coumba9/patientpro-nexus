@@ -187,56 +187,69 @@ class NotificationService {
   }
 
   async sendAppointmentCancellationNotification(appointmentId: string, cancelledBy: string): Promise<void> {
-    // Récupérer les détails du rendez-vous
-    const { data: appointment, error } = await supabase
-      .from('appointments')
-      .select(`
-        *,
-        doctor:doctor_id (profile:id (first_name, last_name)),
-        patient:patient_id (profile:id (first_name, last_name))
-      `)
-      .eq('id', appointmentId)
-      .single();
+    try {
+      // Récupérer les détails du rendez-vous
+      const { data: appointment, error: appointmentError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('id', appointmentId)
+        .single();
 
-    if (error || !appointment) {
-      console.error('Error fetching appointment for notification:', error);
-      return;
+      if (appointmentError || !appointment) {
+        console.error('Error fetching appointment for notification:', appointmentError);
+        return;
+      }
+
+      // Récupérer les informations du médecin
+      const { data: doctorProfile, error: doctorError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', appointment.doctor_id)
+        .single();
+
+      // Récupérer les informations du patient
+      const { data: patientProfile, error: patientError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', appointment.patient_id)
+        .single();
+
+      const notificationPromises = [];
+
+      if (cancelledBy !== appointment.doctor_id && doctorProfile && !doctorError) {
+        // Notifier le médecin
+        notificationPromises.push(
+          this.createNotification({
+            type: "cancellation",
+            title: "Rendez-vous annulé",
+            message: `Le patient ${patientProfile?.first_name || ''} ${patientProfile?.last_name || ''} a annulé son rendez-vous du ${appointment.date}`,
+            user_id: appointment.doctor_id,
+            appointment_id: appointmentId,
+            priority: "high",
+            is_read: false
+          })
+        );
+      }
+
+      if (cancelledBy !== appointment.patient_id && patientProfile && !patientError) {
+        // Notifier le patient
+        notificationPromises.push(
+          this.createNotification({
+            type: "cancellation",
+            title: "Rendez-vous annulé",
+            message: `Dr. ${doctorProfile?.first_name || ''} ${doctorProfile?.last_name || ''} a annulé votre rendez-vous du ${appointment.date}`,
+            user_id: appointment.patient_id,
+            appointment_id: appointmentId,
+            priority: "high",
+            is_read: false
+          })
+        );
+      }
+
+      await Promise.all(notificationPromises);
+    } catch (error) {
+      console.error('Error sending cancellation notifications:', error);
     }
-
-    // Créer des notifications pour les deux parties
-    const notificationPromises = [];
-
-    if (cancelledBy !== appointment.doctor_id) {
-      // Notifier le médecin
-      notificationPromises.push(
-        this.createNotification({
-          type: "cancellation",
-          title: "Rendez-vous annulé",
-          message: `Le patient ${appointment.patient.profile.first_name} ${appointment.patient.profile.last_name} a annulé son rendez-vous du ${appointment.date}`,
-          user_id: appointment.doctor_id,
-          appointment_id: appointmentId,
-          priority: "high",
-          is_read: false
-        })
-      );
-    }
-
-    if (cancelledBy !== appointment.patient_id) {
-      // Notifier le patient
-      notificationPromises.push(
-        this.createNotification({
-          type: "cancellation",
-          title: "Rendez-vous annulé",
-          message: `Dr. ${appointment.doctor.profile.first_name} ${appointment.doctor.profile.last_name} a annulé votre rendez-vous du ${appointment.date}`,
-          user_id: appointment.patient_id,
-          appointment_id: appointmentId,
-          priority: "high",
-          is_read: false
-        })
-      );
-    }
-
-    await Promise.all(notificationPromises);
   }
 }
 
