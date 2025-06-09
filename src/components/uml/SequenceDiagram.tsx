@@ -13,9 +13,9 @@ export const SequenceDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <h2 className="text-2xl font-bold mb-4">Diagramme de Séquence - Prise de Rendez-vous Complète</h2>
+      <h2 className="text-2xl font-bold mb-4">Diagramme de Séquence - Prise de Rendez-vous</h2>
       <p className="text-gray-600 dark:text-gray-300 mb-4">
-        Ce diagramme illustre la séquence complète d'actions lors de la prise d'un rendez-vous médical, incluant le paiement et les notifications.
+        Ce diagramme illustre le processus simplifié de prise d'un rendez-vous médical.
       </p>
       <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
         <div ref={diagramRef} className="mermaid">
@@ -24,55 +24,32 @@ export const SequenceDiagram = () => {
               participant P as Patient
               participant S as Système
               participant M as Médecin
-              participant Pay as Service Paiement
-              participant N as Service Notification
-              participant R as Service Rappel
+              participant Pay as Paiement
+              participant N as Notification
               
               P->>S: Se connecte
-              S->>P: Authentification réussie
+              S->>P: Interface utilisateur
               
-              P->>S: Recherche un médecin
-              S->>P: Liste des médecins disponibles
+              P->>S: Recherche médecin
+              S->>P: Liste des médecins
               
-              P->>S: Sélectionne un médecin
-              S->>P: Affiche disponibilités et tarifs
+              P->>S: Sélectionne médecin et créneau
+              S->>P: Affiche tarifs
               
-              P->>S: Choisit créneau et type consultation
-              P->>S: Remplit informations médicales
-              
-              P->>S: Sélectionne mode paiement
-              S->>Pay: Initie transaction
-              Pay->>P: Interface de paiement
-              P->>Pay: Effectue paiement
-              Pay->>S: Confirmation paiement
+              P->>S: Confirme réservation
+              S->>Pay: Traite paiement
+              Pay->>S: Confirmation
               
               S->>S: Crée rendez-vous
-              S->>S: Génère ticket RDV
-              
-              S->>N: Crée notification pour patient
-              S->>N: Crée notification pour médecin
-              N->>P: Envoie confirmation patient
-              N->>M: Notifie nouveau RDV
+              S->>N: Envoie notifications
+              N->>P: Confirmation patient
+              N->>M: Notification médecin
               
               M->>S: Confirme disponibilité
-              S->>N: Met à jour statut RDV
-              N->>P: Envoie confirmation finale
-              
-              S->>R: Programme rappels automatiques
-              
-              Note over R: 24h avant RDV
-              R->>N: Envoie rappel patient
-              N->>P: Notification rappel
-              
-              Note over R: 2h avant RDV
-              R->>N: Envoie rappel final
-              N->>P: SMS/Email rappel
-              N->>M: Rappel médecin
+              S->>N: Rappel automatique
               
               Note over P,M: Jour du RDV
-              P->>S: Présente ticket
-              M->>S: Confirme consultation
-              S->>N: Met à jour statut
+              P->>M: Consultation
           `}
         </div>
       </div>

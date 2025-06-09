@@ -13,68 +13,42 @@ export const AdminSequenceDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <h2 className="text-2xl font-bold mb-4">Diagramme de Séquence - Gestion Administrative</h2>
+      <h2 className="text-2xl font-bold mb-4">Diagramme de Séquence - Administration</h2>
       <p className="text-gray-600 dark:text-gray-300 mb-4">
-        Ce diagramme illustre les interactions administratives pour la gestion de la plateforme.
+        Ce diagramme illustre les principales tâches administratives de la plateforme.
       </p>
       <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
         <div ref={diagramRef} className="mermaid">
           {`
             sequenceDiagram
-              participant A as Administrateur
+              participant A as Admin
               participant S as Système
               participant DB as Base de Données
-              participant N as Service Notification
-              participant P as Service Paiement
               participant U as Utilisateurs
               
-              A->>S: Se connecte (admin)
-              S->>A: Dashboard administrateur
+              A->>S: Connexion admin
+              S->>A: Dashboard
               
-              Note over A,S: Gestion des utilisateurs
-              A->>S: Consulte liste utilisateurs
-              S->>DB: Requête utilisateurs
-              DB->>S: Données utilisateurs
-              S->>A: Affiche tableau utilisateurs
+              Note over A,S: Gestion Utilisateurs
+              A->>S: Consulte utilisateurs
+              S->>DB: Récupère données
+              DB->>S: Liste utilisateurs
+              S->>A: Affiche tableau
               
               A->>S: Modère utilisateur
               S->>DB: Met à jour statut
-              S->>N: Crée notification
-              N->>U: Informe utilisateur
+              S->>U: Notifie utilisateur
               
-              Note over A,S: Gestion des paiements
-              A->>S: Consulte transactions
-              S->>P: Récupère données paiements
-              P->>S: Historique transactions
-              S->>A: Analytics paiements
+              Note over A,S: Analytics
+              A->>S: Consulte métriques
+              S->>DB: Calcule statistiques
+              DB->>S: Données analytics
+              S->>A: Graphiques et rapports
               
-              A->>S: Configure tarifs
-              S->>DB: Met à jour tarification
-              S->>N: Notifie médecins concernés
-              
-              Note over A,S: Gestion du contenu
-              A->>S: Modifie contenu site
-              S->>DB: Sauvegarde modifications
-              S->>A: Confirmation publication
-              
-              A->>S: Gère FAQ
-              S->>DB: Met à jour FAQ
-              S->>A: Contenu mis à jour
-              
-              Note over A,S: Gestion des notifications
-              A->>S: Configure système rappels
-              S->>DB: Met à jour paramètres
-              S->>N: Reconfigure service
-              
-              A->>S: Gère file d'attente
-              S->>DB: Consulte patients en attente
-              DB->>S: Liste file d'attente
-              S->>A: Affiche patients en attente
-              
-              A->>S: Assigne créneaux
-              S->>DB: Crée rendez-vous
-              S->>N: Notifie patient et médecin
-              N->>U: Confirmation créneau assigné
+              Note over A,S: Gestion Contenu
+              A->>S: Modifie contenu
+              S->>DB: Sauvegarde
+              S->>A: Confirmation
           `}
         </div>
       </div>
