@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BookingForm } from "./BookingForm";
 import { DoctorInfo } from "./doctorTypes";
-import { initiatePayTechPayment } from "@/services/paytech";
+import { initiateAfricaPayment, getSupportedPaymentMethods } from "@/services/africaPayment";
 
 interface AppointmentHandlerProps {
   doctorName: string | null;
@@ -41,47 +41,53 @@ export const AppointmentHandler = ({
     localStorage.setItem("pendingAppointment", JSON.stringify(appointmentData));
     
     // Traitement en fonction du mode de paiement
-    if (data.paymentMethod === "paytech") {
-      // Intégration PayTech
+    const supportedMethods = getSupportedPaymentMethods().map(m => m.id);
+    
+    if (supportedMethods.includes(data.paymentMethod)) {
+      // Intégration Africa Payment SDK
       const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
       
       try {
-        toast.info("Préparation du paiement via PayTech...");
+        const methodName = getSupportedPaymentMethods().find(m => m.id === data.paymentMethod)?.name || "Africa Payment";
+        toast.info(`Préparation du paiement via ${methodName}...`);
         
-        const paymentResponse = await initiatePayTechPayment({
+        const paymentResponse = await initiateAfricaPayment({
           amount: fee,
           currency: "XOF",
           description: `Rendez-vous médical (${data.type}) avec ${doctorName || "Médecin"} - ${specialty || "Spécialité non spécifiée"}`,
-          success_url: `${window.location.origin}/payment-confirmation`,
-          cancel_url: `${window.location.origin}/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}`,
-          customField: {
+          customer: {
+            firstName: data.firstName || "Prénom",
+            lastName: data.lastName || "Nom",
+            phoneNumber: data.phone || "+221000000000",
+            email: data.email,
+          },
+          metadata: {
             appointmentId: `APPOINTMENT-${Date.now()}`,
             patientId: "PATIENT-001", // Dans une vraie application, ceci viendrait du profil utilisateur
             doctorName: doctorName || "Non spécifié",
             specialty: specialty || "Non spécifié",
             appointmentType: data.type,
             hasMedicalInfo: data.medicalInfo ? "true" : "false"
-          }
+          },
+          paymentMethod: data.paymentMethod
         });
         
-        if (paymentResponse.success && paymentResponse.redirect_url) {
-          toast.loading("Redirection vers la plateforme de paiement PayTech...");
-          
-          // En mode DEV, nous utilisons la simulation qui renvoie directement à success_url
-          // En mode production, nous redirigeons vers la page de paiement PayTech
-          if (paymentResponse.redirect_url.includes(window.location.origin)) {
-            // C'est une simulation, naviguer en interne
-            navigate("/payment-confirmation?token=" + paymentResponse.token);
+        if (paymentResponse.success) {
+          if (paymentResponse.redirectUrl) {
+            toast.loading(`Redirection vers la plateforme de paiement ${methodName}...`);
+            // Redirection externe vers le fournisseur de paiement
+            window.location.href = paymentResponse.redirectUrl;
           } else {
-            // Redirection externe
-            window.location.href = paymentResponse.redirect_url;
+            // Paiement traité directement (mode test)
+            toast.success("Paiement traité avec succès !");
+            navigate("/payment-confirmation?token=" + paymentResponse.token);
           }
         } else {
           toast.error(paymentResponse.message || "Erreur lors de l'initialisation du paiement");
         }
       } catch (error) {
-        console.error("PayTech error:", error);
-        toast.error("Une erreur est survenue lors de la connexion à PayTech");
+        console.error("Africa Payment error:", error);
+        toast.error("Une erreur est survenue lors de la connexion au service de paiement");
       }
       
       return;

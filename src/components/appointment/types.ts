@@ -8,6 +8,11 @@ export interface BookingFormValues {
   consultationType: "presentiel" | "teleconsultation";
   paymentMethod: string;
   medicalInfo?: MedicalInfoFormValues;
+  // Informations patient pour les paiements
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface BookingFormProps {
