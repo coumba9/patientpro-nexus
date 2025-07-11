@@ -43,7 +43,18 @@ export interface AfricaPaymentResponse {
 }
 
 // Configuration des fournisseurs de paiement
-const DEV_MODE = true; // Utiliser le fournisseur de test en développement
+const DEV_MODE = process.env.NODE_ENV !== 'production';
+
+// Fonction pour récupérer les secrets depuis Supabase Edge Functions
+const getApiSecrets = () => {
+  // En production, ces valeurs seront définies comme secrets Supabase
+  return {
+    masterKey: process.env.AFRICA_PAYMENT_MASTER_KEY || "test-master-key",
+    privateKey: process.env.AFRICA_PAYMENT_PRIVATE_KEY || "test-private-key",
+    publicKey: process.env.AFRICA_PAYMENT_PUBLIC_KEY || "test-public-key",
+    token: process.env.AFRICA_PAYMENT_TOKEN || "test-token",
+  };
+};
 
 // Initialisation du SDK avec le fournisseur approprié
 let africaPayments: AfricaPayments;
@@ -57,14 +68,15 @@ if (DEV_MODE) {
   );
 } else {
   // En production, utiliser Paydunya ou autre fournisseur réel
+  const secrets = getApiSecrets();
   africaPayments = new AfricaPayments(
     new PaydunyaPaymentProvider({
-      masterKey: "YOUR_PAYDUNYA_MASTER_KEY",
-      privateKey: "YOUR_PAYDUNYA_PRIVATE_KEY",
-      publicKey: "YOUR_PAYDUNYA_PUBLIC_KEY",
-      token: "YOUR_PAYDUNYA_TOKEN",
+      masterKey: secrets.masterKey,
+      privateKey: secrets.privateKey,
+      publicKey: secrets.publicKey,
+      token: secrets.token,
       mode: "live",
-      callbackUrl: "https://votre-domaine.com/webhook/paydunya",
+      callbackUrl: `${window.location.origin}/webhook/paydunya`,
       store: {
         name: "Cabinet Médical",
       },

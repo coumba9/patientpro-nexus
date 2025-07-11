@@ -12,6 +12,7 @@ import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import { PaymentSummary } from "./PaymentSummary";
 import { PendingPaymentNotification } from "./PendingPaymentNotification";
 import { MedicalInformationForm, MedicalInfoFormValues } from "./MedicalInformationForm";
+import { PatientInfoForm } from "./PatientInfoForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -133,6 +134,9 @@ export const BookingForm = ({
           />
 
           <TimeSelector form={form} selectedDate={selectedDate} />
+
+          {/* Patient Information */}
+          <PatientInfoForm form={form} />
 
           {/* Medical Information Card */}
           <Card>
