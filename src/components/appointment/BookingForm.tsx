@@ -36,6 +36,10 @@ export const BookingForm = ({
       type: "consultation",
       consultationType: "presentiel",
       paymentMethod: "card",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      email: "",
     },
   });
 

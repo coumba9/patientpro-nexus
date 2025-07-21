@@ -42,6 +42,7 @@ import Specialties from "./pages/admin/Specialties";
 import PaymentManagement from "./pages/admin/PaymentManagement";
 import ContentManagement from "./pages/admin/ContentManagement";
 import NotificationManagement from "./pages/admin/NotificationManagement";
+import { PaymentConfirmation } from "./pages/PaymentConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/find-doctor" element={<FindDoctor />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
+            <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/patient/*" element={<PatientDashboard />} />
