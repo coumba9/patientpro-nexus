@@ -15,9 +15,21 @@ export const PaymentConfirmation = () => {
   const token = searchParams.get("token");
   const method = searchParams.get("method");
 
+  // Ajouter des logs pour déboguer
+  useEffect(() => {
+    console.log("PaymentConfirmation component loaded");
+    console.log("Current URL:", window.location.href);
+    console.log("Token:", token);
+    console.log("Method:", method);
+    console.log("Search params:", searchParams.toString());
+  }, [token, method, searchParams]);
+
   useEffect(() => {
     const verifyPayment = async () => {
+      console.log("Starting payment verification...");
+      
       if (!token) {
+        console.error("No token found in URL");
         setStatus("error");
         toast.error("Token de paiement manquant");
         return;
@@ -26,16 +38,21 @@ export const PaymentConfirmation = () => {
       try {
         // Récupérer les données de rendez-vous en attente
         const pendingAppointment = localStorage.getItem("pendingAppointment");
+        console.log("Pending appointment data:", pendingAppointment);
+        
         if (pendingAppointment) {
           const data = JSON.parse(pendingAppointment);
           setAppointmentData(data);
+          console.log("Appointment data set:", data);
         }
 
         // Simuler la vérification du paiement
+        console.log("Simulating payment verification...");
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // En mode développement, considérer le paiement comme réussi
         // En production, faire un appel API pour vérifier le statut
+        console.log("Payment verification completed successfully");
         setStatus("success");
         
         // Enregistrer le rendez-vous comme confirmé
@@ -50,10 +67,12 @@ export const PaymentConfirmation = () => {
             confirmedAt: new Date().toISOString()
           });
           localStorage.setItem("confirmedAppointments", JSON.stringify(confirmedAppointments));
+          console.log("Appointment confirmed and saved");
         }
         
         // Nettoyer le localStorage
         localStorage.removeItem("pendingAppointment");
+        console.log("Pending appointment data cleaned");
         
         toast.success("Paiement confirmé avec succès !");
         
@@ -87,6 +106,9 @@ export const PaymentConfirmation = () => {
             <p className="text-gray-600">
               Nous vérifions votre paiement, veuillez patienter...
             </p>
+            <div className="mt-4 text-xs text-gray-500">
+              Token: {token || "Non disponible"}
+            </div>
           </CardContent>
         </Card>
       </div>
