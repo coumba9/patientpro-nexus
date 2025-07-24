@@ -43,7 +43,7 @@ import Specialties from "./pages/admin/Specialties";
 import PaymentManagement from "./pages/admin/PaymentManagement";
 import ContentManagement from "./pages/admin/ContentManagement";
 import NotificationManagement from "./pages/admin/NotificationManagement";
-import { PaymentConfirmation } from "./pages/PaymentConfirmation";
+import PaymentConfirmation from "./pages/PaymentConfirmation";
 
 const queryClient = new QueryClient();
 

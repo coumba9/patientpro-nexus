@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
-export const PaymentConfirmation = () => {
+const PaymentConfirmation = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -208,3 +208,5 @@ export const PaymentConfirmation = () => {
     </div>
   );
 };
+
+export default PaymentConfirmation;
