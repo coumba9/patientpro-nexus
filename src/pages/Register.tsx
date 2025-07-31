@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { RegisterForm } from "@/components/register/RegisterForm";
+import { useAuth } from "@/hooks/useAuth";
 
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isDoctor = searchParams.get("type") === "doctor";
+  const { register } = useAuth();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -27,7 +29,7 @@ const Register = () => {
     }
   }, [isDoctor]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       toast.error("Les mots de passe ne correspondent pas");
@@ -45,13 +47,36 @@ const Register = () => {
       }
     }
 
-    console.log("Register attempt:", formData);
-    if (isDoctor) {
-      toast.success("Votre demande d'inscription a été envoyée et sera examinée par notre équipe");
-    } else {
-      toast.success("Inscription réussie");
+    try {
+      const { register } = useAuth();
+      await register({
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        role: formData.userType,
+        specialty_id: formData.speciality || null,
+        license_number: formData.licenseNumber || null,
+        years_of_experience: formData.yearsOfExperience ? parseInt(formData.yearsOfExperience) : null
+      });
+      
+      if (isDoctor) {
+        toast.success("Votre demande d'inscription a été envoyée. Veuillez vérifier votre email pour confirmer votre compte.");
+      } else {
+        toast.success("Inscription réussie. Veuillez vérifier votre email pour confirmer votre compte.");
+      }
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      
+      if (error.message?.includes("User already registered")) {
+        toast.error("Un compte avec cette adresse email existe déjà");
+      } else if (error.message?.includes("Password should be at least 6 characters")) {
+        toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      } else {
+        toast.error("Erreur lors de l'inscription. Veuillez réessayer.");
+      }
     }
-    navigate("/login");
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -5,7 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { withAuth } from "@/hooks/useAuth";
+import { AuthProvider } from "@/hooks/useAuth";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FindDoctor from "./pages/FindDoctor";
@@ -54,11 +56,13 @@ const App = () => {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AuthGuard>
+              <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/find-doctor" element={<FindDoctor />} />
@@ -66,26 +70,111 @@ const App = () => {
               <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/patient/*" element={<PatientDashboard />} />
-              <Route path="/patient/prescriptions" element={<Prescriptions />} />
-              <Route path="/doctor" element={<DoctorDashboard />} />
-              <Route path="/doctor/messages" element={<DoctorMessages />} />
-              <Route path="/doctor/documents" element={<DoctorDocuments />} />
-              <Route path="/doctor/settings" element={<DoctorSettings />} />
-              <Route path="/doctor/patients" element={<DoctorPatients />} />
-              <Route path="/doctor/patients/:patientName" element={<PatientDetails />} />
-              <Route path="/doctor/teleconsultation" element={<DoctorTeleconsultation />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<Users />} />
-              <Route path="/admin/moderation" element={<AdminModeration />} />
-              <Route path="/admin/analytics" element={<AdminAnalytics />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="/admin/doctors" element={<DoctorManagement />} />
-              <Route path="/admin/patients" element={<PatientsPage />} />
-              <Route path="/admin/specialties" element={<Specialties />} />
-              <Route path="/admin/notifications" element={<NotificationManagement />} />
-              <Route path="/admin/payments" element={<PaymentManagement />} />
-              <Route path="/admin/content" element={<ContentManagement />} />
+              {/* Patient Routes */}
+              <Route path="/patient/*" element={
+                <ProtectedRoute requiredRole={['patient']}>
+                  <PatientDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/patient/prescriptions" element={
+                <ProtectedRoute requiredRole={['patient']}>
+                  <Prescriptions />
+                </ProtectedRoute>
+              } />
+              
+              {/* Doctor Routes */}
+              <Route path="/doctor" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/messages" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorMessages />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/documents" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorDocuments />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/settings" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/patients" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorPatients />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/patients/:patientName" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <PatientDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/teleconsultation" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorTeleconsultation />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <Users />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/moderation" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AdminModeration />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/analytics" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AdminAnalytics />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/settings" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <AdminSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/doctors" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <DoctorManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/patients" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <PatientsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/specialties" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <Specialties />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/notifications" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <NotificationManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/payments" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <PaymentManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/content" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <ContentManagement />
+                </ProtectedRoute>
+              } />
               <Route path="/about" element={<About />} />
               <Route path="/values" element={<Values />} />
               <Route path="/contact" element={<Contact />} />
@@ -100,10 +189,12 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+        </AuthGuard>
+      </TooltipProvider>
+    </ThemeProvider>
+  </AuthProvider>
+</QueryClientProvider>
   );
 };
 
-export default withAuth(App);
+export default App;

@@ -107,59 +107,33 @@ const generateTransactionId = (): string => {
 
 export const initiateAfricaPayment = async (config: AfricaPaymentConfig): Promise<AfricaPaymentResponse> => {
   try {
-    console.log("Initiation du paiement Africa Payment:", config);
+    console.log("Initiation du paiement sécurisé:", config);
 
-    // En mode développement, simuler le processus de paiement
-    if (DEV_MODE) {
-      const mockToken = generateTransactionId();
-      
-      // Simuler une redirection pour certaines méthodes
-      if (["wave", "orange-money", "mobile-money"].includes(config.paymentMethod)) {
-        return {
-          success: true,
-          redirectUrl: `${window.location.origin}/payment-confirmation?token=${mockToken}&method=${config.paymentMethod}`,
-          token: mockToken,
-        };
-      } else {
-        // Paiement direct pour les cartes
-        return {
-          success: true,
-          message: "Paiement traité avec succès (mode test)",
-          token: mockToken,
-        };
+    // Import Supabase client
+    const { supabase } = await import("@/integrations/supabase/client");
+
+    // Call secure payment edge function
+    const { data, error } = await supabase.functions.invoke('secure-payment', {
+      body: {
+        amount: config.amount,
+        currency: config.currency,
+        description: config.description,
+        customer: config.customer,
+        metadata: config.metadata,
+        paymentMethod: config.paymentMethod
       }
+    });
+
+    if (error) {
+      console.error("Erreur de paiement sécurisé:", error);
+      return {
+        success: false,
+        errors: [error.message || "Erreur de connexion au service de paiement"],
+        message: "Erreur lors de l'initiation du paiement",
+      };
     }
 
-    // En production, utiliser le SDK réel
-    const checkoutData = {
-      paymentMethod: mapPaymentMethod(config.paymentMethod),
-      amount: config.amount,
-      description: config.description,
-      currency: config.currency === "XOF" ? Currency.XOF : Currency.EUR,
-      customer: {
-        firstName: config.customer.firstName,
-        lastName: config.customer.lastName,
-        phoneNumber: config.customer.phoneNumber,
-        email: config.customer.email || `${config.customer.firstName.toLowerCase()}.${config.customer.lastName.toLowerCase()}@example.com`,
-      },
-      transactionId: generateTransactionId(),
-      metadata: config.metadata || {},
-    };
-
-    console.log("Données de checkout:", checkoutData);
-
-    // Note: Le SDK réel pourrait avoir une API différente
-    // Ceci est une simulation basée sur la documentation
-    const mockResult = {
-      redirectUrl: `https://payment-provider.com/checkout/${checkoutData.transactionId}`,
-      transactionId: checkoutData.transactionId,
-    };
-
-    return {
-      success: true,
-      redirectUrl: mockResult.redirectUrl,
-      token: mockResult.transactionId,
-    };
+    return data as AfricaPaymentResponse;
   } catch (error) {
     console.error("Erreur lors de l'initiation du paiement:", error);
     return {
