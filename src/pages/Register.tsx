@@ -48,7 +48,6 @@ const Register = () => {
     }
 
     try {
-      const { register } = useAuth();
       await register({
         email: formData.email,
         password: formData.password,

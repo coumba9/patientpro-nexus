@@ -26,7 +26,6 @@ export default function Login() {
     }
 
     try {
-      const { login } = useAuth();
       await login(email, password);
       toast.success("Connexion réussie");
       
