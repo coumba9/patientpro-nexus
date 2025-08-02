@@ -61,9 +61,9 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <AuthGuard>
-              <BrowserRouter>
-            <Routes>
+            <BrowserRouter>
+              <AuthGuard>
+                <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/find-doctor" element={<FindDoctor />} />
               <Route path="/book-appointment" element={<BookAppointment />} />
@@ -187,13 +187,13 @@ const App = () => {
               <Route path="/legal" element={<Legal />} />
               <Route path="/uml-diagrams" element={<UmlDiagrams />} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthGuard>
-      </TooltipProvider>
-    </ThemeProvider>
-  </AuthProvider>
-</QueryClientProvider>
+                </Routes>
+              </AuthGuard>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 
