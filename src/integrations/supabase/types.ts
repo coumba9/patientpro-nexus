@@ -99,29 +99,7 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "appointments_cancelled_by_fkey"
-            columns: ["cancelled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cancellation_policies: {
         Row: {
@@ -219,22 +197,7 @@ export type Database = {
           prescription?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "medical_records_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "medical_records_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       moderation_reports: {
         Row: {
@@ -273,29 +236,7 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "moderation_reports_reported_id_fkey"
-            columns: ["reported_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "moderation_reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "moderation_reports_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       notes: {
         Row: {
@@ -328,22 +269,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notes_doctor_id_fkey"
-            columns: ["doctor_id"]
-            isOneToOne: false
-            referencedRelation: "doctors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -418,15 +344,7 @@ export type Database = {
           medical_record_id?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "patients_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -592,10 +510,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_cancel_appointment: {
-        Args: { appointment_id: string; user_id: string; user_role: string }
-        Returns: boolean
-      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
