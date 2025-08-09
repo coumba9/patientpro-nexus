@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   User,
   Bell,
@@ -15,6 +17,7 @@ import {
   Phone,
   MapPin,
   Save,
+  Loader2,
 } from "lucide-react";
 
 interface UserSettings {
@@ -23,6 +26,10 @@ interface UserSettings {
   email: string;
   phone: string;
   address: string;
+  birthDate: string;
+  gender: string;
+  bloodType: string;
+  allergies: string;
   notifications: {
     email: boolean;
     sms: boolean;
@@ -31,12 +38,18 @@ interface UserSettings {
 }
 
 const Settings = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<UserSettings>({
-    firstName: "Jean",
-    lastName: "Dupont",
-    email: "jean.dupont@email.com",
-    phone: "06 12 34 56 78",
-    address: "123 rue de Paris, 75001 Paris",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    birthDate: "",
+    gender: "",
+    bloodType: "",
+    allergies: "",
     notifications: {
       email: true,
       sms: true,
@@ -44,8 +57,100 @@ const Settings = () => {
     },
   });
 
-  const handleSaveSettings = () => {
-    toast.success("Paramètres enregistrés avec succès");
+  // Charger les données utilisateur
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        
+        // Récupérer les données du profil
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Erreur lors du chargement du profil:', profileError);
+          toast.error('Erreur lors du chargement du profil');
+          return;
+        }
+
+        // Récupérer les données patient
+        const { data: patient, error: patientError } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (patientError && patientError.code !== 'PGRST116') {
+          console.error('Erreur lors du chargement des données patient:', patientError);
+        }
+
+        // Mettre à jour les settings avec les vraies données
+        setSettings({
+          firstName: profile?.first_name || "",
+          lastName: profile?.last_name || "",
+          email: profile?.email || user.email || "",
+          phone: "", // À ajouter dans le profil si nécessaire
+          address: "", // À ajouter dans le profil si nécessaire
+          birthDate: patient?.birth_date || "",
+          gender: patient?.gender || "",
+          bloodType: patient?.blood_type || "",
+          allergies: patient?.allergies ? patient.allergies.join(", ") : "",
+          notifications: {
+            email: true,
+            sms: true,
+            reminders: true,
+          },
+        });
+      } catch (error) {
+        console.error('Erreur:', error);
+        toast.error('Erreur lors du chargement des données');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [user]);
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    
+    try {
+      // Mettre à jour le profil
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: settings.firstName,
+          last_name: settings.lastName,
+          email: settings.email,
+        })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
+
+      // Mettre à jour les données patient
+      const { error: patientError } = await supabase
+        .from('patients')
+        .upsert({
+          id: user.id,
+          birth_date: settings.birthDate || null,
+          gender: settings.gender || null,
+          blood_type: settings.bloodType || null,
+          allergies: settings.allergies ? settings.allergies.split(", ").filter(a => a.trim()) : null,
+        });
+
+      if (patientError) throw patientError;
+
+      toast.success("Paramètres enregistrés avec succès");
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      toast.error("Erreur lors de la sauvegarde");
+    }
   };
 
   const handleNotificationChange = (key: keyof typeof settings.notifications) => {
@@ -57,6 +162,17 @@ const Settings = () => {
       },
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Chargement...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -118,6 +234,50 @@ const Settings = () => {
                 value={settings.phone}
                 onChange={(e) =>
                   setSettings({ ...settings, phone: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">Date de naissance</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={settings.birthDate}
+                onChange={(e) =>
+                  setSettings({ ...settings, birthDate: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Sexe</Label>
+              <Input
+                id="gender"
+                value={settings.gender}
+                placeholder="Homme/Femme/Autre"
+                onChange={(e) =>
+                  setSettings({ ...settings, gender: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bloodType">Groupe sanguin</Label>
+              <Input
+                id="bloodType"
+                value={settings.bloodType}
+                placeholder="A+, B-, O+, etc."
+                onChange={(e) =>
+                  setSettings({ ...settings, bloodType: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="allergies">Allergies</Label>
+              <Input
+                id="allergies"
+                value={settings.allergies}
+                placeholder="Séparez les allergies par des virgules"
+                onChange={(e) =>
+                  setSettings({ ...settings, allergies: e.target.value })
                 }
               />
             </div>

@@ -28,19 +28,30 @@ class CancellationService extends BaseService<CancellationPolicy> {
     userId: string, 
     userRole: 'doctor' | 'patient'
   ): Promise<boolean> {
-    const { data, error } = await supabase
-      .rpc('can_cancel_appointment', {
-        appointment_id: appointmentId,
-        user_id: userId,
-        user_role: userRole
-      });
-    
-    if (error) {
+    // Logique temporaire - à remplacer par une vraie fonction RPC plus tard
+    try {
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .select('date, time, doctor_id, patient_id')
+        .eq('id', appointmentId)
+        .single();
+      
+      if (error) throw error;
+      
+      // Vérifier si l'utilisateur est impliqué dans le rendez-vous
+      const isInvolved = appointment.doctor_id === userId || appointment.patient_id === userId;
+      if (!isInvolved) return false;
+      
+      // Règle simple : permettre l'annulation jusqu'à 24h avant
+      const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+      const now = new Date();
+      const hoursUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+      
+      return hoursUntilAppointment >= 24;
+    } catch (error) {
       console.error('Error checking cancellation permission:', error);
-      throw error;
+      return false;
     }
-    
-    return data as boolean;
   }
 
   async updateCancellationPolicy(
