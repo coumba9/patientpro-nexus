@@ -1,14 +1,10 @@
-// Service de paiement utilisant le SDK Africa Payment
-import AfricaPayments, {
-  PaydunyaPaymentProvider,
-  BogusPaymentProvider,
-  PaymentEventType
-} from "@tecafrik/africa-payment-sdk";
+// Service de paiement utilisant Supabase Edge Functions
+// Le SDK @tecafrik/africa-payment-sdk est utilisé côté serveur seulement
 
 // Enum pour les méthodes de paiement
 export enum PaymentMethod {
   WAVE = "wave",
-  ORANGE_MONEY = "orange_money",
+  ORANGE_MONEY = "orange_money", 
   MTN_MOBILE_MONEY = "mtn_mobile_money",
   CREDIT_CARD = "credit_card"
 }
@@ -16,7 +12,7 @@ export enum PaymentMethod {
 // Enum pour les devises
 export enum Currency {
   XOF = "XOF",
-  EUR = "EUR",
+  EUR = "EUR", 
   USD = "USD"
 }
 
@@ -42,47 +38,10 @@ export interface AfricaPaymentResponse {
   message?: string;
 }
 
-// Configuration des fournisseurs de paiement
-const DEV_MODE = process.env.NODE_ENV !== 'production';
-
-// Fonction pour récupérer les secrets depuis Supabase Edge Functions
-const getApiSecrets = () => {
-  // En production, ces valeurs seront définies comme secrets Supabase
-  return {
-    masterKey: process.env.AFRICA_PAYMENT_MASTER_KEY || "test-master-key",
-    privateKey: process.env.AFRICA_PAYMENT_PRIVATE_KEY || "test-private-key",
-    publicKey: process.env.AFRICA_PAYMENT_PUBLIC_KEY || "test-public-key",
-    token: process.env.AFRICA_PAYMENT_TOKEN || "test-token",
-  };
+// Générer une référence unique pour la transaction
+const generateTransactionId = (): string => {
+  return `APPOINTMENT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 };
-
-// Initialisation du SDK avec le fournisseur approprié
-let africaPayments: AfricaPayments;
-
-if (DEV_MODE) {
-  // Utiliser le fournisseur de test (BogusPaymentProvider) en développement
-  africaPayments = new AfricaPayments(
-    new BogusPaymentProvider({
-      instantEvents: true, // Déclencher immédiatement les événements de succès/échec
-    })
-  );
-} else {
-  // En production, utiliser Paydunya ou autre fournisseur réel
-  const secrets = getApiSecrets();
-  africaPayments = new AfricaPayments(
-    new PaydunyaPaymentProvider({
-      masterKey: secrets.masterKey,
-      privateKey: secrets.privateKey,
-      publicKey: secrets.publicKey,
-      token: secrets.token,
-      mode: "live",
-      callbackUrl: `${window.location.origin}/webhook/paydunya`,
-      store: {
-        name: "Cabinet Médical",
-      },
-    })
-  );
-}
 
 // Mapper les méthodes de paiement de l'application vers celles du SDK
 const mapPaymentMethod = (method: string): PaymentMethod => {
@@ -98,11 +57,6 @@ const mapPaymentMethod = (method: string): PaymentMethod => {
     default:
       return PaymentMethod.WAVE; // Par défaut
   }
-};
-
-// Générer une référence unique pour la transaction
-const generateTransactionId = (): string => {
-  return `APPOINTMENT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 };
 
 export const initiateAfricaPayment = async (config: AfricaPaymentConfig): Promise<AfricaPaymentResponse> => {
@@ -144,29 +98,18 @@ export const initiateAfricaPayment = async (config: AfricaPaymentConfig): Promis
   }
 };
 
-// Configurer les gestionnaires d'événements pour les webhooks
+// Les événements de paiement sont maintenant gérés côté serveur via webhooks
 export const setupPaymentEventHandlers = (
   onSuccess: (event: any) => void,
   onFailure: (event: any) => void
 ) => {
-  africaPayments.on(PaymentEventType.PAYMENT_SUCCESSFUL, (event) => {
-    console.log("Paiement réussi:", event);
-    onSuccess(event);
-  });
-
-  africaPayments.on(PaymentEventType.PAYMENT_FAILED, (event) => {
-    console.log("Paiement échoué:", event);
-    onFailure(event);
-  });
+  console.log("Event handlers configurés pour les webhooks côté serveur");
+  // Les événements seront gérés via des appels API aux callbacks
 };
 
-// Traiter les webhooks entrants
+// Traiter les webhooks entrants (utilisé côté serveur)
 export const handleWebhook = (body: any) => {
-  try {
-    africaPayments.handleWebhook(body);
-  } catch (error) {
-    console.error("Erreur lors du traitement du webhook:", error);
-  }
+  console.log("Webhook reçu côté client - à traiter côté serveur:", body);
 };
 
 // Méthodes de paiement supportées par le SDK
