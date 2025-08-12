@@ -20,65 +20,45 @@ interface PayTechResponse {
   message?: string;
 }
 
-// En production, ces valeurs seraient stockées dans des variables d'environnement
-// ou récupérées depuis un backend sécurisé
-const PAYTECH_API_KEY = "YOUR_PAYTECH_API_KEY";
-const PAYTECH_API_SECRET = "YOUR_PAYTECH_API_SECRET";
-
 // Option pour simuler un paiement réussi en mode développement
 const DEV_MODE = true;
 
 export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Promise<PayTechResponse> => {
   try {
-    // Générer une référence unique si non fournie
-    if (!config.reference) {
-      config.reference = `APPOINTMENT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    }
+    // Import supabase client
+    const { supabase } = await import("@/integrations/supabase/client");
     
-    // Mode développement: simuler une redirection vers PayTech sans appeler l'API réelle
-    if (DEV_MODE) {
-      console.log("DEV MODE: Simulation de paiement PayTech", config);
-      
-      // Sauvegarder le token dans localStorage pour la simulation
-      const mockToken = `mock-${Date.now()}`;
-      localStorage.setItem("paytech_last_token", mockToken);
-      
-      // En mode dev, rediriger directement vers la page de succès avec le token
-      const successUrl = new URL(config.success_url, window.location.origin);
-      successUrl.searchParams.append("token", mockToken);
-      
-      // Simuler un délai de traitement puis rediriger
-      setTimeout(() => {
-        window.location.href = successUrl.toString();
-      }, 1000);
-      
+    // Get current session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error("Authentication required");
+    }
+
+    // Call secure edge function instead of direct API
+    const { data, error } = await supabase.functions.invoke('secure-paytech', {
+      body: config,
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (error) {
+      console.error("PayTech edge function error:", error);
       return {
-        success: true,
-        token: mockToken,
-        redirect_url: successUrl.toString()
+        success: false,
+        errors: ["Erreur de connexion au service de paiement"],
+        message: error.message
       };
     }
-    
-    // En production, appeler l'API PayTech
-    // Attention: ne jamais exposer les clés API dans le frontend en production
-    // Cette logique devrait être gérée par un service backend sécurisé
-    const response = await fetch("https://paytech.sn/api/payment/request-payment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": PAYTECH_API_KEY,
-        "X-API-SECRET": PAYTECH_API_SECRET
-      },
-      body: JSON.stringify(config)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`PayTech API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
+
     if (data.success) {
+      // For development mode, handle redirect directly
+      if (DEV_MODE && data.redirect_url) {
+        setTimeout(() => {
+          window.location.href = data.redirect_url;
+        }, 1000);
+      }
+      
       return {
         success: true,
         token: data.token,
@@ -118,21 +98,27 @@ export const checkPaymentStatus = async (token: string): Promise<boolean> => {
       return false;
     }
     
-    // En production, appeler l'API de vérification de PayTech
-    const response = await fetch(`https://paytech.sn/api/payment/check-status/${token}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": PAYTECH_API_KEY,
-        "X-API-SECRET": PAYTECH_API_SECRET
-      }
-    });
+    // En production, utiliser l'edge function sécurisée pour vérifier le statut
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (!response.ok) {
-      throw new Error(`PayTech status check error: ${response.status}`);
+    if (!session) {
+      console.error("Authentication required for payment status check");
+      return false;
     }
-    
-    const data = await response.json();
+
+    const { data, error } = await supabase.functions.invoke('secure-paytech-status', {
+      body: { token },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (error) {
+      console.error("Payment status check error:", error);
+      return false;
+    }
+
     return data.success && data.status === "completed";
   } catch (error) {
     console.error("Error checking payment status:", error);
@@ -153,21 +139,27 @@ export const getPaymentDetails = async (token: string): Promise<any> => {
       };
     }
     
-    // En production, appeler l'API PayTech
-    const response = await fetch(`https://paytech.sn/api/payment/details/${token}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": PAYTECH_API_KEY,
-        "X-API-SECRET": PAYTECH_API_SECRET
-      }
-    });
+    // En production, utiliser l'edge function sécurisée
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (!response.ok) {
-      throw new Error(`PayTech details error: ${response.status}`);
+    if (!session) {
+      throw new Error("Authentication required for payment details");
     }
-    
-    return await response.json();
+
+    const { data, error } = await supabase.functions.invoke('secure-paytech-details', {
+      body: { token },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (error) {
+      console.error("Payment details error:", error);
+      throw error;
+    }
+
+    return data;
   } catch (error) {
     console.error("Error getting payment details:", error);
     throw error;
