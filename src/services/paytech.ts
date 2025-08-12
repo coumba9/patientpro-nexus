@@ -43,9 +43,14 @@ export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Prom
       const mockToken = `mock-${Date.now()}`;
       localStorage.setItem("paytech_last_token", mockToken);
       
-      // Construire l'URL de retour avec le token
-      const successUrl = new URL(config.success_url);
+      // En mode dev, rediriger directement vers la page de succès avec le token
+      const successUrl = new URL(config.success_url, window.location.origin);
       successUrl.searchParams.append("token", mockToken);
+      
+      // Simuler un délai de traitement puis rediriger
+      setTimeout(() => {
+        window.location.href = successUrl.toString();
+      }, 1000);
       
       return {
         success: true,
