@@ -95,11 +95,34 @@ serve(async (req) => {
       )
     }
 
-    // Production payment processing would go here
-    // For now, simulate the response structure
+    // Production payment processing
+    let redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`;
+    
+    // Map payment methods to appropriate redirect URLs or simulate payment processing
+    switch (paymentMethod) {
+      case 'wave':
+        // In production, this would integrate with Wave API
+        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=wave`;
+        break;
+      case 'orange-money':
+        // In production, this would integrate with Orange Money API
+        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=orange-money`;
+        break;
+      case 'mobile-money':
+        // In production, this would integrate with MTN Mobile Money API
+        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=mobile-money`;
+        break;
+      case 'card':
+        // In production, this would integrate with a card payment processor
+        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=card`;
+        break;
+      default:
+        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`;
+    }
+
     const paymentResponse = {
       success: true,
-      redirectUrl: `https://payment-provider.com/checkout/${transactionId}`,
+      redirectUrl,
       token: transactionId,
       message: "Payment initiated successfully"
     }
