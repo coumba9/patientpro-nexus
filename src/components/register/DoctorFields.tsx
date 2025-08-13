@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DoctorFieldsProps {
   formData: {
@@ -19,24 +21,38 @@ interface DoctorFieldsProps {
   handleSelectChange?: (name: string, value: string) => void;
 }
 
-// Liste des spécialités médicales
-const SPECIALITIES = [
-  "Médecine générale",
-  "Cardiologie",
-  "Dermatologie",
-  "Gastro-entérologie",
-  "Gynécologie",
-  "Neurologie",
-  "Ophtalmologie",
-  "ORL",
-  "Pédiatrie",
-  "Psychiatrie",
-  "Radiologie",
-  "Rhumatologie",
-  "Urologie"
-];
+interface Specialty {
+  id: string;
+  name: string;
+}
 
 export const DoctorFields = ({ formData, handleChange, handleSelectChange }: DoctorFieldsProps) => {
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('specialties')
+          .select('id, name')
+          .eq('status', 'active')
+          .order('name');
+        
+        if (error) {
+          console.error('Error fetching specialties:', error);
+        } else {
+          setSpecialties(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching specialties:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSpecialties();
+  }, []);
   return (
     <>
       <div>
@@ -45,14 +61,15 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
           name="speciality"
           value={formData.speciality || ""}
           onValueChange={(value) => handleSelectChange && handleSelectChange("speciality", value)}
+          disabled={loading}
         >
           <SelectTrigger id="speciality">
-            <SelectValue placeholder="Sélectionnez votre spécialité" />
+            <SelectValue placeholder={loading ? "Chargement..." : "Sélectionnez votre spécialité"} />
           </SelectTrigger>
           <SelectContent>
-            {SPECIALITIES.map((speciality) => (
-              <SelectItem key={speciality} value={speciality}>
-                {speciality}
+            {specialties.map((specialty) => (
+              <SelectItem key={specialty.id} value={specialty.id}>
+                {specialty.name}
               </SelectItem>
             ))}
           </SelectContent>
