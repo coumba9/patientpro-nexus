@@ -8,6 +8,7 @@ import { ConsultationAnalytics } from "@/components/doctor/ConsultationAnalytics
 import { Home, ArrowLeft, UserCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Appointment {
   id: number;
@@ -56,28 +57,19 @@ const appointments: Appointment[] = [
 const DoctorDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, userRole, loading } = useAuth();
   const isHomePage = location.pathname === "/doctor";
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>(appointments);
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    const userRole = localStorage.getItem("userRole");
-    
-    setIsLoggedIn(loginStatus);
-    
-    if (!loginStatus || userRole !== "doctor") {
-      toast.error("Veuillez vous connecter en tant que médecin");
-      navigate("/login");
+    if (!loading) {
+      if (!user || userRole !== "doctor") {
+        toast.error("Veuillez vous connecter en tant que médecin");
+        navigate("/login");
+      }
     }
-    
-    const email = localStorage.getItem("userEmail");
-    if (email) {
-      setUserEmail(email);
-    }
-  }, [navigate]);
+  }, [user, userRole, loading, navigate]);
 
   const handleConfirm = (appointmentId: number) => {
     setUpcomingAppointments(prev =>
@@ -101,8 +93,8 @@ const DoctorDashboard = () => {
     toast.success("Rendez-vous annulé");
   };
 
-  if (!isLoggedIn) {
-    return null;
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Chargement...</div>;
   }
 
   return (
@@ -120,7 +112,7 @@ const DoctorDashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                {userEmail ? `Connecté avec: ${userEmail}` : "Vous êtes connecté en tant que médecin"}
+                {user?.email ? `Connecté avec: ${user.email}` : "Vous êtes connecté en tant que médecin"}
               </p>
               <div className="flex gap-4 mt-4">
                 {!isHomePage && (

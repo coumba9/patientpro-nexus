@@ -2,39 +2,16 @@
 import { Button } from "@/components/ui/button";
 import { LogIn, Search, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Hero = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Utilisation d'une fonction pour vérifier l'état de connexion
-    const checkLoginStatus = () => {
-      const status = localStorage.getItem("isLoggedIn") === "true";
-      const role = localStorage.getItem("userRole");
-      console.log("Hero component - checking login status:", status, "role:", role);
-      setIsLoggedIn(status);
-      setUserRole(role);
-    };
-    
-    // Vérifier au chargement
-    checkLoginStatus();
-    
-    // Configurer un événement pour détecter les changements de localStorage
-    window.addEventListener('storage', checkLoginStatus);
-    
-    // Nettoyage
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
-  }, []);
+  const { user, userRole, loading } = useAuth();
 
   const handleBookAppointment = () => {
     // Si connecté en tant que médecin, afficher un message d'erreur
-    if (isLoggedIn && userRole === "doctor") {
+    if (user && userRole === "doctor") {
       navigate("/doctor");
       return;
     }
@@ -58,7 +35,7 @@ export const Hero = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6"
             >
-              {isLoggedIn && userRole === "doctor" 
+              {user && userRole === "doctor" 
                 ? "Bienvenue dans votre espace médecin" 
                 : "Votre santé, notre priorité"}
             </motion.h1>
@@ -68,7 +45,7 @@ export const Hero = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-lg md:text-xl text-gray-600 mb-8"
             >
-              {isLoggedIn && userRole === "doctor"
+              {user && userRole === "doctor"
                 ? "Gérez vos rendez-vous, vos patients et vos consultations en toute simplicité"
                 : "Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et 7j/7 sur MediConnect"}
             </motion.p>
@@ -78,14 +55,14 @@ export const Hero = () => {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              {!(isLoggedIn && userRole === "doctor") && (
+              {!(user && userRole === "doctor") && (
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all" onClick={handleBookAppointment}>
                   <Search className="mr-2 h-5 w-5" />
                   Trouver un médecin
                 </Button>
               )}
               
-              {!isLoggedIn && (
+              {!user && (
                 <>
                   <Link to="/register" className="w-full sm:w-auto">
                     <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 hover:bg-gray-50">
@@ -102,7 +79,7 @@ export const Hero = () => {
                 </>
               )}
               
-              {isLoggedIn && userRole === "patient" && (
+              {user && userRole === "patient" && (
                 <Link to="/patient" className="w-full sm:w-auto">
                   <Button size="lg" variant="secondary" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
                     Mon espace patient
@@ -110,7 +87,7 @@ export const Hero = () => {
                 </Link>
               )}
 
-              {isLoggedIn && userRole === "doctor" && (
+              {user && userRole === "doctor" && (
                 <Link to="/doctor" className="w-full sm:w-auto">
                   <Button size="lg" variant="secondary" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
                     Mon espace médecin
@@ -118,7 +95,7 @@ export const Hero = () => {
                 </Link>
               )}
             </motion.div>
-            {!(isLoggedIn && userRole === "doctor") && (
+            {!(user && userRole === "doctor") && (
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

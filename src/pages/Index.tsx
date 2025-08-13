@@ -10,35 +10,16 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNavigation } from "@/components/MobileNavigation";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const status = localStorage.getItem("isLoggedIn") === "true";
-      const role = localStorage.getItem("userRole");
-      console.log("Index component - checking login status:", status, "role:", role);
-      setIsLoggedIn(status);
-      setUserRole(role);
-    };
-    
-    checkLoginStatus();
-    
-    window.addEventListener('storage', checkLoginStatus);
-    
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
-  }, []);
+  const { user, userRole, loading, logout } = useAuth();
 
   const handleGetStarted = () => {
-    if (isLoggedIn) {
+    if (user) {
       if (userRole === "doctor") {
         navigate("/doctor");
       } else if (userRole === "patient") {
@@ -63,7 +44,7 @@ const Index = () => {
       <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-50 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 transition-all duration-200">
         <div className="container flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <MobileNavigation isLoggedIn={isLoggedIn} userRole={userRole} />
+            <MobileNavigation isLoggedIn={!!user} userRole={userRole} />
             <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">MediConnect</Link>
           </div>
           
@@ -78,7 +59,7 @@ const Index = () => {
             
             <ThemeToggle />
             
-            {!isLoggedIn ? (
+            {!user ? (
               <>
                 <Link to="/register">
                   <Button variant="outline" className="gap-2">
@@ -157,7 +138,7 @@ const Index = () => {
           </div>
         </motion.div>
 
-        {!(isLoggedIn && userRole === "doctor") && <HowItWorks />}
+        {!(user && userRole === "doctor") && <HowItWorks />}
         
         <motion.section 
           initial="hidden"
@@ -169,12 +150,12 @@ const Index = () => {
         >
           <div className="container relative z-10 text-center text-white">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {isLoggedIn 
+              {user 
                 ? "Gérez votre santé avec MediConnect" 
                 : "Prêt à prendre soin de votre santé ?"}
             </h2>
             <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-              {isLoggedIn && userRole === "doctor"
+              {user && userRole === "doctor"
                 ? "Optimisez votre pratique médicale et suivez vos patients"
                 : "Rejoignez les milliers de patients qui font confiance à MediConnect pour leur santé."}
             </p>
@@ -184,7 +165,7 @@ const Index = () => {
               className="text-primary hover:text-primary/90 dark:bg-gray-200 shadow-lg hover:shadow-xl transition-all"
               onClick={handleGetStarted}
             >
-              {isLoggedIn ? "Accéder à mon espace" : "Commencer maintenant"}
+              {user ? "Accéder à mon espace" : "Commencer maintenant"}
             </Button>
           </div>
           
@@ -195,7 +176,7 @@ const Index = () => {
 
         <Features />
         <Statistics />
-        {!(isLoggedIn && userRole === "doctor") && <Testimonials />}
+        {!(user && userRole === "doctor") && <Testimonials />}
       </main>
       <Footer />
     </div>
