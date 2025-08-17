@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Calendar,
   MessageCircle,
@@ -17,12 +18,17 @@ import {
 
 export const PatientSidebar = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
-    toast.success("Déconnexion réussie");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Déconnexion réussie");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Erreur lors de la déconnexion");
+    }
   };
 
   return (
