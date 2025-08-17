@@ -1,7 +1,7 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Routes, Route, useLocation, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { PatientSidebar } from "@/components/patient/PatientSidebar";
 import { NavigationHeader } from "@/components/patient/NavigationHeader";
 import { AppointmentsPage } from "@/components/patient/AppointmentsPage";
@@ -19,30 +19,20 @@ import { LogOut, Menu } from "lucide-react";
 const PatientDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
   const isHomePage = location.pathname === "/patient";
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loginStatus);
-    
-    if (!loginStatus) {
-      toast.error("Veuillez vous connecter");
-      navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Déconnexion réussie");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Erreur lors de la déconnexion");
     }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
-    toast.success("Déconnexion réussie");
-    navigate("/login");
   };
-
-  if (!isLoggedIn) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
