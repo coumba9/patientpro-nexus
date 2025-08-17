@@ -270,18 +270,35 @@ const Teleconsultation = () => {
                         Terminer la session
                       </Button>
                     </div>
-                    <div className="aspect-video bg-black rounded-lg relative">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <iframe 
-                          src={currentConsultation.meetLink || "https://meet.google.com/embed"} 
-                          allow="camera; microphone; fullscreen; display-capture; autoplay" 
-                          className="w-full h-full rounded-lg"
-                          title="Téléconsultation"
-                        ></iframe>
-                      </div>
-                      {!currentConsultation.meetLink && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-50 text-white">
-                          <p className="mb-4">Aucun lien de visioconférence n'a été créé</p>
+                    <div className="aspect-video bg-gray-100 rounded-lg relative border-2 border-dashed border-gray-300">
+                      {currentConsultation.meetLink ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600 p-6">
+                          <VideoIcon className="h-16 w-16 text-gray-400 mb-4" />
+                          <p className="text-lg font-semibold mb-2 text-center">Session de téléconsultation</p>
+                          <p className="text-sm text-center mb-4">
+                            Pour des raisons de sécurité, les plateformes de visioconférence ne peuvent pas être intégrées directement.
+                          </p>
+                          <div className="flex flex-col gap-3 w-full max-w-md">
+                            <Button 
+                              onClick={() => window.open(currentConsultation.meetLink, '_blank')}
+                              className="w-full"
+                            >
+                              <LinkIcon className="h-4 w-4 mr-2" />
+                              Ouvrir la visioconférence
+                            </Button>
+                            <Button 
+                              variant="outline"
+                              onClick={() => copyToClipboard(currentConsultation.meetLink)}
+                              className="w-full"
+                            >
+                              Copier le lien
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
+                          <VideoIcon className="h-16 w-16 text-gray-400 mb-4" />
+                          <p className="text-lg font-semibold mb-4">Aucun lien de visioconférence</p>
                           <Button 
                             onClick={() => {
                               const newLink = createMeetLink();
