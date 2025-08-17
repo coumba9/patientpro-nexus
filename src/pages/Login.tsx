@@ -116,9 +116,9 @@ export default function Login() {
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-2">
             <div className="text-sm text-gray-500">
-              <a href="#" className="text-primary hover:underline">
+              <Link to="/reset-password" className="text-primary hover:underline">
                 Mot de passe oublié ?
-              </a>
+              </Link>
             </div>
             <div className="text-sm">
               Pas encore de compte ?{" "}

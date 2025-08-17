@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import FindDoctor from "./pages/FindDoctor";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
 import PatientDashboard from "./pages/patient/Dashboard";
 import DoctorDashboard from "./pages/doctor/Dashboard";
 import DoctorMessages from "./pages/doctor/Messages";
@@ -70,6 +71,7 @@ const App = () => {
               <Route path="/payment-confirmation" element={<PaymentConfirmation />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               {/* Patient Routes */}
               <Route path="/patient/*" element={
                 <ProtectedRoute requiredRole={['patient']}>
