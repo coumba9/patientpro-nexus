@@ -1,39 +1,21 @@
 
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DoctorInfoCard } from "@/components/appointment/DoctorInfoCard";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { NavigationButtons } from "@/components/appointment/NavigationButtons";
 import { AppointmentBookingCard } from "@/components/appointment/AppointmentBookingCard";
 import { getDefaultDoctorInfo } from "@/components/appointment/doctorTypes";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export const BookAppointment = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const doctorName = searchParams.get("doctor");
   const specialty = searchParams.get("specialty");
   const isPending = searchParams.get("pending") === "true";
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Vérifier l'état de connexion au chargement du composant
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const loginStatus = localStorage.getItem("isLoggedIn") === "true";
-      console.log("BookAppointment - Login status:", loginStatus);
-      setIsLoggedIn(loginStatus);
-    };
-    
-    // Vérifier immédiatement
-    checkLoginStatus();
-    
-    // Configurer l'écouteur d'événements
-    window.addEventListener('storage', checkLoginStatus);
-    
-    // Nettoyage
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
-  }, []);
+  const isLoggedIn = !!user;
 
   // Vérifier si on arrive avec un paramètre pending
   useEffect(() => {

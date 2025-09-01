@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -10,12 +10,14 @@ import DoctorPageHeader from "@/components/doctor/DoctorPageHeader";
 import DoctorSearchForm from "@/components/doctor/DoctorSearchForm";
 import DoctorFilters from "@/components/doctor/DoctorFilters";
 import { DoctorProvider, useDoctorContext, Doctor } from "@/contexts/DoctorContext";
+import { useAuth } from "@/hooks/useAuth";
 
 const FindDoctorContent = () => {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [showFilters, setShowFilters] = useState(false);
+  const isLoggedIn = !!user;
   
   const { 
     filteredDoctors, 
@@ -28,22 +30,6 @@ const FindDoctorContent = () => {
     setSelectedRadius,
     handleSearch
   } = useDoctorContext();
-
-  // Check login status on component load
-  useEffect(() => {
-    const checkLoginStatus = () => {
-      const status = localStorage.getItem("isLoggedIn") === "true";
-      console.log("FindDoctor component - checking login status:", status);
-      setIsLoggedIn(status);
-    };
-    
-    checkLoginStatus();
-    window.addEventListener('storage', checkLoginStatus);
-    
-    return () => {
-      window.removeEventListener('storage', checkLoginStatus);
-    };
-  }, []);
 
   // Handle selecting a doctor on the map
   const handleDoctorSelect = (doctorId: number) => {

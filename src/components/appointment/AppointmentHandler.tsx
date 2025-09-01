@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { BookingForm } from "./BookingForm";
 import { DoctorInfo } from "./doctorTypes";
 import { initiateAfricaPayment, getSupportedPaymentMethods } from "@/services/africaPayment";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AppointmentHandlerProps {
   doctorName: string | null;
@@ -17,10 +18,11 @@ export const AppointmentHandler = ({
   doctorInfo,
 }: AppointmentHandlerProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleSubmit = async (data: BookingFormValues) => {
     // Vérifier à nouveau si l'utilisateur est connecté avant de finaliser la réservation
-    if (!localStorage.getItem("isLoggedIn")) {
+    if (!user) {
       toast.error("Vous devez être connecté pour finaliser la réservation");
       navigate(`/login?redirect=/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}`);
       return;
