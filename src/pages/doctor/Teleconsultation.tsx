@@ -86,6 +86,10 @@ const Teleconsultation = () => {
   }, [location.state]);
 
   const startConsultation = (consultation: any) => {
+    // S'assurer qu'il y a un lien de visioconférence
+    if (!consultation.meetLink) {
+      consultation.meetLink = createMeetLink();
+    }
     setCurrentConsultation(consultation);
     setActiveTab("session");
     toast.success(`Consultation avec ${consultation.patient} démarrée`);

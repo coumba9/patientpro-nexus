@@ -1,11 +1,10 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileSignature, ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { PrescriptionCard } from "@/components/patient/PrescriptionCard";
 
 const Prescriptions = () => {
   const navigate = useNavigate();
@@ -20,6 +19,11 @@ const Prescriptions = () => {
       ],
       duration: "7 jours",
       signed: true,
+      patientName: "Marie Dubois",
+      patientAge: "45 ans",
+      diagnosis: "Syndrome grippal",
+      doctorSpecialty: "Médecin généraliste",
+      doctorAddress: "123 Avenue de la Santé, Dakar"
     },
     {
       id: 2,
@@ -30,6 +34,11 @@ const Prescriptions = () => {
       ],
       duration: "5 jours",
       signed: true,
+      patientName: "Marie Dubois", 
+      patientAge: "45 ans",
+      diagnosis: "Infection bactérienne",
+      doctorSpecialty: "Infectiologue",
+      doctorAddress: "456 Rue des Spécialistes, Dakar"
     },
     {
       id: 3,
@@ -40,11 +49,31 @@ const Prescriptions = () => {
       ],
       duration: "3 jours",
       signed: false,
+      patientName: "Marie Dubois",
+      patientAge: "45 ans", 
+      diagnosis: "Maux de tête",
+      doctorSpecialty: "Médecin généraliste",
+      doctorAddress: "123 Avenue de la Santé, Dakar"
     },
   ]);
 
-  const handleDownload = () => {
-    toast.success("Ordonnance téléchargée");
+  const handleDownload = (prescriptionId: number) => {
+    // Simuler le téléchargement d'un PDF
+    const prescription = prescriptions.find(p => p.id === prescriptionId);
+    if (prescription) {
+      // Créer un blob simulé pour le téléchargement
+      const content = `Ordonnance du ${prescription.date} - ${prescription.doctor}`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ordonnance-${prescription.date}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Ordonnance téléchargée avec succès");
+    }
   };
 
   return (
@@ -75,44 +104,11 @@ const Prescriptions = () => {
         <h2 className="text-2xl font-bold mb-6">Mes Ordonnances</h2>
         <div className="space-y-4">
           {prescriptions.map((prescription) => (
-            <Card key={prescription.id}>
-              <CardHeader>
-                <CardTitle className="text-lg flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span>Ordonnance du {prescription.date}</span>
-                    {prescription.signed ? (
-                      <Badge variant="outline" className="bg-green-50 text-green-700">
-                        <FileSignature className="h-3 w-3 mr-1" />
-                        Signée par {prescription.doctor}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                        En attente de signature du médecin
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Télécharger
-                    </Button>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-semibold mb-2">{prescription.doctor}</p>
-                <ul className="space-y-2">
-                  {prescription.medications.map((med, idx) => (
-                    <li key={idx} className="text-gray-600">
-                      {med.name} - {med.dosage} - {med.frequency}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-2 text-sm text-gray-500">
-                  Durée du traitement : {prescription.duration}
-                </p>
-              </CardContent>
-            </Card>
+            <PrescriptionCard
+              key={prescription.id}
+              prescription={prescription}
+              onDownload={handleDownload}
+            />
           ))}
         </div>
       </div>
