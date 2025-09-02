@@ -5,6 +5,8 @@ import { File, FileSignature, Download, Share2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DocItem } from "./types";
+import { PrescriptionViewer } from "./PrescriptionViewer";
+import { useState } from "react";
 
 interface DocumentItemProps {
   doc: DocItem;
@@ -14,6 +16,35 @@ interface DocumentItemProps {
 }
 
 export const DocumentItem = ({ doc, onSignDocument, onDownload, onShare }: DocumentItemProps) => {
+  const [showPrescriptionViewer, setShowPrescriptionViewer] = useState(false);
+
+  // Transformer les données du document en format prescription si c'est une ordonnance
+  const getPrescriptionData = () => {
+    if (doc.type !== "Ordonnance") return null;
+    
+    const medications = doc.content?.split('\n').map(line => {
+      const parts = line.split(' - ');
+      return {
+        name: parts[0] || '',
+        dosage: parts[1]?.split(' ')[0] || 'Selon ordonnance',
+        frequency: parts[1]?.substring(parts[1].indexOf(' ') + 1) || 'Selon prescription'
+      };
+    }) || [];
+
+    return {
+      id: doc.id.toString(),
+      date: doc.date,
+      doctor: "Dr. Médecin", // Vous pouvez récupérer cela depuis vos données
+      medications,
+      duration: "Selon prescription",
+      signed: doc.signed,
+      patientName: doc.patient,
+      patientAge: "N/A",
+      diagnosis: "",
+      doctorSpecialty: "Médecin généraliste",
+      doctorAddress: "Cabinet médical"
+    };
+  };
   return (
     <div
       key={doc.id}
@@ -40,28 +71,39 @@ export const DocumentItem = ({ doc, onSignDocument, onDownload, onShare }: Docum
         </div>
       </div>
       <div className="flex gap-2">
-        {/* View document content button - for all document types */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Eye className="h-4 w-4 mr-2" />
-              Visualiser
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Contenu du document</DialogTitle>
-            </DialogHeader>
-            <div className="bg-gray-50 p-4 rounded-md mb-4 whitespace-pre-line">
-              <h3 className="font-semibold mb-2">{doc.name}</h3>
-              {doc.content ? (
-                <p className="text-sm text-gray-700">{doc.content}</p>
-              ) : (
-                <p className="text-sm text-gray-500 italic">Contenu non disponible pour ce document</p>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* View document content button - special handling for prescriptions */}
+        {doc.type === "Ordonnance" ? (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowPrescriptionViewer(true)}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Visualiser
+          </Button>
+        ) : (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                Visualiser
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Contenu du document</DialogTitle>
+              </DialogHeader>
+              <div className="bg-gray-50 p-4 rounded-md mb-4 whitespace-pre-line">
+                <h3 className="font-semibold mb-2">{doc.name}</h3>
+                {doc.content ? (
+                  <p className="text-sm text-gray-700">{doc.content}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">Contenu non disponible pour ce document</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {doc.type === "Ordonnance" && !doc.signed && (
           <Dialog>
@@ -99,6 +141,16 @@ export const DocumentItem = ({ doc, onSignDocument, onDownload, onShare }: Docum
           Partager
         </Button>
       </div>
+
+      {/* Prescription Viewer for ordonnances */}
+      {doc.type === "Ordonnance" && getPrescriptionData() && (
+        <PrescriptionViewer
+          prescription={getPrescriptionData()!}
+          isOpen={showPrescriptionViewer}
+          onClose={() => setShowPrescriptionViewer(false)}
+          onDownload={() => onDownload(doc)}
+        />
+      )}
     </div>
   );
 };

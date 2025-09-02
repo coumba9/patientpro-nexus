@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle, Eye } from "lucide-react";
 import { AddMedicalRecordForm } from "./AddMedicalRecordForm";
+import { PrescriptionViewer } from "./PrescriptionViewer";
+import { useState as useViewerState } from "react";
 
 interface Patient {
   id: string;
@@ -43,6 +45,8 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const [selectedTab, setSelectedTab] = useState("info");
   const [showAddRecordForm, setShowAddRecordForm] = useState(false);
   const [refreshHistory, setRefreshHistory] = useState(0);
+  const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
+  const [showPrescriptionViewer, setShowPrescriptionViewer] = useState(false);
 
   // Données de démonstration
   const patients: Patient[] = [
@@ -116,6 +120,16 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const handleRecordAdded = () => {
     setRefreshHistory(prev => prev + 1);
     // En pratique, ici on rechargerait les données depuis l'API
+  };
+
+  const handleViewPrescription = (prescriptionData: any) => {
+    setSelectedPrescription(prescriptionData);
+    setShowPrescriptionViewer(true);
+  };
+
+  const handleDownloadPrescription = (prescriptionId: string) => {
+    console.log('Téléchargement prescription:', prescriptionId);
+    // Logique de téléchargement PDF sera implémentée ici
   };
 
   return (
@@ -263,17 +277,14 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                                     {record.date} - {record.doctor}
                                   </div>
                                   <div className="flex gap-2">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      onClick={() => {
-                                        // Ici on pourrait ouvrir la PrescriptionViewer
-                                        console.log('Voir ordonnance', prescriptionData);
-                                      }}
-                                    >
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      Voir ordonnance
-                                    </Button>
+                                     <Button 
+                                       variant="outline" 
+                                       size="sm"
+                                       onClick={() => handleViewPrescription(prescriptionData)}
+                                     >
+                                       <Eye className="h-4 w-4 mr-1" />
+                                       Voir ordonnance
+                                     </Button>
                                   </div>
                                 </CardTitle>
                               </CardHeader>
@@ -348,6 +359,18 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
             </TabsContent>
           </Tabs>
         </div>
+      )}
+
+      {selectedPrescription && (
+        <PrescriptionViewer
+          prescription={selectedPrescription}
+          isOpen={showPrescriptionViewer}
+          onClose={() => {
+            setShowPrescriptionViewer(false);
+            setSelectedPrescription(null);
+          }}
+          onDownload={() => handleDownloadPrescription(selectedPrescription.id)}
+        />
       )}
     </div>
   );
