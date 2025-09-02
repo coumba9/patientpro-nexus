@@ -11,7 +11,7 @@ interface Medication {
 }
 
 interface Prescription {
-  id: number;
+  id: string;
   date: string;
   doctor: string;
   medications: Medication[];
@@ -37,6 +37,18 @@ export const PrescriptionViewer = ({
   onClose, 
   onDownload 
 }: PrescriptionViewerProps) => {
+  // Changer le titre de l'onglet quand la modal s'ouvre
+  React.useEffect(() => {
+    if (isOpen) {
+      const originalTitle = document.title;
+      document.title = `Ordonnance du ${prescription.date} - ${prescription.patientName}`;
+      
+      return () => {
+        document.title = originalTitle;
+      };
+    }
+  }, [isOpen, prescription.date, prescription.patientName]);
+
   const handlePrint = () => {
     const printContent = document.getElementById('prescription-content');
     if (printContent) {
@@ -66,24 +78,12 @@ export const PrescriptionViewer = ({
     }
   };
 
-  // Changer le titre de l'onglet quand la modal s'ouvre
-  React.useEffect(() => {
-    if (isOpen) {
-      const originalTitle = document.title;
-      document.title = `Ordonnance du ${prescription.date} - ${prescription.doctor}`;
-      
-      return () => {
-        document.title = originalTitle;
-      };
-    }
-  }, [isOpen, prescription.date, prescription.doctor]);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Ordonnance du {prescription.date}</span>
+            <span>Ordonnance du {prescription.date} - {prescription.patientName}</span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle } from "lucide-react";
+import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle, Eye } from "lucide-react";
 import { AddMedicalRecordForm } from "./AddMedicalRecordForm";
 
 interface Patient {
@@ -233,39 +233,76 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                   <CardContent>
                     {getPatientRecords(selectedPatient.id).length > 0 ? (
                       <div className="space-y-4">
-                        {getPatientRecords(selectedPatient.id).map(record => (
-                          <Card key={record.id} className="bg-background border">
-                            <CardHeader className="pb-2">
-                              <CardTitle className="text-md flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                {record.date} - {record.doctor}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                              <div>
-                                <span className="font-medium flex items-center gap-1">
-                                  <Activity className="h-4 w-4 text-red-500" />
-                                  Diagnostic:
-                                </span> 
-                                <p>{record.diagnosis}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium flex items-center gap-1">
-                                  <Pill className="h-4 w-4 text-blue-500" />
-                                  Prescription:
-                                </span> 
-                                <p>{record.prescription}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium flex items-center gap-1">
-                                  <MessageCircle className="h-4 w-4 text-green-500" />
-                                  Notes:
-                                </span> 
-                                <p>{record.notes}</p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                        {getPatientRecords(selectedPatient.id).map(record => {
+                          const prescriptionData = {
+                            id: record.id,
+                            date: record.date,
+                            doctor: record.doctor,
+                            medications: [
+                              { 
+                                name: record.prescription.split(' ')[0], 
+                                dosage: record.prescription.split(' ')[1] || "Selon ordonnance",
+                                frequency: "Selon prescription médicale"
+                              }
+                            ],
+                            duration: "Selon prescription",
+                            signed: true,
+                            patientName: selectedPatient.name,
+                            patientAge: `${selectedPatient.age} ans`,
+                            diagnosis: record.diagnosis,
+                            doctorSpecialty: "Médecin généraliste",
+                            doctorAddress: "Cabinet médical"
+                          };
+
+                          return (
+                            <Card key={record.id} className="bg-background border">
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-md flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                    {record.date} - {record.doctor}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        // Ici on pourrait ouvrir la PrescriptionViewer
+                                        console.log('Voir ordonnance', prescriptionData);
+                                      }}
+                                    >
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      Voir ordonnance
+                                    </Button>
+                                  </div>
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent className="space-y-3">
+                                <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md border-l-4 border-red-500">
+                                  <span className="font-medium flex items-center gap-1 text-red-900 dark:text-red-100">
+                                    <Activity className="h-4 w-4" />
+                                    Diagnostic:
+                                  </span> 
+                                  <p className="text-red-800 dark:text-red-200 mt-1">{record.diagnosis}</p>
+                                </div>
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border-l-4 border-blue-500">
+                                  <span className="font-medium flex items-center gap-1 text-blue-900 dark:text-blue-100">
+                                    <Pill className="h-4 w-4" />
+                                    Prescription:
+                                  </span> 
+                                  <p className="text-blue-800 dark:text-blue-200 mt-1 font-semibold">{record.prescription}</p>
+                                </div>
+                                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md border-l-4 border-green-500">
+                                  <span className="font-medium flex items-center gap-1 text-green-900 dark:text-green-100">
+                                    <MessageCircle className="h-4 w-4" />
+                                    Notes:
+                                  </span> 
+                                  <p className="text-green-800 dark:text-green-200 mt-1">{record.notes}</p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="text-center text-muted-foreground py-4">Aucun historique médical disponible</p>

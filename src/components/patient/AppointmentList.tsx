@@ -31,7 +31,7 @@ export const AppointmentList = ({
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Mes prochains rendez-vous</h2>
-        <Link to="/book-appointment">
+        <Link to="/find-doctor">
           <Button>Prendre un rendez-vous</Button>
         </Link>
       </div>
