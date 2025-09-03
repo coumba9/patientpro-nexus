@@ -106,3 +106,60 @@ export interface AdminMetric extends BaseEntity {
   category: string;
   period: string;
 }
+
+export interface NotificationData extends BaseEntity {
+  user_id: string;
+  type: string;
+  title: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high';
+  is_read: boolean;
+  appointment_id?: string;
+  metadata?: any;
+}
+
+export interface QueueEntryData extends BaseEntity {
+  patient_id: string;
+  requested_doctor_id?: string;
+  specialty_id?: string;
+  urgency: 'urgent' | 'normal' | 'flexible';
+  status: 'waiting' | 'assigned' | 'cancelled';
+  preferred_dates?: string[];
+  notes?: string;
+}
+
+export interface ReminderData extends BaseEntity {
+  appointment_id: string;
+  patient_id: string;
+  scheduled_for: string;
+  reminder_type: '24h' | '2h' | 'manual';
+  method: 'phone' | 'sms' | 'email';
+  status: 'pending' | 'sent' | 'failed' | 'completed';
+  attempts: number;
+}
+
+// Validation schemas types
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface FormValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+}
+
+// API Response types
+export interface ApiResponse<T = any> {
+  data?: T;
+  error?: string;
+  success: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}

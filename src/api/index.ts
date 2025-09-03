@@ -12,7 +12,7 @@ export * from './services/admin-metrics.service';
 export * from './services/cancellation.service';
 
 // Export notification service
-export * from './services/notification.service';
+export { notificationService } from './services/notification.service';
 
 // Export interfaces
 export * from './interfaces';
