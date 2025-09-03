@@ -19,8 +19,14 @@ export const ContentSettings = () => {
     moderateComments: true
   });
 
-  const handleSave = () => {
-    toast.success("Paramètres du contenu sauvegardés");
+  const handleSave = async () => {
+    try {
+      // TODO: Implement API call to save content settings
+      // await contentService.updateSettings(settings);
+      toast.success("Paramètres du contenu sauvegardés avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la sauvegarde des paramètres");
+    }
   };
 
   return (

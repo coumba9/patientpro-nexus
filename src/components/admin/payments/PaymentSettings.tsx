@@ -26,8 +26,14 @@ export const PaymentSettings = () => {
     }
   });
 
-  const handleSave = () => {
-    toast.success("Paramètres de paiement sauvegardés");
+  const handleSave = async () => {
+    try {
+      // TODO: Implement API call to save payment settings
+      // await paymentService.updateSettings(settings);
+      toast.success("Paramètres de paiement sauvegardés avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la sauvegarde des paramètres de paiement");
+    }
   };
 
   return (

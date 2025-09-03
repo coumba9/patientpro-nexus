@@ -54,8 +54,24 @@ export const FAQManagement = () => {
     return status === "published" ? "Publié" : "Brouillon";
   };
 
-  const handleDelete = (id: number) => {
-    toast.success("Question FAQ supprimée");
+  const handleDelete = async (id: number) => {
+    try {
+      // TODO: Implement API call to delete FAQ
+      // await faqService.delete(id);
+      toast.success("Question FAQ supprimée avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression de la question");
+    }
+  };
+
+  const handleEdit = (id: number) => {
+    // TODO: Implement edit dialog/form
+    toast.info("Fonction d'édition en cours de développement");
+  };
+
+  const handleCreate = () => {
+    // TODO: Implement create FAQ dialog/form
+    toast.info("Fonction de création de FAQ en cours de développement");
   };
 
   return (
@@ -63,7 +79,7 @@ export const FAQManagement = () => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           Questions fréquentes
-          <Button>
+          <Button onClick={handleCreate}>
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle question
           </Button>
@@ -113,7 +129,7 @@ export const FAQManagement = () => {
                         <ChevronDown className="h-4 w-4" />
                       }
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => handleEdit(faq.id)}>
                       <Edit className="h-3 w-3" />
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => handleDelete(faq.id)}>

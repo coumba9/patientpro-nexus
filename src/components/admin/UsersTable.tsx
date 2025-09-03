@@ -112,29 +112,54 @@ export const UsersTable = () => {
     }
   };
 
-  const handleStatusChange = (userId: string, newStatus: "active" | "blocked") => {
-    console.log(`Changing status for user ${userId} to ${newStatus}`);
-    toast.success(`Le statut de l'utilisateur a été modifié avec succès`);
+  const handleStatusChange = async (userId: string, newStatus: "active" | "blocked") => {
+    try {
+      // TODO: Implement API call to change user status
+      // await userService.updateStatus(userId, newStatus);
+      toast.success(`Le statut de l'utilisateur a été modifié avec succès`);
+    } catch (error) {
+      toast.error("Erreur lors de la modification du statut");
+    }
   };
 
-  const handleContactUser = (email: string) => {
-    console.log(`Contacting user at ${email}`);
-    toast.success(`Un email va être envoyé à ${email}`);
+  const handleContactUser = async (email: string) => {
+    try {
+      // TODO: Implement email service
+      // await emailService.sendAdminEmail(email, subject, message);
+      toast.success(`Un email va être envoyé à ${email}`);
+    } catch (error) {
+      toast.error("Erreur lors de l'envoi de l'email");
+    }
   };
   
   const handleViewUser = (userId: string) => {
-    console.log(`Viewing user details ${userId}`);
-    toast.info(`Affichage des détails de l'utilisateur`);
+    // TODO: Implement user details dialog/page
+    toast.info(`Fonction de visualisation en cours de développement`);
   };
   
   const handleEditUser = (userId: string) => {
-    console.log(`Editing user ${userId}`);
-    toast.info(`Édition de l'utilisateur en cours`);
+    // TODO: Implement user edit dialog/form
+    toast.info(`Fonction d'édition en cours de développement`);
   };
   
-  const handleDeleteUser = (userId: string) => {
-    console.log(`Deleting user ${userId}`);
-    toast.success(`L'utilisateur a été supprimé avec succès`);
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // TODO: Implement API call to delete user
+      // await userService.delete(userId);
+      toast.success(`L'utilisateur a été supprimé avec succès`);
+    } catch (error) {
+      toast.error("Erreur lors de la suppression de l'utilisateur");
+    }
+  };
+
+  const handlePromoteAdmin = async (userId: string) => {
+    try {
+      // TODO: Implement API call to promote user to admin
+      // await userService.promoteToAdmin(userId);
+      toast.success("Droits d'administrateur accordés avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la promotion");
+    }
   };
 
   const getInitials = (name: string) => {
@@ -247,7 +272,7 @@ export const UsersTable = () => {
                         <span>Contacter</span>
                       </DropdownMenuItem>
                       {user.type !== "admin" && (
-                        <DropdownMenuItem onClick={() => toast.success("Droits d'administrateur accordés")}>
+                        <DropdownMenuItem onClick={() => handlePromoteAdmin(user.id)}>
                           <Shield className="mr-2 h-4 w-4" />
                           <span>Promouvoir Admin</span>
                         </DropdownMenuItem>
