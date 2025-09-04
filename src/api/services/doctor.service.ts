@@ -10,36 +10,62 @@ class DoctorService extends BaseService<Doctor> {
 
   async getDoctorsWithDetails(): Promise<Doctor[]> {
     const { data, error } = await supabase
-      .from(this.tableName as any)
-      .select(`
-        *,
-        specialty:specialty_id (id, name),
-        profile:id (first_name, last_name, email)
-      `);
+      .rpc('get_available_doctors', { 
+        specialty_filter: null, 
+        verified_only: true 
+      });
     
     if (error) {
       console.error('Error fetching doctors with details:', error);
       throw error;
     }
     
-    return data as unknown as Doctor[];
+    return (data || []).map((doctor: any) => ({
+      id: doctor.id,
+      specialty_id: doctor.specialty_id,
+      years_of_experience: doctor.years_of_experience,
+      is_verified: doctor.is_verified,
+      license_number: doctor.license_number,
+      profile: {
+        first_name: doctor.first_name,
+        last_name: doctor.last_name,
+        email: doctor.email
+      },
+      specialty: doctor.specialty_name ? {
+        id: doctor.specialty_id,
+        name: doctor.specialty_name
+      } : null
+    })) as Doctor[];
   }
 
   async getDoctorsBySpecialty(specialtyId: string): Promise<Doctor[]> {
     const { data, error } = await supabase
-      .from(this.tableName as any)
-      .select(`
-        *,
-        profile:id (first_name, last_name, email)
-      `)
-      .eq('specialty_id', specialtyId);
+      .rpc('get_available_doctors', { 
+        specialty_filter: specialtyId, 
+        verified_only: true 
+      });
     
     if (error) {
       console.error('Error fetching doctors by specialty:', error);
       throw error;
     }
     
-    return data as unknown as Doctor[];
+    return (data || []).map((doctor: any) => ({
+      id: doctor.id,
+      specialty_id: doctor.specialty_id,
+      years_of_experience: doctor.years_of_experience,
+      is_verified: doctor.is_verified,
+      license_number: doctor.license_number,
+      profile: {
+        first_name: doctor.first_name,
+        last_name: doctor.last_name,
+        email: doctor.email
+      },
+      specialty: doctor.specialty_name ? {
+        id: doctor.specialty_id,
+        name: doctor.specialty_name
+      } : null
+    })) as Doctor[];
   }
 
   async verifyDoctor(id: string, verified: boolean): Promise<Doctor> {

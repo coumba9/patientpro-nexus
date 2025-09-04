@@ -2,10 +2,80 @@
 import { BaseService, TableName } from "../base/base.service";
 import { Appointment, CancellationRequest } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
+import { validateAppointmentScheduling, hasAppointmentConflict, calculateConsultationFees } from "@/lib/businessLogic";
 
 class AppointmentService extends BaseService<Appointment> {
   constructor() {
     super('appointments' as TableName);
+  }
+
+  async createAppointment(appointmentData: {
+    doctor_id: string;
+    patient_id: string;
+    date: string;
+    time: string;
+    type: string;
+    mode: string;
+    location?: string;
+    notes?: string;
+  }): Promise<Appointment> {
+    // First, get existing appointments to check for conflicts
+    const { data: existingAppointments, error: fetchError } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('doctor_id', appointmentData.doctor_id)
+      .eq('date', appointmentData.date)
+      .neq('status', 'cancelled');
+
+    if (fetchError) {
+      throw new Error(`Error checking conflicts: ${fetchError.message}`);
+    }
+
+    // Validate appointment scheduling
+    const validation = validateAppointmentScheduling(
+      {
+        ...appointmentData,
+        doctorId: appointmentData.doctor_id,
+        patientId: appointmentData.patient_id
+      },
+      (existingAppointments as any[]) || []
+    );
+
+    if (!validation.valid) {
+      throw new Error(validation.errors.join(', '));
+    }
+
+    // Create the appointment
+    const { data, error } = await supabase
+      .from('appointments')
+      .insert({
+        ...appointmentData,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error creating appointment: ${error.message}`);
+    }
+
+    return data as any;
+  }
+
+  async confirmAppointment(id: string, doctorId: string): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({ status: 'confirmed' })
+      .eq('id', id)
+      .eq('doctor_id', doctorId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error confirming appointment: ${error.message}`);
+    }
+
+    return data as any;
   }
 
   async getAppointmentsByDoctor(doctorId: string): Promise<Appointment[]> {
@@ -27,7 +97,7 @@ class AppointmentService extends BaseService<Appointment> {
       throw error;
     }
     
-    return data as unknown as Appointment[];
+    return (data as any[]) || [];
   }
 
   async getAppointmentsByPatient(patientId: string): Promise<Appointment[]> {
@@ -50,7 +120,7 @@ class AppointmentService extends BaseService<Appointment> {
       throw error;
     }
     
-    return data as unknown as Appointment[];
+    return (data as any[]) || [];
   }
 
   async updateAppointmentStatus(id: string, status: Appointment['status']): Promise<Appointment> {
@@ -76,37 +146,57 @@ class AppointmentService extends BaseService<Appointment> {
       throw error;
     }
     
-    return data as unknown as Appointment;
+    return data as any;
   }
 
-  async getUpcomingAppointments(userId: string, userRole: 'doctor' | 'patient'): Promise<Appointment[]> {
+  async getTodayAppointments(doctorId: string): Promise<Appointment[]> {
     const today = new Date().toISOString().split('T')[0];
-    const fieldName = userRole === 'doctor' ? 'doctor_id' : 'patient_id';
     
     const { data, error } = await supabase
-      .from(this.tableName as any)
+      .from('appointments')
+      .select(`
+        *,
+        patient:patient_id (
+          id,
+          profile:id (first_name, last_name)
+        )
+      `)
+      .eq('doctor_id', doctorId)
+      .eq('date', today)
+      .order('time', { ascending: true });
+
+    if (error) {
+      throw new Error(`Error fetching today's appointments: ${error.message}`);
+    }
+
+    return (data as any[]) || [];
+  }
+
+  async getAppointmentsByUser(userId: string, role: 'doctor' | 'patient'): Promise<Appointment[]> {
+    const column = role === 'doctor' ? 'doctor_id' : 'patient_id';
+    
+    const { data, error } = await supabase
+      .from('appointments')
       .select(`
         *,
         doctor:doctor_id (
-          id, 
-          profile:id (first_name, last_name)
+          id,
+          profile:id (first_name, last_name),
+          specialty:specialty_id (name)
         ),
         patient:patient_id (
           id,
           profile:id (first_name, last_name)
         )
       `)
-      .eq(fieldName, userId)
-      .gte('date', today)
-      .order('date', { ascending: true })
-      .order('time', { ascending: true });
-    
+      .eq(column, userId)
+      .order('date', { ascending: true });
+
     if (error) {
-      console.error('Error fetching upcoming appointments:', error);
-      throw error;
+      throw new Error(`Error fetching appointments: ${error.message}`);
     }
-    
-    return data as unknown as Appointment[];
+
+    return (data as any[]) || [];
   }
 }
 

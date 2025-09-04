@@ -510,6 +510,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_available_doctors: {
+        Args: { specialty_filter?: string; verified_only?: boolean }
+        Returns: {
+          email: string
+          first_name: string
+          id: string
+          is_verified: boolean
+          last_name: string
+          license_number: string
+          specialty_id: string
+          specialty_name: string
+          years_of_experience: number
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
