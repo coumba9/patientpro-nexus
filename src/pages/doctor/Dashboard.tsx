@@ -3,8 +3,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DoctorSidebar } from "@/components/doctor/Sidebar";
 import { StatsCards } from "@/components/doctor/StatsCards";
-import { AppointmentsList } from "@/components/doctor/AppointmentsList";
+import { RealtimeAppointmentsList } from "@/components/doctor/RealtimeAppointmentsList";
 import { ConsultationAnalytics } from "@/components/doctor/ConsultationAnalytics";
+import { RealtimeNotifications } from "@/components/patient/RealtimeNotifications";
 import { Home, ArrowLeft, UserCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,9 +112,12 @@ const DoctorDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                {user?.email ? `Connecté avec: ${user.email}` : "Vous êtes connecté en tant que médecin"}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-muted-foreground">
+                  {user?.email ? `Connecté avec: ${user.email}` : "Vous êtes connecté en tant que médecin"}
+                </p>
+                <RealtimeNotifications userId={user?.id || null} />
+              </div>
               <div className="flex gap-4 mt-4">
                 {!isHomePage && (
                   <Button
@@ -166,11 +170,7 @@ const DoctorDashboard = () => {
               )}
             </div>
             
-            <AppointmentsList
-              appointments={upcomingAppointments}
-              onConfirm={handleConfirm}
-              onCancel={handleCancel}
-            />
+            <RealtimeAppointmentsList doctorId={user?.id || null} />
           </div>
         </div>
       </div>

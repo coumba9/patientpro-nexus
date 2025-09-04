@@ -4,7 +4,8 @@ import { Routes, Route, useLocation, useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth";
 import { PatientSidebar } from "@/components/patient/PatientSidebar";
 import { NavigationHeader } from "@/components/patient/NavigationHeader";
-import { AppointmentsPage } from "@/components/patient/AppointmentsPage";
+import { RealAppointmentsPage } from "@/components/patient/RealAppointmentsPage";
+import { RealtimeNotifications } from "@/components/patient/RealtimeNotifications";
 import Messages from "./Messages";
 import Documents from "./Documents";
 import SettingsPage from "./Settings";
@@ -67,6 +68,7 @@ const PatientDashboard = () => {
           </div>
           
           <div className="flex items-center gap-3">
+            <RealtimeNotifications userId={user?.id || null} />
             <ThemeToggle />
             <Button 
               variant="outline" 
@@ -115,7 +117,7 @@ const PatientDashboard = () => {
           {/* Main Content */}
           <div className="md:col-span-3">
             <Routes>
-              <Route path="/" element={<AppointmentsPage />} />
+              <Route path="/" element={<RealAppointmentsPage />} />
               <Route path="/tickets" element={<AppointmentTickets />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/medical-history" element={<MedicalHistory />} />
