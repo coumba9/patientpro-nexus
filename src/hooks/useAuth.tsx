@@ -32,14 +32,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
       
       if (error) {
         console.error('Error fetching user role:', error);
         return null;
       }
       
-      return data?.role || null;
+      // Retourne le premier rôle (le plus récent)
+      return data?.[0]?.role || null;
     } catch (error) {
       console.error('Error fetching user role:', error);
       return null;

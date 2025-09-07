@@ -38,8 +38,8 @@ export const RealAppointmentsPage = () => {
   // Transform appointments to match the expected format
   const transformedAppointments = appointments.map(apt => ({
     id: parseInt(apt.id) || 0,
-    doctor: (apt as any).doctor?.profile ? `Dr. ${(apt as any).doctor.profile.first_name} ${(apt as any).doctor.profile.last_name}` : 'Médecin',
-    specialty: (apt as any).doctor?.specialty?.name || 'Spécialité',
+    doctor: `Médecin ${apt.doctor_id.slice(0, 8)}...`, // Affichage temporaire de l'ID
+    specialty: 'Spécialité à définir',
     date: apt.date,
     time: apt.time,
     location: apt.location || 'À définir',

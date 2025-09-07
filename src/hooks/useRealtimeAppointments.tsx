@@ -17,11 +17,7 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
       try {
         const { data, error } = await supabase
           .from('appointments')
-          .select(`
-            *,
-            doctor:doctor_id (id, profile:id (first_name, last_name), specialty:specialty_id (name)),
-            patient:patient_id (id, profile:id (first_name, last_name))
-          `)
+          .select('*')
           .eq(userRole === 'doctor' ? 'doctor_id' : 'patient_id', userId)
           .order('date', { ascending: true });
 
