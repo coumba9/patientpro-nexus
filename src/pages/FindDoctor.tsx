@@ -32,7 +32,7 @@ const FindDoctorContent = () => {
   } = useDoctorContext();
 
   // Handle selecting a doctor on the map
-  const handleDoctorSelect = (doctorId: number) => {
+  const handleDoctorSelect = (doctorId: string) => {
     const selectedDoctor = filteredDoctors.find(d => d.id === doctorId);
     if (selectedDoctor) {
       handleBooking(selectedDoctor);

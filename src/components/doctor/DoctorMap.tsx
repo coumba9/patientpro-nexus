@@ -20,7 +20,7 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 interface Doctor {
-  id: number;
+  id: string;
   name: string;
   specialty: string;
   location: string;
@@ -32,7 +32,7 @@ interface Doctor {
 
 interface DoctorMapProps {
   doctors: Doctor[];
-  onDoctorSelect: (doctorId: number) => void;
+  onDoctorSelect: (doctorId: string) => void;
   selectedRadius: number;
   userLocation: [number, number] | null;
 }

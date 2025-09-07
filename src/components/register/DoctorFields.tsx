@@ -60,7 +60,10 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
         <Select 
           name="speciality"
           value={formData.speciality || ""}
-          onValueChange={(value) => handleSelectChange && handleSelectChange("speciality", value)}
+          onValueChange={(value) => {
+            console.log('Specialty selected:', value);
+            handleSelectChange && handleSelectChange("speciality", value);
+          }}
           disabled={loading}
         >
           <SelectTrigger id="speciality">

@@ -3,7 +3,7 @@ import React from 'react';
 import DoctorCard from './DoctorCard';
 
 interface Doctor {
-  id: number;
+  id: string;
   name: string;
   specialty: string;
   location: string;

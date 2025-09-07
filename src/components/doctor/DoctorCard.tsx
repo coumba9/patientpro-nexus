@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 
 interface Doctor {
-  id: number;
+  id: string;
   name: string;
   specialty: string;
   location: string;

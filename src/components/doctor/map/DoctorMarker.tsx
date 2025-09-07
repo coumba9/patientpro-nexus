@@ -3,7 +3,7 @@ import React from 'react';
 import L from 'leaflet';
 
 interface Doctor {
-  id: number;
+  id: string;
   name: string;
   specialty: string;
   location: string;
@@ -16,7 +16,7 @@ interface Doctor {
 interface DoctorMarkerProps {
   doctor: Doctor;
   map: L.Map;
-  onDoctorSelect: (doctorId: number) => void;
+  onDoctorSelect: (doctorId: string) => void;
 }
 
 const DoctorMarker: React.FC<DoctorMarkerProps> = ({ doctor, map, onDoctorSelect }) => {

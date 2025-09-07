@@ -1,9 +1,10 @@
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { doctorService } from "@/api/services/doctor.service";
 
 export interface Doctor {
-  id: number;
+  id: string;
   name: string;
   specialty: string;
   location: string;
@@ -11,12 +12,20 @@ export interface Doctor {
   rating: number;
   latitude?: number;
   longitude?: number;
+  profile?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
+  specialty_name?: string;
+  years_of_experience?: number;
+  is_verified?: boolean;
 }
 
 // Mock doctors data
 const mockDoctors: Doctor[] = [
   {
-    id: 1,
+    id: "1",
     name: "Dr. Fatou Sarr",
     specialty: "Cardiologue",
     location: "Dakar",
@@ -26,7 +35,7 @@ const mockDoctors: Doctor[] = [
     longitude: 2.3522
   },
   {
-    id: 2,
+    id: "2",
     name: "Dr. Amadou Sarre",
     specialty: "Dermatologue",
     location: "Saint-Louis",
@@ -36,7 +45,7 @@ const mockDoctors: Doctor[] = [
     longitude: 4.8357
   },
   {
-    id: 3,
+    id: "3",
     name: "Dr. Khadija Deme",
     specialty: "Pédiatre",
     location: "Thies",
@@ -46,7 +55,7 @@ const mockDoctors: Doctor[] = [
     longitude: 5.3698
   },
   {
-    id: 4,
+    id: "4",
     name: "Dr. Ahmadou Fall",
     specialty: "Généraliste",
     location: "Podor",
@@ -56,7 +65,7 @@ const mockDoctors: Doctor[] = [
     longitude: 1.4437
   },
   {
-    id: 5,
+    id: "5",
     name: "Dr. Aissatou Ndiaye",
     specialty: "Ophtalmologue",
     location: "Matam",
@@ -66,7 +75,7 @@ const mockDoctors: Doctor[] = [
     longitude: 7.2620
   },
   {
-    id: 6,
+    id: "6",
     name: "Dr. Kalidou Diop",
     specialty: "Psychiatre",
     location: "Keur Massar",
@@ -96,13 +105,48 @@ const DoctorContext = createContext<DoctorContextType | undefined>(undefined);
 export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>(mockDoctors);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [selectedRadius, setSelectedRadius] = useState(15);
+  const [loading, setLoading] = useState(true);
   const { userLocation, getUserLocation, filterDoctorsByProximity } = useUserLocation();
 
+  // Fetch real doctors from database
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const realDoctors = await doctorService.getDoctorsWithDetails();
+        const transformedDoctors: Doctor[] = realDoctors.map(doctor => ({
+          id: doctor.id,
+          name: `Dr. ${doctor.profile?.first_name} ${doctor.profile?.last_name}`,
+          specialty: doctor.specialty?.name || 'Généraliste',
+          location: 'Dakar', // Default location - should be added to doctor profile
+          availability: 'Disponible',
+          rating: 4.5, // Default rating - should be calculated from reviews
+          profile: doctor.profile,
+          specialty_name: doctor.specialty?.name,
+          years_of_experience: doctor.years_of_experience,
+          is_verified: doctor.is_verified
+        }));
+        
+        setDoctors(transformedDoctors);
+        setFilteredDoctors(transformedDoctors);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+        // Fallback to mock data if database fails
+        setDoctors(mockDoctors);
+        setFilteredDoctors(mockDoctors);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
   // Apply all filters (search, location, proximity)
-  const applyAllFilters = (doctors = mockDoctors) => {
-    const filtered = doctors.filter(
+  const applyAllFilters = (doctorsToFilter = doctors) => {
+    const filtered = doctorsToFilter.filter(
       (doctor) =>
         (searchTerm === "" ||
           doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,7 +161,7 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   // Handle search action
   const handleSearch = () => {
     if (userLocation) {
-      const doctorsInRadius = filterDoctorsByProximity(mockDoctors, selectedRadius);
+      const doctorsInRadius = filterDoctorsByProximity(doctors, selectedRadius);
       applyAllFilters(doctorsInRadius);
     } else {
       applyAllFilters();
@@ -128,7 +172,7 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const handleRadiusChange = (newRadius: number) => {
     setSelectedRadius(newRadius);
     if (userLocation) {
-      const doctorsInRadius = filterDoctorsByProximity(mockDoctors, newRadius);
+      const doctorsInRadius = filterDoctorsByProximity(doctors, newRadius);
       applyAllFilters(doctorsInRadius);
     }
   };
@@ -136,7 +180,7 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   return (
     <DoctorContext.Provider
       value={{
-        doctors: mockDoctors,
+        doctors,
         filteredDoctors,
         searchTerm,
         location,
