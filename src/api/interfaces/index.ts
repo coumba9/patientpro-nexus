@@ -56,6 +56,33 @@ export interface Appointment extends BaseEntity {
   cancelled_by?: string;
   cancellation_reason?: string;
   cancellation_type?: 'doctor' | 'patient';
+  // Relations optionnelles pour les données enrichies
+  doctor?: {
+    id: string;
+    license_number: string;
+    years_of_experience?: number;
+    specialty_id?: string;
+    profile?: {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+    };
+    specialty?: {
+      name: string;
+      description?: string;
+    };
+    specialties?: {
+      name: string;
+      description?: string;
+    };
+  };
+  patient?: {
+    profile?: {
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+    };
+  };
 }
 
 export interface CancellationPolicy extends BaseEntity {
