@@ -22,7 +22,7 @@ export const AuthGuard = ({ children, requireAuth = false }: AuthGuardProps) => 
       // Auto-redirect authenticated users to their dashboard
       const currentPath = window.location.pathname;
       
-      // Don't redirect if already on a valid page
+      // Don't redirect if already on a valid page for the user's role
       if (currentPath === '/login' || currentPath === '/register') {
         switch (userRole) {
           case 'admin':
@@ -34,6 +34,34 @@ export const AuthGuard = ({ children, requireAuth = false }: AuthGuardProps) => 
           case 'patient':
             navigate('/patient');
             break;
+        }
+      }
+      
+      // Si l'utilisateur est sur admin mais n'est pas admin, rediriger
+      if (currentPath.startsWith('/admin') && userRole !== 'admin') {
+        switch (userRole) {
+          case 'doctor':
+            navigate('/doctor');
+            break;
+          case 'patient':
+            navigate('/patient');
+            break;
+          default:
+            navigate('/');
+        }
+      }
+      
+      // Si l'utilisateur est sur patient mais n'est pas patient, rediriger
+      if (currentPath.startsWith('/patient') && userRole !== 'patient') {
+        switch (userRole) {
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'doctor':
+            navigate('/doctor');
+            break;
+          default:
+            navigate('/');
         }
       }
     }

@@ -17,8 +17,10 @@ import {
   Calendar,
   Phone,
   Mail,
+  LogOut,
+  Home,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -26,6 +28,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const pendingDoctors = [
   {
@@ -63,8 +67,21 @@ const pendingDoctors = [
 ];
 
 const AdminDashboard = () => {
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [openDialog, setOpenDialog] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Déconnexion réussie");
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Erreur lors de la déconnexion");
+    }
+  };
 
   const handleValidateDoctor = (doctorId: number) => {
     // Simulation de la validation d'un médecin
@@ -93,6 +110,41 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navigation Header */}
+      <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-50 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80">
+        <div className="container flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
+              MediConnect
+            </Link>
+            <span className="text-sm bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1"
+            >
+              <Home className="h-4 w-4" />
+              Accueil
+            </Button>
+            <ThemeToggle />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleLogout} 
+              className="flex items-center gap-1 text-red-500 border-red-200 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container py-8">
       <div className="container py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar */}
@@ -336,6 +388,7 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 };
