@@ -1,1 +1,16 @@
 project_id = "diieheagpzlqatqpzjua"
+
+[functions.secure-payment]
+verify_jwt = true
+
+[functions.secure-paytech]
+verify_jwt = true
+
+[functions.share-prescription]
+verify_jwt = true
+
+[functions.process-reminders]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
