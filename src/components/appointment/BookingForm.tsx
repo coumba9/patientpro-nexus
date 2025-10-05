@@ -1,5 +1,7 @@
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +19,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const bookingFormSchema = z.object({
+  date: z.date({
+    required_error: "Veuillez sélectionner une date",
+  }),
+  time: z.string({
+    required_error: "Veuillez sélectionner un horaire",
+  }).min(1, "Veuillez sélectionner un horaire"),
+  type: z.string(),
+  consultationType: z.enum(["presentiel", "teleconsultation"]),
+  paymentMethod: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+});
+
 export const BookingForm = ({
   doctorName,
   specialty,
@@ -32,6 +50,7 @@ export const BookingForm = ({
   const navigate = useNavigate();
 
   const form = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingFormSchema),
     defaultValues: {
       type: "consultation",
       consultationType: "presentiel",
@@ -101,6 +120,16 @@ export const BookingForm = ({
   };
 
   const handleFormSubmit = (data: BookingFormValues) => {
+    // Vérifier que date et time sont bien définis
+    if (!data.date) {
+      toast.error("Veuillez sélectionner une date");
+      return;
+    }
+    if (!data.time) {
+      toast.error("Veuillez sélectionner un horaire");
+      return;
+    }
+    
     // Include medical info with the form data
     const completeData = {
       ...data,
