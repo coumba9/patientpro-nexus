@@ -12,6 +12,7 @@ export const BookAppointment = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const doctorId = searchParams.get("doctorId");
   const doctorName = searchParams.get("doctor");
   const specialty = searchParams.get("specialty");
   const isPending = searchParams.get("pending") === "true";
@@ -46,6 +47,7 @@ export const BookAppointment = () => {
           {/* Formulaire de réservation ou message de connexion */}
           <div className="md:col-span-2">
             <AppointmentBookingCard
+              doctorId={doctorId}
               doctorName={doctorName}
               specialty={specialty}
               isLoggedIn={isLoggedIn}

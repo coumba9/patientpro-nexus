@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { appointmentService } from "@/api";
+import { useAuth } from "@/hooks/useAuth";
 
 const PaymentConfirmation = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [appointmentData, setAppointmentData] = useState<any>(null);
 
@@ -53,28 +56,56 @@ const PaymentConfirmation = () => {
         // En mode développement, considérer le paiement comme réussi
         // En production, faire un appel API pour vérifier le statut
         console.log("Payment verification completed successfully");
-        setStatus("success");
         
-        // Enregistrer le rendez-vous comme confirmé
-        if (pendingAppointment) {
-          const appointmentData = JSON.parse(pendingAppointment);
-          const confirmedAppointments = JSON.parse(localStorage.getItem("confirmedAppointments") || "[]");
-          confirmedAppointments.push({
-            ...appointmentData,
-            paymentToken: token,
-            paymentMethod: method,
-            status: "confirmed",
-            confirmedAt: new Date().toISOString()
-          });
-          localStorage.setItem("confirmedAppointments", JSON.stringify(confirmedAppointments));
-          console.log("Appointment confirmed and saved");
+        // Créer le rendez-vous dans Supabase
+        if (pendingAppointment && user) {
+          const data = JSON.parse(pendingAppointment);
+          
+          if (!data.doctorId) {
+            console.error("Doctor ID is missing from appointment data");
+            throw new Error("Doctor ID is required to create appointment");
+          }
+
+          try {
+            console.log("Creating appointment in Supabase...", {
+              doctor_id: data.doctorId,
+              patient_id: user.id,
+              date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
+              time: data.time,
+              type: data.type,
+              mode: data.consultationType
+            });
+
+            const appointment = await appointmentService.createAppointment({
+              doctor_id: data.doctorId,
+              patient_id: user.id,
+              date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
+              time: data.time,
+              type: data.type,
+              mode: data.consultationType,
+              location: data.consultationType === 'presentiel' ? 'Cabinet médical' : 'Téléconsultation',
+              notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
+            });
+
+            console.log("Appointment created successfully:", appointment);
+            setStatus("success");
+            toast.success("Paiement confirmé et rendez-vous créé avec succès !");
+          } catch (error: any) {
+            console.error("Error creating appointment:", error);
+            setStatus("error");
+            toast.error("Erreur lors de la création du rendez-vous: " + error.message);
+            return;
+          }
+        } else if (!user) {
+          console.error("User not logged in");
+          setStatus("error");
+          toast.error("Vous devez être connecté pour créer un rendez-vous");
+          return;
         }
         
         // Nettoyer le localStorage
         localStorage.removeItem("pendingAppointment");
         console.log("Pending appointment data cleaned");
-        
-        toast.success("Paiement confirmé avec succès !");
         
       } catch (error) {
         console.error("Erreur lors de la vérification du paiement:", error);

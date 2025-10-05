@@ -45,7 +45,7 @@ const FindDoctorContent = () => {
       toast.info("Vous allez être redirigé vers la page de réservation. Vous pourrez vous connecter par la suite.");
     }
     
-    navigate(`/book-appointment?doctor=${encodeURIComponent(doctor.name)}&specialty=${encodeURIComponent(doctor.specialty)}`);
+    navigate(`/book-appointment?doctorId=${encodeURIComponent(doctor.id)}&doctor=${encodeURIComponent(doctor.name)}&specialty=${encodeURIComponent(doctor.specialty)}`);
   };
 
   // Toggle filters visibility

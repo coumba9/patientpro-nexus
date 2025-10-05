@@ -7,12 +7,14 @@ import { initiateAfricaPayment, getSupportedPaymentMethods } from "@/services/af
 import { useAuth } from "@/hooks/useAuth";
 
 interface AppointmentHandlerProps {
+  doctorId: string | null;
   doctorName: string | null;
   specialty: string | null;
   doctorInfo: DoctorInfo;
 }
 
 export const AppointmentHandler = ({
+  doctorId,
   doctorName,
   specialty,
   doctorInfo,
@@ -33,6 +35,7 @@ export const AppointmentHandler = ({
     // Stocker les informations de réservation dans le localStorage pour pouvoir les récupérer après paiement
     const appointmentData = {
       ...data,
+      doctorId,
       doctorName,
       specialty,
       timestamp: new Date().toISOString(),

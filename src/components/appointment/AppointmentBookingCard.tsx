@@ -11,13 +11,15 @@ import { LoginPrompt } from "./LoginPrompt";
 import { DoctorInfo } from "./doctorTypes";
 
 interface AppointmentBookingCardProps {
+  doctorId: string | null;
   doctorName: string | null;
   specialty: string | null;
   isLoggedIn: boolean;
   doctorInfo: DoctorInfo;
 }
 
-export const AppointmentBookingCard = ({
+export const AppointmentBookingCard = ({ 
+  doctorId,
   doctorName,
   specialty,
   isLoggedIn,
@@ -38,6 +40,7 @@ export const AppointmentBookingCard = ({
           <LoginPrompt doctorName={doctorName} specialty={specialty} />
         ) : (
           <AppointmentHandler
+            doctorId={doctorId}
             doctorName={doctorName}
             specialty={specialty}
             doctorInfo={doctorInfo}
