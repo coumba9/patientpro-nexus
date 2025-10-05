@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 const PaymentConfirmation = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [appointmentData, setAppointmentData] = useState<any>(null);
 
@@ -30,6 +30,12 @@ const PaymentConfirmation = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       console.log("Starting payment verification...");
+      
+      // Wait for auth to load
+      if (authLoading) {
+        console.log("Auth still loading, waiting...");
+        return;
+      }
       
       if (!token) {
         console.error("No token found in URL");
@@ -115,7 +121,7 @@ const PaymentConfirmation = () => {
     };
 
     verifyPayment();
-  }, [token, method]);
+  }, [token, method, user, authLoading]);
   
   const getPaymentMethodName = (methodId: string) => {
     const methods: Record<string, string> = {

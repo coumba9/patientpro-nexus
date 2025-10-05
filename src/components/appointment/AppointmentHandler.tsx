@@ -20,9 +20,15 @@ export const AppointmentHandler = ({
   doctorInfo,
 }: AppointmentHandlerProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const handleSubmit = async (data: BookingFormValues) => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      toast.info("Vérification de la connexion...");
+      return;
+    }
+    
     // Vérifier à nouveau si l'utilisateur est connecté avant de finaliser la réservation
     if (!user) {
       toast.error("Vous devez être connecté pour finaliser la réservation");
