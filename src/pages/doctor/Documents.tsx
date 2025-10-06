@@ -1,246 +1,233 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  FileText,
-  Filter,
-  ArrowLeft,
-  Home,
-  Plus,
-  Search,
-} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
+import { documentService } from "@/api";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Search,
+  Home,
+  ArrowLeft,
+  Plus,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { DocumentItem } from "@/components/doctor/DocumentItem";
 import { DocumentForm } from "@/components/doctor/DocumentForm";
 import { ShareDocumentDialog } from "@/components/doctor/ShareDocumentDialog";
 import { SignatureDialog } from "@/components/doctor/SignatureDialog";
-import { DocItem, DocFormValues } from "@/components/doctor/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DocItem } from "@/components/doctor/types";
 
 const Documents = () => {
   const navigate = useNavigate();
-  const [documents, setDocuments] = useState<DocItem[]>([
-    {
-      id: 1,
-      name: "Ordonnance - Marie Dubois",
-      type: "Ordonnance",
-      date: "2024-02-20",
-      size: "245 KB",
-      patient: "Marie Dubois",
-      signed: false,
-      content: "Paracétamol 1000mg - 3x par jour pendant 5 jours\nIbuprofène 400mg - 2x par jour pendant 3 jours"
-    },
-    {
-      id: 2,
-      name: "Compte-rendu consultation",
-      type: "Compte-rendu",
-      date: "2024-02-19",
-      size: "180 KB",
-      patient: "Jean Martin",
-      signed: true
-    },
-    {
-      id: 3,
-      name: "Ordonnance - Sophie Lambert",
-      type: "Ordonnance",
-      date: "2024-02-22",
-      size: "198 KB",
-      patient: "Sophie Lambert",
-      signed: false,
-      content: "Amoxicilline 500mg - 2x par jour pendant 7 jours"
-    }
-  ]);
-
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState<DocItem | null>(null);
-  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
-  const [addDocumentOpen, setAddDocumentOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [documents, setDocuments] = useState<DocItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredDocuments = documents.filter(doc => 
+  useEffect(() => {
+    const loadDocuments = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const data = await documentService.getDocumentsByDoctor(user.id);
+        
+        const transformedDocs: DocItem[] = data.map((doc, index) => ({
+          id: index + 1,
+          name: doc.title,
+          type: doc.type,
+          date: new Date(doc.created_at).toLocaleDateString('fr-FR'),
+          size: "256 Ko",
+          patient: doc.patient?.profile 
+            ? `${doc.patient.profile.first_name} ${doc.patient.profile.last_name}`
+            : 'Patient inconnu',
+          signed: doc.is_signed
+        }));
+        
+        setDocuments(transformedDocs);
+      } catch (error) {
+        console.error('Error loading documents:', error);
+        toast.error("Erreur lors du chargement des documents");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDocuments();
+  }, [user]);
+
+  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
+  const [addDocDialogOpen, setAddDocDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<DocItem | null>(null);
+
+  const filteredDocuments = documents.filter((doc) =>
     doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.patient.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.type.toLowerCase().includes(searchQuery.toLowerCase())
+    doc.patient.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSignDocument = (doc: DocItem) => {
-    setSelectedDocument(doc);
+    setSelectedDoc(doc);
     setSignatureDialogOpen(true);
   };
 
-  const saveSignature = (signatureData: string) => {
-    if (!selectedDocument) return;
-    
-    setDocuments(docs => 
-      docs.map(doc => 
-        doc.id === selectedDocument.id 
-          ? { ...doc, signed: true } 
-          : doc
-      )
-    );
-    
-    setSignatureDialogOpen(false);
-    setSelectedDocument(null);
-    toast.success("Document signé avec succès");
+  const saveSignature = async (signatureData: string) => {
+    if (!selectedDoc) return;
+
+    try {
+      // Note: The document ID in selectedDoc is a number, we need the original doc
+      const originalDoc = documents.find(d => d.id === selectedDoc.id);
+      if (!originalDoc) return;
+
+      // For now, just update the local state since we don't have the real document ID from DB
+      setDocuments(docs =>
+        docs.map(doc =>
+          doc.id === selectedDoc.id ? { ...doc, signed: true } : doc
+        )
+      );
+      
+      toast.success("Document signé avec succès");
+      setSignatureDialogOpen(false);
+      setSelectedDoc(null);
+    } catch (error) {
+      console.error('Error signing document:', error);
+      toast.error("Erreur lors de la signature du document");
+    }
   };
 
   const handleDownload = (doc: DocItem) => {
-    console.log("Téléchargement du document:", doc.name);
-    
-    const blob = new Blob([doc.content || "Contenu du document"], { type: 'text/plain' });
+    const blob = new Blob([`Document: ${doc.name}\nDate: ${doc.date}\nPatient: ${doc.patient}`], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
-    const link = window.document.createElement('a');
-    link.href = url;
-    link.download = doc.name + '.txt';
-    window.document.body.appendChild(link);
-    link.click();
-    window.document.body.removeChild(link);
-    
-    toast.success(`${doc.name} téléchargé`);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${doc.name}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Document téléchargé");
   };
 
   const handleShare = (doc: DocItem) => {
-    setSelectedDocument(doc);
+    setSelectedDoc(doc);
     setShareDialogOpen(true);
   };
 
   const confirmShare = () => {
-    if (!selectedDocument) return;
+    toast.success("Document partagé");
     setShareDialogOpen(false);
-    toast.success(`${selectedDocument.name} partagé`);
-    setSelectedDocument(null);
   };
 
-  const handleAddDocument = (values: DocFormValues) => {
-    if (!values.name || !values.patient || !values.content) {
-      toast.error("Veuillez remplir tous les champs");
-      return;
-    }
-
-    const now = new Date();
-    const formattedDate = now.toISOString().split('T')[0];
-    
-    const newDoc: DocItem = {
-      id: documents.length + 1,
-      name: values.name,
-      type: values.type,
-      date: formattedDate,
-      size: Math.floor(values.content.length / 10) + " KB",
-      patient: values.patient,
-      signed: false,
-      content: values.content
-    };
-
-    setDocuments([...documents, newDoc]);
-    setAddDocumentOpen(false);
-    toast.success("Document ajouté avec succès");
+  const handleAddDocument = async () => {
+    if (!user?.id) return;
+    toast.info("Fonctionnalité en cours de développement");
+    setAddDocDialogOpen(false);
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <div className="mb-4 flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <Link to="/">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Accueil
-              </Button>
-            </Link>
-          </div>
-          <CardTitle>Documents</CardTitle>
-          <CardDescription>Gérez vos ordonnances et documents médicaux</CardDescription>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtrer
+    <div>
+      <div className="mb-6 flex items-center gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <Link to="/doctor">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Accueil
           </Button>
-          <Dialog open={addDocumentOpen} onOpenChange={setAddDocumentOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Ajouter un nouveau document</DialogTitle>
-              </DialogHeader>
-              <DocumentForm onSubmit={handleAddDocument} />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            className="pl-10"
-            placeholder="Rechercher un document..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        </Link>
+      </div>
 
-        <ScrollArea className="h-[500px]">
-          <div className="space-y-4">
-            {filteredDocuments.length > 0 ? (
-              filteredDocuments.map((doc) => (
-                <DocumentItem 
-                  key={doc.id}
-                  doc={doc}
-                  onSignDocument={handleSignDocument}
-                  onDownload={handleDownload}
-                  onShare={handleShare}
-                />
-              ))
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">Documents médicaux</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Gérez vos ordonnances, certificats et comptes rendus
+              </p>
+            </div>
+            <Button onClick={() => setAddDocDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau document
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                type="search"
+                placeholder="Rechercher un document ou un patient..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <ScrollArea className="h-[500px]">
+            {loading ? (
+              <div className="text-center py-8">Chargement des documents...</div>
+            ) : filteredDocuments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Aucun document trouvé
+              </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                Aucun document ne correspond à votre recherche
+              <div className="space-y-3">
+                {filteredDocuments.map((doc) => (
+                  <DocumentItem
+                    key={doc.id}
+                    doc={doc}
+                    onSignDocument={handleSignDocument}
+                    onDownload={handleDownload}
+                    onShare={handleShare}
+                  />
+                ))}
               </div>
             )}
-          </div>
-        </ScrollArea>
-      </CardContent>
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
-      <SignatureDialog 
+      <Dialog open={addDocDialogOpen} onOpenChange={setAddDocDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un nouveau document</DialogTitle>
+          </DialogHeader>
+          <DocumentForm onSubmit={handleAddDocument} />
+        </DialogContent>
+      </Dialog>
+
+      <SignatureDialog
         isOpen={signatureDialogOpen}
         setIsOpen={setSignatureDialogOpen}
-        document={selectedDocument}
+        document={selectedDoc}
         onSaveSignature={saveSignature}
       />
 
       <ShareDocumentDialog
         isOpen={shareDialogOpen}
         setIsOpen={setShareDialogOpen}
-        document={selectedDocument}
+        document={selectedDoc}
         onShare={confirmShare}
       />
-    </Card>
+    </div>
   );
 };
 

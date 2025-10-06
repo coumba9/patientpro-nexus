@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { LogOut, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { DoctorPersonalInfo } from "@/components/settings/DoctorPersonalInfo";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { TeleconsultationSettings } from "@/components/settings/TeleconsultationSettings";
@@ -33,14 +35,16 @@ interface DoctorSettings {
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("general");
+  const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<DoctorSettings>({
-    firstName: "Thomas",
-    lastName: "Martin",
-    email: "dr.martin@email.com",
-    phone: "06 12 34 56 78",
-    address: "123 rue de la Médecine, 75001 Paris",
-    speciality: "Médecine générale",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    speciality: "",
     consultationDuration: "20",
     notifications: {
       email: true,
@@ -52,6 +56,59 @@ const Settings = () => {
     },
   });
 
+  useEffect(() => {
+    const loadDoctorSettings = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        const { data: doctor, error: doctorError } = await supabase
+          .from('doctors')
+          .select(`
+            *,
+            specialty:specialty_id (name)
+          `)
+          .eq('id', user.id)
+          .single();
+
+        if (doctorError) throw doctorError;
+
+        setSettings({
+          firstName: profile.first_name || "",
+          lastName: profile.last_name || "",
+          email: profile.email || "",
+          phone: "",
+          address: "",
+          speciality: doctor.specialty?.name || "",
+          consultationDuration: "20",
+          notifications: {
+            email: true,
+            sms: true,
+          },
+          teleconsultation: {
+            enabled: true,
+            automaticReminders: true,
+          },
+        });
+      } catch (error) {
+        console.error('Error loading doctor settings:', error);
+        toast.error("Erreur lors du chargement des paramètres");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDoctorSettings();
+  }, [user]);
+
   const handleSaveSettings = () => {
     toast.success("Paramètres enregistrés avec succès");
   };
@@ -61,6 +118,14 @@ const Settings = () => {
     toast.success("Déconnexion réussie");
     navigate("/login");
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <p>Chargement des paramètres...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

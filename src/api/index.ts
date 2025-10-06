@@ -10,6 +10,8 @@ export * from './services/profile.service';
 export * from './services/moderation.service';
 export * from './services/admin-metrics.service';
 export * from './services/cancellation.service';
+export * from './services/message.service';
+export * from './services/document.service';
 
 // Export notification service
 export { notificationService } from './services/notification.service';

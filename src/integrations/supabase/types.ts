@@ -178,6 +178,48 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          file_size: number | null
+          file_url: string | null
+          id: string
+          is_signed: boolean
+          patient_id: string
+          signed_at: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_signed?: boolean
+          patient_id: string
+          signed_at?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          is_signed?: boolean
+          patient_id?: string
+          signed_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medical_records: {
         Row: {
           created_at: string
@@ -210,6 +252,42 @@ export type Database = {
           notes?: string | null
           patient_id?: string
           prescription?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          appointment_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          receiver_id: string
+          sender_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          receiver_id: string
+          sender_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          receiver_id?: string
+          sender_id?: string
+          subject?: string
           updated_at?: string
         }
         Relationships: []

@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle, Eye } from "lucide-react";
 import { AddMedicalRecordForm } from "./AddMedicalRecordForm";
 import { PrescriptionViewer } from "./PrescriptionViewer";
-import { useState as useViewerState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRealPatients } from "@/hooks/useRealPatients";
 
 interface Patient {
   id: string;
@@ -40,6 +41,8 @@ interface PatientRecordProps {
 }
 
 export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
+  const { user } = useAuth();
+  const { patients: realPatients, loading } = useRealPatients(user?.id || null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedTab, setSelectedTab] = useState("info");
@@ -48,13 +51,15 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
   const [showPrescriptionViewer, setShowPrescriptionViewer] = useState(false);
 
-  // Données de démonstration
-  const patients: Patient[] = [
-    { id: "1", name: "Seynabou Seye", age: 45, gender: "Femme", contact: "seyna@example.com", lastVisit: "15/03/2024" },
-    { id: "2", name: "Ansou Faye", age: 62, gender: "Homme", contact: "ansou@example.com", lastVisit: "02/04/2024" },
-    { id: "3", name: "Sophie Ndiaye", age: 38, gender: "Femme", contact: "sophie@example.com", lastVisit: "24/03/2024" },
-    { id: "4", name: "Badara Sene", age: 28, gender: "Homme", contact: "bada@example.com", lastVisit: "10/04/2024" },
-  ];
+  // Use real patients from database
+  const patients: Patient[] = realPatients.map(p => ({
+    id: p.id,
+    name: p.name,
+    age: p.age,
+    gender: p.gender,
+    contact: p.contact,
+    lastVisit: p.lastVisit
+  }));
 
   const medicalRecords: Record<string, MedicalRecord[]> = {
     "1": [
@@ -131,6 +136,10 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
     console.log('Téléchargement prescription:', prescriptionId);
     // Logique de téléchargement PDF sera implémentée ici
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Chargement des patients...</div>;
+  }
 
   return (
     <div className="space-y-6">

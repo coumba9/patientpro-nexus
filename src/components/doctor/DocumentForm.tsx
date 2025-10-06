@@ -13,6 +13,8 @@ interface DocFormValues {
   content: string;
 }
 
+export type { DocFormValues };
+
 interface DocumentFormProps {
   initialValues?: DocFormValues;
   onSubmit: (values: DocFormValues) => void;
