@@ -63,15 +63,22 @@ export const RealtimeAppointmentsList = ({
     );
   }
 
-  const todayAppointments = appointments.filter(apt => {
-    const today = new Date().toISOString().split('T')[0];
-    return apt.date === today;
+  // Afficher tous les rendez-vous à venir, pas seulement ceux d'aujourd'hui
+  const upcomingAppointments = appointments.filter(apt => {
+    const aptDate = new Date(apt.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return aptDate >= today && apt.status !== 'cancelled';
+  }).sort((a, b) => {
+    const dateA = new Date(a.date + 'T' + a.time);
+    const dateB = new Date(b.date + 'T' + b.time);
+    return dateA.getTime() - dateB.getTime();
   });
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Rendez-vous du jour ({todayAppointments.length})</CardTitle>
+        <CardTitle>Rendez-vous à venir ({upcomingAppointments.length})</CardTitle>
         <Link to="/doctor/teleconsultation">
           <Button variant="outline" size="sm">
             <Video className="h-4 w-4 mr-2" />
@@ -82,12 +89,12 @@ export const RealtimeAppointmentsList = ({
       <CardContent>
         <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-4">
-            {todayAppointments.length === 0 ? (
+            {upcomingAppointments.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
-                Aucun rendez-vous pour aujourd'hui
+                Aucun rendez-vous à venir
               </div>
             ) : (
-              todayAppointments.map((appointment: any) => (
+              upcomingAppointments.map((appointment: any) => (
                 <div
                   key={appointment.id}
                   className="flex items-center justify-between p-4 border rounded-lg"
@@ -97,7 +104,10 @@ export const RealtimeAppointmentsList = ({
                       {appointment.patient?.profile?.first_name} {appointment.patient?.profile?.last_name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {appointment.time} - {appointment.type}
+                      {new Date(appointment.date).toLocaleDateString('fr-FR')} à {appointment.time}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {appointment.type}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Mode: {appointment.mode === 'teleconsultation' ? 'Téléconsultation' : 'Présentiel'}

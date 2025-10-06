@@ -151,7 +151,7 @@ const DoctorDashboard = () => {
           </div>
 
           <div className="md:col-span-4">
-            <StatsCards />
+            <StatsCards doctorId={user?.id || ''} />
             
             <div className="mb-6">
               <Button 
