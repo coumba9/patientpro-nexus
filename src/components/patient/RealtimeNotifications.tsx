@@ -97,6 +97,8 @@ export const RealtimeNotifications = ({ userId }: RealtimeNotificationsProps) =>
                       {notification.type === 'appointment_created' ? 'Rendez-vous' :
                        notification.type === 'appointment_status_changed' ? 'Statut' :
                        notification.type === 'appointment_cancelled' ? 'Annulation' :
+                       notification.type === 'appointment_reschedule_request' ? 'Report demandé' :
+                       notification.type === 'medical_record' ? 'Dossier médical' :
                        notification.type}
                     </Badge>
                   </div>

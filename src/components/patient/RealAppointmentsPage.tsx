@@ -15,9 +15,23 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  const handleReschedule = (appointmentId: number, reason: string) => {
-    if (reason.trim()) {
-      toast.success("Demande de report envoyée");
+  const handleReschedule = async (appointmentId: number, reason: string) => {
+    if (!reason.trim()) return;
+    
+    try {
+      // Mettre à jour le rendez-vous avec la raison du report
+      // Cela déclenchera la notification au médecin via le trigger
+      await appointmentService.update(appointmentId.toString(), {
+        cancellation_reason: reason.trim(),
+        cancelled_by: user?.id,
+        cancellation_type: 'patient'
+      });
+      
+      toast.success("Demande de report envoyée au médecin");
+      // Les rendez-vous seront automatiquement mis à jour via le hook realtime
+    } catch (error) {
+      console.error("Error requesting reschedule:", error);
+      toast.error("Erreur lors de l'envoi de la demande de report");
     }
   };
 
