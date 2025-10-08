@@ -16,7 +16,7 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  const handleReschedule = async (appointmentId: number, reason: string) => {
+  const handleReschedule = async (appointmentId: string, reason: string) => {
     if (!reason.trim() || !user?.id) return;
     
     try {
@@ -29,7 +29,7 @@ export const RealAppointmentsPage = () => {
           cancelled_by: user.id,
           cancellation_type: 'patient'
         })
-        .eq('id', appointmentId.toString());
+        .eq('id', appointmentId);
       
       if (error) {
         console.error("Error requesting reschedule:", error);
@@ -45,9 +45,9 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  const handleConfirm = async (appointmentId: number) => {
+  const handleConfirm = async (appointmentId: string) => {
     try {
-      await appointmentService.updateAppointmentStatus(appointmentId.toString(), 'confirmed');
+      await appointmentService.updateAppointmentStatus(appointmentId, 'confirmed');
       toast.success("Rendez-vous confirmé avec succès");
     } catch (error) {
       console.error('Error confirming appointment:', error);
@@ -61,7 +61,7 @@ export const RealAppointmentsPage = () => {
 
   // Transform appointments to match the expected format
   const transformedAppointments = appointments.map(apt => ({
-    id: parseInt(apt.id) || 0,
+    id: apt.id,
     doctor: (apt as any).doctor?.profile ? 
       `Dr. ${(apt as any).doctor.profile.first_name} ${(apt as any).doctor.profile.last_name}` : 
       `Médecin ${apt.doctor_id.slice(0, 8)}...`,
@@ -72,7 +72,8 @@ export const RealAppointmentsPage = () => {
     time: apt.time,
     location: apt.location || 'À définir',
     type: apt.type,
-    status: apt.status as "confirmed" | "pending"
+    status: apt.status as "confirmed" | "pending",
+    doctorId: apt.doctor_id,
   }));
 
   return (

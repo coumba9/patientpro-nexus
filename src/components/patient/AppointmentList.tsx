@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AppointmentCard } from "./AppointmentCard";
 
 interface Appointment {
-  id: number;
+  id: string;
   doctor: string;
   specialty: string;
   date: string;
@@ -12,13 +12,14 @@ interface Appointment {
   location: string;
   type: string;
   status: "confirmed" | "pending";
+  doctorId?: string;
 }
 
 interface AppointmentListProps {
   appointments: Appointment[];
   onSendMessage: (doctorName: string, message: string) => void;
-  onReschedule: (appointmentId: number, reason: string) => void;
-  onConfirm: (appointmentId: number) => void;
+  onReschedule: (appointmentId: string, reason: string) => void;
+  onConfirm: (appointmentId: string) => void;
 }
 
 export const AppointmentList = ({

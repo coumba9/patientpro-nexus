@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-
 interface Appointment {
-  id: number;
+  id: string;
   doctor: string;
   specialty: string;
   date: string;
@@ -22,12 +21,11 @@ interface Appointment {
   type: string;
   status: "confirmed" | "pending";
 }
-
 interface RescheduleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment;
-  onReschedule: (appointmentId: number, reason: string) => void;
+  onReschedule: (appointmentId: string, reason: string) => void;
 }
 
 export const RescheduleDialog = ({

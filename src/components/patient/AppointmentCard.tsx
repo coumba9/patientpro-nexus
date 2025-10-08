@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +16,11 @@ import {
 import { MessageDialog } from "./MessageDialog";
 import { RescheduleDialog } from "./RescheduleDialog";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
-
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { messageService } from "@/api";
 interface Appointment {
-  id: number;
+  id: string;
   doctor: string;
   specialty: string;
   date: string;
@@ -27,13 +28,14 @@ interface Appointment {
   location: string;
   type: string;
   status: "confirmed" | "pending";
+  doctorId?: string;
 }
 
 interface AppointmentCardProps {
   appointment: Appointment;
   onSendMessage: (doctorName: string, message: string) => void;
-  onReschedule: (appointmentId: number, reason: string) => void;
-  onConfirm: (appointmentId: number) => void;
+  onReschedule: (appointmentId: string, reason: string) => void;
+  onConfirm: (appointmentId: string) => void;
 }
 
 export const AppointmentCard = ({
@@ -45,7 +47,7 @@ export const AppointmentCard = ({
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const userId = "patient-id"; // TODO: Get from auth context
+  const { user } = useAuth();
 
   const getStatusBadge = (status: string) => {
     return status === "confirmed" ? (
@@ -60,6 +62,32 @@ export const AppointmentCard = ({
   const handleCancelConfirmed = () => {
     // This would trigger the parent component to refresh the appointment list
     setIsCancelDialogOpen(false);
+  };
+
+  const handleSendMessage = async (doctorName: string, message: string) => {
+    if (!message.trim()) return;
+    if (!user?.id) {
+      toast.error("Vous devez être connecté pour envoyer un message");
+      return;
+    }
+    if (!appointment.doctorId) {
+      toast.error("Impossible de trouver le médecin destinataire");
+      return;
+    }
+
+    try {
+      await messageService.sendMessage({
+        sender_id: user.id,
+        receiver_id: appointment.doctorId,
+        subject: `Message au sujet du rendez-vous du ${appointment.date}`,
+        content: message,
+        appointment_id: appointment.id,
+      } as any);
+      toast.success(`Message envoyé au ${doctorName}`);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error("Erreur lors de l'envoi du message");
+    }
   };
 
   return (
@@ -153,7 +181,7 @@ export const AppointmentCard = ({
         isOpen={isMessageDialogOpen}
         onClose={() => setIsMessageDialogOpen(false)}
         doctorName={appointment.doctor}
-        onSendMessage={onSendMessage}
+        onSendMessage={handleSendMessage}
       />
 
       <RescheduleDialog
@@ -166,11 +194,11 @@ export const AppointmentCard = ({
       <CancelAppointmentDialog
         isOpen={isCancelDialogOpen}
         onClose={() => setIsCancelDialogOpen(false)}
-        appointmentId={appointment.id.toString()}
+        appointmentId={appointment.id}
         doctorName={appointment.doctor}
         appointmentTime={appointment.time}
         appointmentDate={appointment.date}
-        userId={userId}
+        userId={user?.id || ''}
         onCancel={handleCancelConfirmed}
       />
     </>
