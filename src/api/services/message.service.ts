@@ -33,11 +33,7 @@ class MessageService extends BaseService<Message> {
   async getMessagesByUser(userId: string): Promise<Message[]> {
     const { data, error } = await supabase
       .from(this.tableName as any)
-      .select(`
-        *,
-        sender:sender_id (id, first_name, last_name, email),
-        receiver:receiver_id (id, first_name, last_name, email)
-      `)
+      .select('*')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: false });
     
@@ -46,7 +42,24 @@ class MessageService extends BaseService<Message> {
       throw error;
     }
     
-    return (data as any[]) || [];
+    // Fetch sender and receiver profiles separately
+    const messages = (data as any[]) || [];
+    const enrichedMessages = await Promise.all(
+      messages.map(async (msg) => {
+        const [senderProfile, receiverProfile] = await Promise.all([
+          supabase.from('profiles').select('id, first_name, last_name, email').eq('id', msg.sender_id).single(),
+          supabase.from('profiles').select('id, first_name, last_name, email').eq('id', msg.receiver_id).single()
+        ]);
+        
+        return {
+          ...msg,
+          sender: senderProfile.data,
+          receiver: receiverProfile.data
+        };
+      })
+    );
+    
+    return enrichedMessages;
   }
 
   async sendMessage(message: Omit<Message, 'id' | 'created_at' | 'updated_at' | 'is_read'>): Promise<Message> {
