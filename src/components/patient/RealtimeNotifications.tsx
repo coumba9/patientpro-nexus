@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface RealtimeNotificationsProps {
-  userId: string;
+  userId: string | null;
 }
 
 export const RealtimeNotifications = ({ userId }: RealtimeNotificationsProps) => {

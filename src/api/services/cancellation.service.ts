@@ -42,10 +42,19 @@ class CancellationService extends BaseService<CancellationPolicy> {
       const isInvolved = appointment.doctor_id === userId || appointment.patient_id === userId;
       if (!isInvolved) return false;
       
-      // Règle simple : permettre l'annulation jusqu'à 24h avant
-      const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+      // Règle : permettre l'annulation jusqu'à 24h avant (calcul robuste au fuseau)
+      const datePart = String(appointment.date); // YYYY-MM-DD
+      const timePart = String(appointment.time || '00:00:00'); // HH:MM:SS
+      const [hhStr, mmStr = '0', ssStr = '0'] = timePart.split(':');
+      const hh = Number(hhStr) || 0;
+      const mm = Number(mmStr) || 0;
+      const ss = Number(ssStr) || 0;
+      // Construire la date locale du rendez-vous sans parsing ambigu
+      const appointmentDate = new Date(datePart + 'T00:00:00');
+      appointmentDate.setHours(hh, mm, ss, 0);
+      
       const now = new Date();
-      const hoursUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+      const hoursUntilAppointment = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
       
       return hoursUntilAppointment >= 24;
     } catch (error) {
