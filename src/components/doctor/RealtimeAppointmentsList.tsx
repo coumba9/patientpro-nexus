@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Video, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Video, CheckCircle, XCircle, Clock, Calendar } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +13,8 @@ import {
 import { useRealtimeAppointments } from "@/hooks/useRealtimeAppointments";
 import { appointmentService } from "@/api/services/appointment.service";
 import { toast } from "sonner";
+import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
+import { RescheduleAppointmentDialog } from "./RescheduleAppointmentDialog";
 
 interface RealtimeAppointmentsListProps {
   doctorId: string;
@@ -22,6 +24,9 @@ export const RealtimeAppointmentsList = ({
   doctorId,
 }: RealtimeAppointmentsListProps) => {
   const { appointments, loading } = useRealtimeAppointments(doctorId, 'doctor');
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   const handleConfirm = async (appointmentId: string) => {
     try {
@@ -33,19 +38,22 @@ export const RealtimeAppointmentsList = ({
     }
   };
 
-  const handleCancel = async (appointmentId: string) => {
-    try {
-      await appointmentService.cancelAppointment({
-        appointment_id: appointmentId,
-        cancelled_by: doctorId,
-        reason: "Annulé par le médecin",
-        cancellation_type: "doctor"
-      });
-      toast.success("Rendez-vous annulé avec succès");
-    } catch (error) {
-      console.error('Error cancelling appointment:', error);
-      toast.error("Erreur lors de l'annulation du rendez-vous");
-    }
+  const openCancelDialog = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setCancelDialogOpen(true);
+  };
+
+  const openRescheduleDialog = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setRescheduleDialogOpen(true);
+  };
+
+  const handleCancelSuccess = () => {
+    setSelectedAppointment(null);
+  };
+
+  const handleRescheduleSuccess = () => {
+    setSelectedAppointment(null);
   };
 
   if (loading) {
@@ -135,24 +143,34 @@ export const RealtimeAppointmentsList = ({
                        appointment.status === 'cancelled' ? 'Annulé' :
                        appointment.status}
                     </Badge>
-                    {appointment.status === 'pending' && (
-                      <div className="flex gap-1">
+                    <div className="flex gap-1">
+                      {appointment.status === 'pending' && (
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleConfirm(appointment.id)}
+                          title="Confirmer"
                         >
                           <CheckCircle className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCancel(appointment.id)}
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openRescheduleDialog(appointment)}
+                        title="Reporter"
+                      >
+                        <Calendar className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openCancelDialog(appointment)}
+                        title="Annuler"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -160,6 +178,31 @@ export const RealtimeAppointmentsList = ({
           </div>
         </ScrollArea>
       </CardContent>
+
+      {selectedAppointment && (
+        <>
+          <CancelAppointmentDialog
+            isOpen={cancelDialogOpen}
+            onClose={() => setCancelDialogOpen(false)}
+            appointmentId={selectedAppointment.id}
+            patientName={`${selectedAppointment.patient?.profile?.first_name} ${selectedAppointment.patient?.profile?.last_name}`}
+            appointmentTime={selectedAppointment.time}
+            appointmentDate={new Date(selectedAppointment.date).toLocaleDateString('fr-FR')}
+            onCancel={handleCancelSuccess}
+          />
+
+          <RescheduleAppointmentDialog
+            isOpen={rescheduleDialogOpen}
+            onClose={() => setRescheduleDialogOpen(false)}
+            appointmentId={selectedAppointment.id}
+            patientName={`${selectedAppointment.patient?.profile?.first_name} ${selectedAppointment.patient?.profile?.last_name}`}
+            currentDate={new Date(selectedAppointment.date).toLocaleDateString('fr-FR')}
+            currentTime={selectedAppointment.time}
+            doctorId={doctorId}
+            onReschedule={handleRescheduleSuccess}
+          />
+        </>
+      )}
     </Card>
   );
 };

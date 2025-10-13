@@ -18,7 +18,7 @@ import { RescheduleDialog } from "./RescheduleDialog";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { messageService } from "@/api";
+import { messageService, appointmentService } from "@/api";
 interface Appointment {
   id: string;
   doctor: string;
@@ -34,7 +34,7 @@ interface Appointment {
 interface AppointmentCardProps {
   appointment: Appointment;
   onSendMessage: (doctorName: string, message: string) => void;
-  onReschedule: (appointmentId: string, reason: string) => void;
+  onReschedule: (appointmentId: string, newDate: string, newTime: string) => void;
   onConfirm: (appointmentId: string) => void;
 }
 
@@ -58,6 +58,18 @@ export const AppointmentCard = ({
   };
 
   const isOnline = appointment.type.toLowerCase().includes('télé');
+
+  const handleRescheduleSubmit = async (appointmentId: string, newDate: string, newTime: string) => {
+    try {
+      await appointmentService.rescheduleAppointment(appointmentId, newDate, newTime, user?.id || '', 'patient');
+      toast.success("Rendez-vous reporté avec succès");
+      onReschedule(appointmentId, newDate, newTime);
+      setIsRescheduleDialogOpen(false);
+    } catch (error) {
+      console.error("Error rescheduling:", error);
+      toast.error("Erreur lors du report du rendez-vous");
+    }
+  };
 
   const handleCancelConfirmed = () => {
     // This would trigger the parent component to refresh the appointment list
@@ -188,7 +200,7 @@ export const AppointmentCard = ({
         isOpen={isRescheduleDialogOpen}
         onClose={() => setIsRescheduleDialogOpen(false)}
         appointment={appointment}
-        onReschedule={onReschedule}
+        onReschedule={handleRescheduleSubmit}
       />
 
       <CancelAppointmentDialog

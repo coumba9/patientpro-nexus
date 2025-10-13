@@ -16,33 +16,10 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  const handleReschedule = async (appointmentId: string, reason: string) => {
-    if (!reason.trim() || !user?.id) return;
-    
-    try {
-      // Mettre à jour le rendez-vous avec la raison du report
-      // Cela déclenchera la notification au médecin via le trigger
-      const { error } = await supabase
-        .from('appointments')
-        .update({
-          cancellation_reason: reason.trim(),
-          cancelled_by: user.id,
-          cancellation_type: 'patient'
-        })
-        .eq('id', appointmentId);
-      
-      if (error) {
-        console.error("Error requesting reschedule:", error);
-        toast.error("Erreur lors de l'envoi de la demande de report");
-        return;
-      }
-      
-      toast.success("Demande de report envoyée au médecin");
-      // Les rendez-vous seront automatiquement mis à jour via le hook realtime
-    } catch (error) {
-      console.error("Error requesting reschedule:", error);
-      toast.error("Erreur lors de l'envoi de la demande de report");
-    }
+  const handleReschedule = async (appointmentId: string, newDate: string, newTime: string) => {
+    // Le report est géré par le service et les notifications se font via les triggers DB
+    // Le useRealtimeAppointments va rafraîchir automatiquement les données
+    toast.success("Rendez-vous reporté avec succès");
   };
 
   const handleConfirm = async (appointmentId: string) => {

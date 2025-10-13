@@ -17,49 +17,45 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-interface Appointment {
-  id: string;
-  doctor: string;
-  specialty: string;
-  date: string;
-  time: string;
-  location: string;
-  type: string;
-  status: "confirmed" | "pending";
-  doctor_id?: string;
-}
-
-interface RescheduleDialogProps {
+interface RescheduleAppointmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  appointment: Appointment;
-  onReschedule: (appointmentId: string, newDate: string, newTime: string) => void;
+  appointmentId: string;
+  patientName: string;
+  currentDate: string;
+  currentTime: string;
+  doctorId: string;
+  onReschedule: () => void;
 }
 
-export const RescheduleDialog = ({
+export const RescheduleAppointmentDialog = ({
   isOpen,
   onClose,
-  appointment,
+  appointmentId,
+  patientName,
+  currentDate,
+  currentTime,
+  doctorId,
   onReschedule,
-}: RescheduleDialogProps) => {
+}: RescheduleAppointmentDialogProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (selectedDate && appointment.doctor_id) {
+    if (selectedDate && doctorId) {
       loadAvailableSlots();
     }
-  }, [selectedDate, appointment.doctor_id]);
+  }, [selectedDate, doctorId]);
 
   const loadAvailableSlots = async () => {
-    if (!selectedDate || !appointment.doctor_id) return;
+    if (!selectedDate) return;
     
     setIsLoading(true);
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const slots = await appointmentService.getAvailableSlots(appointment.doctor_id, dateStr);
+      const slots = await appointmentService.getAvailableSlots(doctorId, dateStr);
       setAvailableSlots(slots);
       setSelectedTime("");
     } catch (error) {
@@ -70,15 +66,32 @@ export const RescheduleDialog = ({
     }
   };
 
-  const handleReschedule = () => {
+  const handleReschedule = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error("Veuillez sélectionner une date et une heure");
       return;
     }
 
-    const newDate = format(selectedDate, 'yyyy-MM-dd');
-    onReschedule(appointment.id, newDate, selectedTime);
-    onClose();
+    setIsLoading(true);
+    try {
+      const newDate = format(selectedDate, 'yyyy-MM-dd');
+      await appointmentService.rescheduleAppointment(
+        appointmentId,
+        newDate,
+        selectedTime,
+        doctorId,
+        'doctor'
+      );
+
+      toast.success("Rendez-vous reporté avec succès");
+      onReschedule();
+      onClose();
+    } catch (error) {
+      console.error("Error rescheduling appointment:", error);
+      toast.error("Erreur lors du report du rendez-vous");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formatTimeSlot = (time: string) => {
@@ -91,7 +104,7 @@ export const RescheduleDialog = ({
         <DialogHeader>
           <DialogTitle>Reporter le rendez-vous</DialogTitle>
           <DialogDescription>
-            Choisissez une nouvelle date et heure pour votre rendez-vous avec {appointment.doctor}
+            Reporter le rendez-vous avec {patientName} prévu le {currentDate} à {currentTime}
           </DialogDescription>
         </DialogHeader>
         
@@ -99,7 +112,7 @@ export const RescheduleDialog = ({
           <div className="grid gap-2">
             <Label>
               <CalendarIcon className="inline h-4 w-4 mr-2" />
-              Sélectionnez une date
+              Sélectionnez une nouvelle date
             </Label>
             <Calendar
               mode="single"
@@ -141,14 +154,14 @@ export const RescheduleDialog = ({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Annuler
           </Button>
           <Button 
             onClick={handleReschedule} 
-            disabled={!selectedDate || !selectedTime}
+            disabled={!selectedDate || !selectedTime || isLoading}
           >
-            Confirmer le report
+            {isLoading ? "Report en cours..." : "Confirmer le report"}
           </Button>
         </DialogFooter>
       </DialogContent>

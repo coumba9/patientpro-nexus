@@ -196,7 +196,6 @@ export const AppointmentCard = ({
         patientName={appointment.patient}
         appointmentTime={appointment.time}
         appointmentDate={appointment.date}
-        userId={userId}
         onCancel={handleCancelConfirmed}
       />
     </>

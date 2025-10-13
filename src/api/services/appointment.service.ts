@@ -198,6 +198,51 @@ class AppointmentService extends BaseService<Appointment> {
 
     return (data as any[]) || [];
   }
+
+  async getAvailableSlots(doctorId: string, targetDate: string): Promise<string[]> {
+    // Récupérer les rendez-vous du médecin pour cette date
+    const { data: existingAppointments, error } = await supabase
+      .from('appointments')
+      .select('time')
+      .eq('doctor_id', doctorId)
+      .eq('date', targetDate)
+      .neq('status', 'cancelled');
+
+    if (error) {
+      throw new Error(`Error fetching slots: ${error.message}`);
+    }
+
+    // Horaires de travail: 9h-18h, créneaux de 30 min
+    const allSlots = [];
+    for (let hour = 9; hour < 18; hour++) {
+      allSlots.push(`${hour.toString().padStart(2, '0')}:00:00`);
+      allSlots.push(`${hour.toString().padStart(2, '0')}:30:00`);
+    }
+
+    // Filtrer les créneaux déjà pris
+    const bookedTimes = (existingAppointments || []).map((apt: any) => apt.time);
+    return allSlots.filter(slot => !bookedTimes.includes(slot));
+  }
+
+  async rescheduleAppointment(appointmentId: string, newDate: string, newTime: string, userId: string, userRole: 'doctor' | 'patient'): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({
+        date: newDate,
+        time: newTime,
+        status: 'confirmed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', appointmentId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error rescheduling appointment: ${error.message}`);
+    }
+
+    return data as any;
+  }
 }
 
 export const appointmentService = new AppointmentService();

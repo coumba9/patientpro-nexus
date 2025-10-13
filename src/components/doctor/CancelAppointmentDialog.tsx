@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { appointmentService, cancellationService } from "@/api";
+import { appointmentService } from "@/api";
 
 interface CancelAppointmentDialogProps {
   isOpen: boolean;
@@ -21,7 +20,6 @@ interface CancelAppointmentDialogProps {
   patientName: string;
   appointmentTime: string;
   appointmentDate: string;
-  userId: string;
   onCancel: () => void;
 }
 
@@ -32,7 +30,6 @@ export const CancelAppointmentDialog = ({
   patientName,
   appointmentTime,
   appointmentDate,
-  userId,
   onCancel,
 }: CancelAppointmentDialogProps) => {
   const [reason, setReason] = useState("");
@@ -47,24 +44,17 @@ export const CancelAppointmentDialog = ({
     setIsLoading(true);
     
     try {
-      // Vérifier si l'annulation est autorisée
-      const canCancel = await cancellationService.canCancelAppointment(
-        appointmentId,
-        userId,
-        'doctor'
-      );
-
-      if (!canCancel) {
-        toast.error("Vous ne pouvez plus annuler ce rendez-vous (délai de 2h avant le rendez-vous dépassé)");
-        setIsLoading(false);
+      // Get current user ID from session
+      const { data: { session } } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.getSession());
+      if (!session?.user?.id) {
+        toast.error("Vous devez être connecté");
         return;
       }
 
-      // Procéder à l'annulation
       await appointmentService.cancelAppointment({
         appointment_id: appointmentId,
         reason: reason.trim(),
-        cancelled_by: userId,
+        cancelled_by: session.user.id,
         cancellation_type: 'doctor'
       });
 
@@ -110,9 +100,8 @@ export const CancelAppointmentDialog = ({
             />
           </div>
           
-          <div className="text-sm text-muted-foreground bg-yellow-50 p-3 rounded-md">
-            <strong>Note :</strong> Vous pouvez annuler un rendez-vous jusqu'à 2 heures avant l'heure prévue.
-            Le patient sera automatiquement notifié de l'annulation.
+          <div className="text-sm text-muted-foreground bg-yellow-50 dark:bg-yellow-950 p-3 rounded-md">
+            <strong>Note :</strong> Le patient sera automatiquement notifié de l'annulation.
           </div>
         </div>
 
