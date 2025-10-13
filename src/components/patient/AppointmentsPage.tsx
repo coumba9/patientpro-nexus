@@ -5,7 +5,7 @@ import { AppointmentStats } from "./AppointmentStats";
 import { AppointmentList } from "./AppointmentList";
 
 interface Appointment {
-  id: number;
+  id: string;
   doctor: string;
   specialty: string;
   date: string;
@@ -17,7 +17,7 @@ interface Appointment {
 
 const mockAppointments: Appointment[] = [
   {
-    id: 1,
+    id: "1",
     doctor: "Dr. Sarah Martin",
     specialty: "Cardiologue",
     date: "2024-02-20",
@@ -27,7 +27,7 @@ const mockAppointments: Appointment[] = [
     status: "pending",
   },
   {
-    id: 2,
+    id: "2",
     doctor: "Dr. Thomas Bernard",
     specialty: "Dermatologue",
     date: "2024-02-25",
@@ -47,13 +47,13 @@ export const AppointmentsPage = () => {
     }
   };
 
-  const handleReschedule = (appointmentId: number, reason: string) => {
+const handleReschedule = (appointmentId: string, reason: string) => {
     if (reason.trim()) {
       toast.success("Demande de report envoyée");
     }
   };
 
-  const handleConfirm = (appointmentId: number) => {
+const handleConfirm = (appointmentId: string) => {
     toast.success("Rendez-vous confirmé avec succès");
   };
 
