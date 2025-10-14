@@ -10,13 +10,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface RealtimeNotificationsProps {
   userId: string | null;
+  userRole?: 'doctor' | 'patient';
 }
 
-export const RealtimeNotifications = ({ userId }: RealtimeNotificationsProps) => {
+export const RealtimeNotifications = ({ userId, userRole }: RealtimeNotificationsProps) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useRealtimeNotifications(userId);
+  const navigate = useNavigate();
+
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.is_read) {
+      markAsRead(notification.id);
+    }
+    
+    // Redirect to appointment details if appointment_id exists
+    if (notification.appointment_id) {
+      const basePath = userRole === 'doctor' ? '/doctor' : '/patient';
+      navigate(`${basePath}/appointment/${notification.appointment_id}`);
+    }
+  };
 
   return (
     <Popover>
@@ -59,7 +74,7 @@ export const RealtimeNotifications = ({ userId }: RealtimeNotificationsProps) =>
                   className={`p-4 hover:bg-muted/50 cursor-pointer ${
                     !notification.is_read ? 'bg-primary/5 border-l-2 border-l-primary' : ''
                   }`}
-                  onClick={() => !notification.is_read && markAsRead(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">

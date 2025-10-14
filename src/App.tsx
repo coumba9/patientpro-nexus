@@ -47,6 +47,8 @@ import PaymentManagement from "./pages/admin/PaymentManagement";
 import ContentManagement from "./pages/admin/ContentManagement";
 import NotificationManagement from "./pages/admin/NotificationManagement";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
+import DoctorAppointmentDetails from "./pages/doctor/AppointmentDetails";
+import PatientAppointmentDetails from "./pages/patient/AppointmentDetails";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +115,11 @@ const App = () => {
               <Route path="/doctor/teleconsultation" element={
                 <ProtectedRoute requiredRole={['doctor']}>
                   <DoctorTeleconsultation />
+                </ProtectedRoute>
+              } />
+              <Route path="/doctor/appointment/:id" element={
+                <ProtectedRoute requiredRole={['doctor']}>
+                  <DoctorAppointmentDetails />
                 </ProtectedRoute>
               } />
               

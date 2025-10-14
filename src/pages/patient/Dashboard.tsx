@@ -13,6 +13,7 @@ import Profile from "./Profile";
 import MedicalHistory from "./MedicalHistory";
 import Prescriptions from "./Prescriptions";
 import AppointmentTickets from "./AppointmentTickets";
+import PatientAppointmentDetails from "./AppointmentDetails";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu } from "lucide-react";
@@ -68,7 +69,7 @@ const PatientDashboard = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <RealtimeNotifications userId={user?.id || null} />
+            <RealtimeNotifications userId={user?.id || null} userRole="patient" />
             <ThemeToggle />
             <Button 
               variant="outline" 
@@ -119,6 +120,7 @@ const PatientDashboard = () => {
             <Routes>
               <Route path="/" element={<RealAppointmentsPage />} />
               <Route path="/tickets" element={<AppointmentTickets />} />
+              <Route path="/appointment/:id" element={<PatientAppointmentDetails />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/medical-history" element={<MedicalHistory />} />
               <Route path="/prescriptions" element={<Prescriptions />} />

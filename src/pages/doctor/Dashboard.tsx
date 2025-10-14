@@ -116,7 +116,7 @@ const DoctorDashboard = () => {
                 <p className="text-muted-foreground">
                   {user?.email ? `Connecté avec: ${user.email}` : "Vous êtes connecté en tant que médecin"}
                 </p>
-                <RealtimeNotifications userId={user?.id || null} />
+                <RealtimeNotifications userId={user?.id || null} userRole="doctor" />
               </div>
               <div className="flex gap-4 mt-4">
                 {!isHomePage && (

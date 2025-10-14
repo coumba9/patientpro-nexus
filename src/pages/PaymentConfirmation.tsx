@@ -14,6 +14,7 @@ const PaymentConfirmation = () => {
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [appointmentData, setAppointmentData] = useState<any>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const token = searchParams.get("token");
   const method = searchParams.get("method");
@@ -64,11 +65,13 @@ const PaymentConfirmation = () => {
         console.log("Payment verification completed successfully");
         
         // Créer le rendez-vous dans Supabase
-        if (pendingAppointment && user) {
+        if (pendingAppointment && user && !isCreating) {
+          setIsCreating(true);
           const data = JSON.parse(pendingAppointment);
           
           if (!data.doctorId) {
             console.error("Doctor ID is missing from appointment data");
+            setIsCreating(false);
             throw new Error("Doctor ID is required to create appointment");
           }
 
@@ -96,9 +99,11 @@ const PaymentConfirmation = () => {
             console.log("Appointment created successfully:", appointment);
             setStatus("success");
             toast.success("Paiement confirmé et rendez-vous créé avec succès !");
+            setIsCreating(false);
           } catch (error: any) {
             console.error("Error creating appointment:", error);
             setStatus("error");
+            setIsCreating(false);
             toast.error("Erreur lors de la création du rendez-vous: " + error.message);
             return;
           }
@@ -106,6 +111,9 @@ const PaymentConfirmation = () => {
           console.error("User not logged in");
           setStatus("error");
           toast.error("Vous devez être connecté pour créer un rendez-vous");
+          return;
+        } else if (isCreating) {
+          console.log("Appointment creation already in progress, skipping...");
           return;
         }
         
