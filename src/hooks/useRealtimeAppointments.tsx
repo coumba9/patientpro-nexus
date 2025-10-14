@@ -106,16 +106,9 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
         (payload) => {
           console.log('Appointment change received:', payload);
           
-          if (payload.eventType === 'INSERT') {
-            fetchAppointments(); // Refetch to get complete data with relations
-          } else if (payload.eventType === 'UPDATE') {
-            setAppointments(prev => 
-              prev.map(apt => 
-                apt.id === payload.new.id 
-                  ? { ...apt, ...payload.new }
-                  : apt
-              )
-            );
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Refetch to get complete data with relations for INSERT and UPDATE
+            fetchAppointments();
           } else if (payload.eventType === 'DELETE') {
             setAppointments(prev => 
               prev.filter(apt => apt.id !== payload.old.id)
