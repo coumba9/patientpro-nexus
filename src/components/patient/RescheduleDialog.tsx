@@ -33,7 +33,7 @@ interface RescheduleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment;
-  onReschedule: (appointmentId: string, newDate: string, newTime: string) => void;
+  onReschedule: (appointmentId: string, newDate: string, newTime: string, reason?: string) => void;
 }
 
 export const RescheduleDialog = ({
@@ -46,6 +46,7 @@ export const RescheduleDialog = ({
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     if (selectedDate && appointment.doctor_id) {
@@ -77,7 +78,7 @@ export const RescheduleDialog = ({
     }
 
     const newDate = format(selectedDate, 'yyyy-MM-dd');
-    onReschedule(appointment.id, newDate, selectedTime);
+    onReschedule(appointment.id, newDate, selectedTime, reason);
     onClose();
   };
 
@@ -136,6 +137,19 @@ export const RescheduleDialog = ({
                   </div>
                 </ScrollArea>
               )}
+            </div>
+          )}
+
+          {selectedDate && selectedTime && (
+            <div className="grid gap-2">
+              <Label htmlFor="reason">Raison du report (optionnel)</Label>
+              <textarea
+                id="reason"
+                className="min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                placeholder="Expliquez pourquoi vous souhaitez reporter ce rendez-vous..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
             </div>
           )}
         </div>

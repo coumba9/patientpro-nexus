@@ -224,24 +224,71 @@ class AppointmentService extends BaseService<Appointment> {
     return allSlots.filter(slot => !bookedTimes.includes(slot));
   }
 
-  async rescheduleAppointment(appointmentId: string, newDate: string, newTime: string, userId: string, userRole: 'doctor' | 'patient'): Promise<Appointment> {
-    const { data, error } = await supabase
-      .from('appointments')
-      .update({
+  async rescheduleAppointment(
+    appointmentId: string,
+    newDate: string,
+    newTime: string,
+    userId: string,
+    userRole: 'doctor' | 'patient',
+    reason?: string
+  ): Promise<Appointment> {
+    try {
+      // Get the current appointment
+      const appointment = await this.getById(appointmentId);
+      if (!appointment) {
+        throw new Error("Rendez-vous non trouvé");
+      }
+
+      // Verify the user is authorized to reschedule
+      if (userRole === 'doctor' && appointment.doctor_id !== userId) {
+        throw new Error("Non autorisé à reporter ce rendez-vous");
+      }
+      if (userRole === 'patient' && appointment.patient_id !== userId) {
+        throw new Error("Non autorisé à reporter ce rendez-vous");
+      }
+
+      // Check if the new slot is available
+      const availableSlots = await this.getAvailableSlots(appointment.doctor_id, newDate);
+      if (!availableSlots.includes(newTime)) {
+        throw new Error("Ce créneau n'est pas disponible");
+      }
+
+      // If patient is rescheduling, set status to pending_reschedule and save previous date/time
+      // If doctor is rescheduling, update directly
+      const updateData: any = {
         date: newDate,
         time: newTime,
-        status: 'confirmed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', appointmentId)
-      .select()
-      .single();
+        reschedule_reason: reason || null,
+        reschedule_requested_by: userId,
+        reschedule_requested_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-    if (error) {
-      throw new Error(`Error rescheduling appointment: ${error.message}`);
+      // Only save previous date/time if patient is rescheduling
+      if (userRole === 'patient') {
+        updateData.previous_date = appointment.date;
+        updateData.previous_time = appointment.time;
+        updateData.status = 'pending_reschedule';
+      } else {
+        // Doctor reschedule is immediate
+        updateData.status = 'confirmed';
+      }
+
+      // Update the appointment
+      const { data, error } = await supabase
+        .from('appointments')
+        .update(updateData)
+        .eq('id', appointmentId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return data as Appointment;
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error);
+      throw error;
     }
-
-    return data as any;
   }
 }
 

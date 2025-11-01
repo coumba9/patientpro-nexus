@@ -16,10 +16,27 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  const handleReschedule = async (appointmentId: string, newDate: string, newTime: string) => {
-    // Le report est géré par le service et les notifications se font via les triggers DB
-    // Le useRealtimeAppointments va rafraîchir automatiquement les données
-    toast.success("Rendez-vous reporté avec succès");
+  const handleReschedule = async (appointmentId: string, newDate: string, newTime: string, reason?: string) => {
+    try {
+      if (!user?.id) {
+        toast.error("Vous devez être connecté");
+        return;
+      }
+
+      await appointmentService.rescheduleAppointment(
+        appointmentId,
+        newDate,
+        newTime,
+        user.id,
+        'patient',
+        reason
+      );
+      
+      toast.success("Demande de report envoyée au médecin");
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error);
+      toast.error("Erreur lors du report du rendez-vous");
+    }
   };
 
   const handleConfirm = async (appointmentId: string) => {

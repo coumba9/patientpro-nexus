@@ -34,7 +34,7 @@ interface Appointment {
 interface AppointmentCardProps {
   appointment: Appointment;
   onSendMessage: (doctorName: string, message: string) => void;
-  onReschedule: (appointmentId: string, newDate: string, newTime: string) => void;
+  onReschedule: (appointmentId: string, newDate: string, newTime: string, reason?: string) => void;
   onConfirm: (appointmentId: string) => void;
 }
 
@@ -59,11 +59,11 @@ export const AppointmentCard = ({
 
   const isOnline = appointment.type.toLowerCase().includes('télé');
 
-  const handleRescheduleSubmit = async (appointmentId: string, newDate: string, newTime: string) => {
+  const handleRescheduleSubmit = async (appointmentId: string, newDate: string, newTime: string, reason?: string) => {
     try {
-      await appointmentService.rescheduleAppointment(appointmentId, newDate, newTime, user?.id || '', 'patient');
-      toast.success("Rendez-vous reporté avec succès");
-      onReschedule(appointmentId, newDate, newTime);
+      await appointmentService.rescheduleAppointment(appointmentId, newDate, newTime, user?.id || '', 'patient', reason);
+      toast.success("Demande de report envoyée au médecin");
+      onReschedule(appointmentId, newDate, newTime, reason);
       setIsRescheduleDialogOpen(false);
     } catch (error) {
       console.error("Error rescheduling:", error);

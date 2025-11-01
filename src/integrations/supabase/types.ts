@@ -58,6 +58,11 @@ export type Database = {
           mode: string
           notes: string | null
           patient_id: string
+          previous_date: string | null
+          previous_time: string | null
+          reschedule_reason: string | null
+          reschedule_requested_at: string | null
+          reschedule_requested_by: string | null
           status: string
           time: string
           type: string
@@ -76,6 +81,11 @@ export type Database = {
           mode?: string
           notes?: string | null
           patient_id: string
+          previous_date?: string | null
+          previous_time?: string | null
+          reschedule_reason?: string | null
+          reschedule_requested_at?: string | null
+          reschedule_requested_by?: string | null
           status?: string
           time: string
           type?: string
@@ -94,6 +104,11 @@ export type Database = {
           mode?: string
           notes?: string | null
           patient_id?: string
+          previous_date?: string | null
+          previous_time?: string | null
+          reschedule_reason?: string | null
+          reschedule_requested_at?: string | null
+          reschedule_requested_by?: string | null
           status?: string
           time?: string
           type?: string
@@ -618,7 +633,7 @@ export type Database = {
         }[]
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       has_role: {
@@ -628,14 +643,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_current_user_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
+      is_current_user_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "doctor" | "patient"

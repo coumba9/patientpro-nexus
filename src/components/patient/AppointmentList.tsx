@@ -18,7 +18,7 @@ interface Appointment {
 interface AppointmentListProps {
   appointments: Appointment[];
   onSendMessage: (doctorName: string, message: string) => void;
-  onReschedule: (appointmentId: string, newDate: string, newTime: string) => void;
+  onReschedule: (appointmentId: string, newDate: string, newTime: string, reason?: string) => void;
   onConfirm: (appointmentId: string) => void;
 }
 

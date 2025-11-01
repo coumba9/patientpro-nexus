@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Video, CheckCircle, XCircle, Clock, Calendar } from "lucide-react";
+import { Video, CheckCircle, XCircle, Clock, Calendar, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,6 +15,7 @@ import { appointmentService } from "@/api/services/appointment.service";
 import { toast } from "sonner";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { RescheduleAppointmentDialog } from "./RescheduleAppointmentDialog";
+import { ValidateRescheduleDialog } from "./ValidateRescheduleDialog";
 
 interface RealtimeAppointmentsListProps {
   doctorId: string;
@@ -26,6 +27,7 @@ export const RealtimeAppointmentsList = ({
   const { appointments, loading } = useRealtimeAppointments(doctorId, 'doctor');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [validateRescheduleDialogOpen, setValidateRescheduleDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   const handleConfirm = async (appointmentId: string) => {
@@ -54,6 +56,16 @@ export const RealtimeAppointmentsList = ({
 
   const handleRescheduleSuccess = () => {
     setSelectedAppointment(null);
+  };
+
+  const handleValidateReschedule = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setValidateRescheduleDialogOpen(true);
+  };
+
+  const handleValidateSuccess = () => {
+    setSelectedAppointment(null);
+    setValidateRescheduleDialogOpen(false);
   };
 
   if (loading) {
@@ -102,11 +114,30 @@ export const RealtimeAppointmentsList = ({
                 Aucun rendez-vous à venir
               </div>
             ) : (
-              upcomingAppointments.map((appointment: any) => (
-                <div
-                  key={appointment.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
+              upcomingAppointments.map((appointment: any) => {
+                const isPendingReschedule = appointment.status === 'pending_reschedule';
+                
+                return (
+                  <div key={appointment.id} className="space-y-2">
+                    {isPendingReschedule && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-yellow-800">
+                            Le patient a demandé à reporter ce rendez-vous
+                          </p>
+                          <Button
+                            variant="link"
+                            className="h-auto p-0 text-sm text-primary"
+                            onClick={() => handleValidateReschedule(appointment)}
+                          >
+                            Valider ou refuser le report →
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+
                   <div className="space-y-1">
                     <p className="font-medium">
                       {appointment.patient?.profile?.first_name} {appointment.patient?.profile?.last_name}
@@ -131,15 +162,18 @@ export const RealtimeAppointmentsList = ({
                       variant={
                         appointment.status === 'confirmed' ? 'default' :
                         appointment.status === 'pending' ? 'secondary' :
+                        appointment.status === 'pending_reschedule' ? 'secondary' :
                         appointment.status === 'cancelled' ? 'destructive' :
                         'outline'
                       }
                     >
                       {appointment.status === 'confirmed' && <CheckCircle className="h-3 w-3 mr-1" />}
                       {appointment.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                      {appointment.status === 'pending_reschedule' && <Clock className="h-3 w-3 mr-1" />}
                       {appointment.status === 'cancelled' && <XCircle className="h-3 w-3 mr-1" />}
                       {appointment.status === 'confirmed' ? 'Confirmé' :
                        appointment.status === 'pending' ? 'En attente' :
+                       appointment.status === 'pending_reschedule' ? 'Report en attente' :
                        appointment.status === 'cancelled' ? 'Annulé' :
                        appointment.status}
                     </Badge>
@@ -173,7 +207,9 @@ export const RealtimeAppointmentsList = ({
                     </div>
                   </div>
                 </div>
-              ))
+                  </div>
+                );
+              })
             )}
           </div>
         </ScrollArea>
@@ -200,6 +236,19 @@ export const RealtimeAppointmentsList = ({
             currentTime={selectedAppointment.time}
             doctorId={doctorId}
             onReschedule={handleRescheduleSuccess}
+          />
+
+          <ValidateRescheduleDialog
+            isOpen={validateRescheduleDialogOpen}
+            onClose={() => setValidateRescheduleDialogOpen(false)}
+            appointmentId={selectedAppointment.id}
+            patientName={`${selectedAppointment.patient?.profile?.first_name} ${selectedAppointment.patient?.profile?.last_name}`}
+            oldDate={selectedAppointment.previous_date || selectedAppointment.date}
+            oldTime={selectedAppointment.previous_time || selectedAppointment.time}
+            newDate={selectedAppointment.date}
+            newTime={selectedAppointment.time}
+            reason={selectedAppointment.reschedule_reason || ""}
+            onValidate={handleValidateSuccess}
           />
         </>
       )}
