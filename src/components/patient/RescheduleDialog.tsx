@@ -16,18 +16,7 @@ import { toast } from "sonner";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-
-interface Appointment {
-  id: string;
-  doctor: string;
-  specialty: string;
-  date: string;
-  time: string;
-  location: string;
-  type: string;
-  status: "confirmed" | "pending";
-  doctor_id?: string;
-}
+import { Appointment } from "./types";
 
 interface RescheduleDialogProps {
   isOpen: boolean;
@@ -49,18 +38,18 @@ export const RescheduleDialog = ({
   const [reason, setReason] = useState("");
 
   useEffect(() => {
-    if (selectedDate && appointment.doctor_id) {
+    if (selectedDate && appointment.doctorId) {
       loadAvailableSlots();
     }
-  }, [selectedDate, appointment.doctor_id]);
+  }, [selectedDate, appointment.doctorId]);
 
   const loadAvailableSlots = async () => {
-    if (!selectedDate || !appointment.doctor_id) return;
+    if (!selectedDate || !appointment.doctorId) return;
     
     setIsLoading(true);
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const slots = await appointmentService.getAvailableSlots(appointment.doctor_id, dateStr);
+      const slots = await appointmentService.getAvailableSlots(appointment.doctorId, dateStr);
       setAvailableSlots(slots);
       setSelectedTime("");
     } catch (error) {

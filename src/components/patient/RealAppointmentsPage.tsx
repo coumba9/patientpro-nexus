@@ -41,11 +41,15 @@ export const RealAppointmentsPage = () => {
 
   const handleConfirm = async (appointmentId: string) => {
     try {
-      await appointmentService.updateAppointmentStatus(appointmentId, 'confirmed');
+      if (!user?.id) {
+        toast.error("Vous devez être connecté");
+        return;
+      }
+      await appointmentService.patientConfirmAppointment(appointmentId, user.id);
       toast.success("Rendez-vous confirmé avec succès");
     } catch (error) {
       console.error('Error confirming appointment:', error);
-      toast.error("Erreur lors de la confirmation");
+      toast.error("Le médecin doit d'abord valider ce rendez-vous");
     }
   };
 
@@ -66,7 +70,7 @@ export const RealAppointmentsPage = () => {
     time: apt.time,
     location: apt.location || 'À définir',
     type: apt.type,
-    status: apt.status as "confirmed" | "pending",
+    status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation",
     doctorId: apt.doctor_id,
   }));
 

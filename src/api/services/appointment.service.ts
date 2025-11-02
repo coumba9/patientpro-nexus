@@ -63,11 +63,31 @@ class AppointmentService extends BaseService<Appointment> {
   }
 
   async confirmAppointment(id: string, doctorId: string): Promise<Appointment> {
+    // Médecin valide le rendez-vous : pending → awaiting_patient_confirmation
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({ status: 'awaiting_patient_confirmation' })
+      .eq('id', id)
+      .eq('doctor_id', doctorId)
+      .eq('status', 'pending') // Seulement si encore en attente
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error confirming appointment: ${error.message}`);
+    }
+
+    return data as any;
+  }
+
+  async patientConfirmAppointment(id: string, patientId: string): Promise<Appointment> {
+    // Patient confirme le rendez-vous : awaiting_patient_confirmation → confirmed
     const { data, error } = await supabase
       .from('appointments')
       .update({ status: 'confirmed' })
       .eq('id', id)
-      .eq('doctor_id', doctorId)
+      .eq('patient_id', patientId)
+      .eq('status', 'awaiting_patient_confirmation') // Seulement si médecin a validé
       .select()
       .single();
 

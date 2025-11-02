@@ -1,19 +1,7 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppointmentCard } from "./AppointmentCard";
-
-interface Appointment {
-  id: string;
-  doctor: string;
-  specialty: string;
-  date: string;
-  time: string;
-  location: string;
-  type: string;
-  status: "confirmed" | "pending";
-  doctorId?: string;
-}
+import { Appointment } from "./types";
 
 interface AppointmentListProps {
   appointments: Appointment[];

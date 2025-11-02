@@ -33,10 +33,10 @@ export const RealtimeAppointmentsList = ({
   const handleConfirm = async (appointmentId: string) => {
     try {
       await appointmentService.confirmAppointment(appointmentId, doctorId);
-      toast.success("Rendez-vous confirmé avec succès");
+      toast.success("Rendez-vous validé. En attente de confirmation du patient.");
     } catch (error) {
       console.error('Error confirming appointment:', error);
-      toast.error("Erreur lors de la confirmation du rendez-vous");
+      toast.error("Erreur lors de la validation du rendez-vous");
     }
   };
 
@@ -162,6 +162,7 @@ export const RealtimeAppointmentsList = ({
                       variant={
                         appointment.status === 'confirmed' ? 'default' :
                         appointment.status === 'pending' ? 'secondary' :
+                        appointment.status === 'awaiting_patient_confirmation' ? 'secondary' :
                         appointment.status === 'pending_reschedule' ? 'secondary' :
                         appointment.status === 'cancelled' ? 'destructive' :
                         'outline'
@@ -169,10 +170,12 @@ export const RealtimeAppointmentsList = ({
                     >
                       {appointment.status === 'confirmed' && <CheckCircle className="h-3 w-3 mr-1" />}
                       {appointment.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                      {appointment.status === 'awaiting_patient_confirmation' && <Clock className="h-3 w-3 mr-1" />}
                       {appointment.status === 'pending_reschedule' && <Clock className="h-3 w-3 mr-1" />}
                       {appointment.status === 'cancelled' && <XCircle className="h-3 w-3 mr-1" />}
                       {appointment.status === 'confirmed' ? 'Confirmé' :
-                       appointment.status === 'pending' ? 'En attente' :
+                       appointment.status === 'pending' ? 'À valider' :
+                       appointment.status === 'awaiting_patient_confirmation' ? 'En attente patient' :
                        appointment.status === 'pending_reschedule' ? 'Report en attente' :
                        appointment.status === 'cancelled' ? 'Annulé' :
                        appointment.status}
