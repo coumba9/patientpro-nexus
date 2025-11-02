@@ -35,6 +35,26 @@ export const AppointmentHandler = ({
       navigate(`/login?redirect=/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}`);
       return;
     }
+
+    // Vérifier la disponibilité du créneau AVANT le paiement
+    if (doctorId && data.date && data.time) {
+      try {
+        const { appointmentService } = await import("@/api");
+        const slotCheck = await appointmentService.checkSlotAvailability({
+          doctor_id: doctorId,
+          date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
+          time: data.time
+        });
+
+        if (!slotCheck.available) {
+          toast.error(slotCheck.error || "Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
+          return;
+        }
+      } catch (error: any) {
+        toast.error("Erreur lors de la vérification de la disponibilité");
+        return;
+      }
+    }
     
     console.log("Booking data:", { ...data, doctorName, specialty });
     

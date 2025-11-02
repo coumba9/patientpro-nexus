@@ -9,6 +9,42 @@ class AppointmentService extends BaseService<Appointment> {
     super('appointments' as TableName);
   }
 
+  // Vérifier la disponibilité d'un créneau
+  async checkSlotAvailability(appointmentData: {
+    doctor_id: string;
+    date: string;
+    time: string;
+  }): Promise<{ available: boolean; error?: string }> {
+    const { data: existingAppointments, error: fetchError } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('doctor_id', appointmentData.doctor_id)
+      .eq('date', appointmentData.date)
+      .neq('status', 'cancelled');
+
+    if (fetchError) {
+      return { available: false, error: `Erreur lors de la vérification: ${fetchError.message}` };
+    }
+
+    // Validate appointment scheduling
+    const validation = validateAppointmentScheduling(
+      {
+        ...appointmentData,
+        doctorId: appointmentData.doctor_id,
+        patientId: 'temp', // temporary ID just for validation
+        type: 'consultation',
+        mode: 'presentiel'
+      },
+      (existingAppointments as any[]) || []
+    );
+
+    if (!validation.valid) {
+      return { available: false, error: validation.errors.join(', ') };
+    }
+
+    return { available: true };
+  }
+
   async createAppointment(appointmentData: {
     doctor_id: string;
     patient_id: string;
@@ -19,30 +55,15 @@ class AppointmentService extends BaseService<Appointment> {
     location?: string;
     notes?: string;
   }): Promise<Appointment> {
-    // First, get existing appointments to check for conflicts
-    const { data: existingAppointments, error: fetchError } = await supabase
-      .from('appointments')
-      .select('*')
-      .eq('doctor_id', appointmentData.doctor_id)
-      .eq('date', appointmentData.date)
-      .neq('status', 'cancelled');
+    // Vérifier la disponibilité avant de créer
+    const slotCheck = await this.checkSlotAvailability({
+      doctor_id: appointmentData.doctor_id,
+      date: appointmentData.date,
+      time: appointmentData.time
+    });
 
-    if (fetchError) {
-      throw new Error(`Error checking conflicts: ${fetchError.message}`);
-    }
-
-    // Validate appointment scheduling
-    const validation = validateAppointmentScheduling(
-      {
-        ...appointmentData,
-        doctorId: appointmentData.doctor_id,
-        patientId: appointmentData.patient_id
-      },
-      (existingAppointments as any[]) || []
-    );
-
-    if (!validation.valid) {
-      throw new Error(validation.errors.join(', '));
+    if (!slotCheck.available) {
+      throw new Error(slotCheck.error || 'Ce créneau n\'est pas disponible');
     }
 
     // Create the appointment

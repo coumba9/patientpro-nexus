@@ -97,14 +97,25 @@ const PaymentConfirmation = () => {
             });
 
             console.log("Appointment created successfully:", appointment);
+            
+            // Nettoyer le localStorage avant de changer le statut
+            localStorage.removeItem("pendingAppointment");
+            
             setStatus("success");
-            toast.success("Paiement confirmé et rendez-vous créé avec succès !");
+            toast.success("Rendez-vous créé avec succès !");
             setIsCreating(false);
           } catch (error: any) {
             console.error("Error creating appointment:", error);
             setStatus("error");
             setIsCreating(false);
-            toast.error("Erreur lors de la création du rendez-vous: " + error.message);
+            
+            // Message d'erreur plus clair
+            const errorMessage = error.message || "Une erreur s'est produite";
+            if (errorMessage.includes("créneau")) {
+              toast.error("Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
+            } else {
+              toast.error("Erreur: " + errorMessage);
+            }
             return;
           }
         } else if (!user) {
@@ -116,10 +127,6 @@ const PaymentConfirmation = () => {
           console.log("Appointment creation already in progress, skipping...");
           return;
         }
-        
-        // Nettoyer le localStorage
-        localStorage.removeItem("pendingAppointment");
-        console.log("Pending appointment data cleaned");
         
       } catch (error) {
         console.error("Erreur lors de la vérification du paiement:", error);
@@ -167,10 +174,10 @@ const PaymentConfirmation = () => {
           <CardContent className="p-8 text-center">
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2 text-red-600">
-              Paiement échoué
+              Erreur lors de la création du rendez-vous
             </h2>
             <p className="text-gray-600 mb-6">
-              Une erreur s'est produite lors du traitement de votre paiement.
+              Le créneau sélectionné n'est plus disponible. Veuillez en choisir un autre.
             </p>
             <div className="space-y-2">
               <Button
