@@ -38,24 +38,27 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
             let enrichedAppointment = { ...appointment };
 
             // Récupérer les infos du médecin
-            const { data: doctorData } = await supabase
+            const { data: doctorData, error: doctorError } = await supabase
               .from('doctors')
               .select(`
                 id,
                 license_number,
                 years_of_experience,
                 specialty_id,
-                specialties!inner(name, description)
+                specialties(name, description)
               `)
               .eq('id', appointment.doctor_id)
-              .single();
+              .maybeSingle();
 
             // Récupérer le profil du médecin
-            const { data: doctorProfile } = await supabase
+            const { data: doctorProfile, error: profileError } = await supabase
               .from('profiles')
               .select('first_name, last_name, email')
               .eq('id', appointment.doctor_id)
-              .single();
+              .maybeSingle();
+
+            if (doctorError) console.error('Error fetching doctor:', doctorError);
+            if (profileError) console.error('Error fetching doctor profile:', profileError);
 
             if (doctorData && doctorProfile) {
               (enrichedAppointment as any).doctor = {
@@ -66,11 +69,13 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
             }
 
             // Récupérer les infos du patient
-            const { data: patientProfile } = await supabase
+            const { data: patientProfile, error: patientError } = await supabase
               .from('profiles')
               .select('first_name, last_name, email')
               .eq('id', appointment.patient_id)
-              .single();
+              .maybeSingle();
+
+            if (patientError) console.error('Error fetching patient profile:', patientError);
 
             if (patientProfile) {
               (enrichedAppointment as any).patient = {
