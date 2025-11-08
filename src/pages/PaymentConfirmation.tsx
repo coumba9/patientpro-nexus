@@ -30,6 +30,7 @@ const PaymentConfirmation = () => {
 
   useEffect(() => {
     const verifyPayment = async () => {
+      toast.dismiss();
       console.log("Starting payment verification...");
       
       // Wait for auth to load
@@ -181,11 +182,11 @@ const PaymentConfirmation = () => {
             </p>
             <div className="space-y-2">
               <Button
-                onClick={() => navigate("/book-appointment")}
+                onClick={() => navigate(appointmentData ? `/book-appointment?doctor=${encodeURIComponent(appointmentData.doctorName || "")}&specialty=${encodeURIComponent(appointmentData.specialty || "")}` : "/book-appointment")}
                 className="w-full"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Retenter le paiement
+                Choisir un autre créneau
               </Button>
               <Button
                 variant="outline"

@@ -110,7 +110,6 @@ export const AppointmentHandler = ({
             window.location.href = paymentResponse.redirectUrl;
           } else {
             // Paiement traité directement (mode test)
-            toast.success("Paiement traité avec succès !");
             navigate("/payment-confirmation?token=" + paymentResponse.token);
           }
         } else {
