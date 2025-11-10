@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// @ts-ignore
+import AfricaPayments, { PaydunyaPaymentProvider, PaymentMethod, Currency } from 'npm:@tecafrik/africa-payment-sdk@^1.0.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -72,62 +74,7 @@ serve(async (req) => {
     // Generate transaction ID
     const transactionId = `APPOINTMENT-${Date.now()}-${Math.floor(Math.random() * 10000)}`
 
-    // In development mode, simulate payment
-    const isDevelopment = Deno.env.get('DENO_DEPLOYMENT_ID') === undefined
-
-    if (isDevelopment) {
-      console.log('Development mode: simulating payment for', transactionId)
-      
-      // Simulate successful payment
-      const mockResponse = {
-        success: true,
-        redirectUrl: `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`,
-        token: transactionId,
-        message: "Payment initiated successfully (development mode)"
-      }
-
-      return new Response(
-        JSON.stringify(mockResponse),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Production payment processing
-    let redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`;
-    
-    // Map payment methods to appropriate redirect URLs or simulate payment processing
-    switch (paymentMethod) {
-      case 'wave':
-        // In production, this would integrate with Wave API
-        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=wave`;
-        break;
-      case 'orange-money':
-        // In production, this would integrate with Orange Money API
-        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=orange-money`;
-        break;
-      case 'mobile-money':
-        // In production, this would integrate with MTN Mobile Money API
-        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=mobile-money`;
-        break;
-      case 'card':
-        // In production, this would integrate with a card payment processor
-        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=card`;
-        break;
-      default:
-        redirectUrl = `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`;
-    }
-
-    const paymentResponse = {
-      success: true,
-      redirectUrl,
-      token: transactionId,
-      message: "Payment initiated successfully"
-    }
-
-    console.log('Payment initiated:', {
+    console.log('Initiating payment with Africa Payment SDK:', {
       transactionId,
       amount,
       currency,
@@ -135,13 +82,85 @@ serve(async (req) => {
       userId: user.id
     })
 
-    return new Response(
-      JSON.stringify(paymentResponse),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    try {
+      // Initialize Africa Payment SDK with Paydunya provider
+      const africaPayments = new AfricaPayments(
+        new PaydunyaPaymentProvider({
+          masterKey,
+          privateKey,
+          publicKey,
+          token,
+          mode: Deno.env.get('DENO_DEPLOYMENT_ID') ? 'live' : 'test',
+          store: {
+            name: metadata?.storeName || "Medical Appointment System",
+          },
+        })
+      )
+
+      // Map payment method string to SDK enum
+      let sdkPaymentMethod = PaymentMethod.WAVE
+      switch (paymentMethod) {
+        case 'wave':
+          sdkPaymentMethod = PaymentMethod.WAVE
+          break
+        case 'orange-money':
+          sdkPaymentMethod = PaymentMethod.ORANGE_MONEY
+          break
+        case 'mobile-money':
+          sdkPaymentMethod = PaymentMethod.MTN_MOBILE_MONEY
+          break
+        case 'card':
+          sdkPaymentMethod = PaymentMethod.CREDIT_CARD
+          break
       }
-    )
+
+      // Initiate checkout
+      const checkoutResult = await africaPayments.checkout({
+        paymentMethod: sdkPaymentMethod,
+        amount,
+        description,
+        currency: currency as Currency,
+        customer: {
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          phoneNumber: customer.phoneNumber,
+          email: customer.email,
+        },
+        transactionId,
+        metadata: metadata || {},
+      })
+
+      console.log('Africa Payment SDK checkout result:', checkoutResult)
+
+      // Return the result with redirect URL
+      return new Response(
+        JSON.stringify({
+          success: true,
+          redirectUrl: checkoutResult.redirectUrl || `${req.headers.get('origin')}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`,
+          token: transactionId,
+          message: "Payment initiated successfully"
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    } catch (sdkError) {
+      console.error('Africa Payment SDK error:', sdkError)
+      
+      // Return error response
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Payment initiation failed',
+          message: sdkError instanceof Error ? sdkError.message : 'Unknown error'
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
 
   } catch (error) {
     console.error('Payment error:', error)
