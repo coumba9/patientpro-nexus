@@ -12,16 +12,43 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     );
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     const { token, method } = await req.json();
 
-    if (!token) {
+    // Input validation
+    if (!token || typeof token !== 'string' || token.length > 500) {
       return new Response(
-        JSON.stringify({ error: 'Missing payment token' }),
+        JSON.stringify({ error: 'Invalid payment token format' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -29,7 +56,28 @@ serve(async (req) => {
       );
     }
 
-    console.log('Verifying payment:', { token, method });
+    if (!method || typeof method !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid payment method' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const allowedMethods = ['wave', 'orange-money', 'mobile-money', 'paytech', 'cash', 'tiers-payant'];
+    if (!allowedMethods.includes(method)) {
+      return new Response(
+        JSON.stringify({ error: 'Unsupported payment method' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    console.log('Verifying payment for user:', user.id, { method });
 
     // In development, simulate payment verification
     const isDevelopment = Deno.env.get('DENO_DEPLOYMENT_ID') === undefined;
