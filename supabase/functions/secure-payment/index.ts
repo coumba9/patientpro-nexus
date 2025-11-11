@@ -60,15 +60,22 @@ serve(async (req) => {
     const privateKey = Deno.env.get('AFRICA_PAYMENT_PRIVATE_KEY')
     const token = Deno.env.get('AFRICA_PAYMENT_TOKEN')
 
+    // Dev/sandbox mode support
+    const isDevelopment = Deno.env.get('DENO_DEPLOYMENT_ID') === undefined || Deno.env.get('PAYMENT_SANDBOX') === 'true'
+
     if (!masterKey || !privateKey || !token) {
-      console.error('Missing payment API secrets')
-      return new Response(
-        JSON.stringify({ error: 'Payment service configuration error' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      if (isDevelopment) {
+        console.warn('Missing payment API secrets - continuing in development/sandbox mode')
+      } else {
+        console.error('Missing payment API secrets')
+        return new Response(
+          JSON.stringify({ error: 'Payment service configuration error' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
     }
 
     // Generate transaction ID
@@ -84,6 +91,24 @@ serve(async (req) => {
     })
 
     try {
+      // Development/sandbox short-circuit
+      if (isDevelopment) {
+        console.log('Development mode: simulating Paydunya payment')
+        return new Response(
+          JSON.stringify({
+            success: true,
+            redirectUrl: `${origin}/payment-confirmation?token=${transactionId}&method=${paymentMethod}`,
+            token: transactionId,
+            invoiceToken: 'dev-simulated',
+            message: "Payment initiated successfully (development mode)"
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
       // Step 1: Create invoice with Paydunya
       const invoicePayload = {
         invoice: {
