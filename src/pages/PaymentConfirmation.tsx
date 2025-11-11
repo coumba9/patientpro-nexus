@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ const PaymentConfirmation = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [appointmentData, setAppointmentData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const startedRef = useRef(false);
 
   const token = searchParams.get("token");
   const method = searchParams.get("method");
@@ -30,6 +31,11 @@ const PaymentConfirmation = () => {
 
   useEffect(() => {
     const verifyPayment = async () => {
+      if (startedRef.current) {
+        console.log("Verification already started, skipping");
+        return;
+      }
+      startedRef.current = true;
       toast.dismiss();
       console.log("Starting payment verification...");
       
@@ -44,6 +50,19 @@ const PaymentConfirmation = () => {
         setStatus("error");
         toast.error("Token de paiement manquant");
         return;
+      }
+
+      // Idempotency guard: if we already created appointment for this token, skip creation
+      try {
+        const alreadyCreatedFor = localStorage.getItem("appointmentCreatedFor");
+        if (alreadyCreatedFor && token && alreadyCreatedFor === token) {
+          console.log("Appointment already created for this token, skipping creation");
+          setStatus("success");
+          toast.success("Rendez-vous déjà confirmé");
+          return;
+        }
+      } catch (e) {
+        console.warn("Unable to read idempotency flag:", e);
       }
 
       try {
@@ -101,7 +120,9 @@ const PaymentConfirmation = () => {
             
             // Nettoyer le localStorage avant de changer le statut
             localStorage.removeItem("pendingAppointment");
-            
+            if (token) {
+              try { localStorage.setItem("appointmentCreatedFor", token); } catch {}
+            }
             setStatus("success");
             toast.success("Rendez-vous créé avec succès !");
             setIsCreating(false);
