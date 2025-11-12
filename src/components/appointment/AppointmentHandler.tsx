@@ -85,6 +85,7 @@ export const AppointmentHandler = ({
         
         const successUrl = `${window.location.origin}/payment-confirmation?method=${encodeURIComponent(data.paymentMethod)}`;
         const cancelUrl = `${window.location.origin}/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}&cancelled=1`;
+        const ipnUrl = `https://diieheagpzlqatqpzjua.supabase.co/functions/v1/verify-payment`;
         
         const paymentResponse = await initiatePayTechPayment({
           item_name: `Consultation ${specialty || "médicale"}`,
@@ -95,6 +96,7 @@ export const AppointmentHandler = ({
           env: "test",
           success_url: successUrl,
           cancel_url: cancelUrl,
+          ipn_url: ipnUrl,
           custom_field: JSON.stringify({
             doctorName: doctorName || "Non spécifié",
             specialty: specialty || "Non spécifié",
