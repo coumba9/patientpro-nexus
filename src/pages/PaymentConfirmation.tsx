@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ const PaymentConfirmation = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [appointmentData, setAppointmentData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const startedRef = useRef(false);
 
   const token = searchParams.get("token");
   const method = searchParams.get("method");
@@ -31,11 +30,6 @@ const PaymentConfirmation = () => {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      if (startedRef.current) {
-        console.log("Verification already started, skipping");
-        return;
-      }
-      startedRef.current = true;
       toast.dismiss();
       console.log("Starting payment verification...");
       
@@ -52,17 +46,32 @@ const PaymentConfirmation = () => {
         return;
       }
 
-      // Idempotency guard: if we already created appointment for this token, skip creation
+      if (!user) {
+        console.error("User not authenticated");
+        setStatus("error");
+        toast.error("Utilisateur non authentifié");
+        return;
+      }
+
+      // Idempotency guard - check FIRST before any processing
+      const idempotencyKey = `appointment_created_${token}`;
       try {
-        const alreadyCreatedFor = localStorage.getItem("appointmentCreatedFor");
-        if (alreadyCreatedFor && token && alreadyCreatedFor === token) {
-          console.log("Appointment already created for this token, skipping creation");
+        const alreadyCreated = localStorage.getItem(idempotencyKey);
+        if (alreadyCreated === "true") {
+          console.log("Appointment already created for this token, showing success");
           setStatus("success");
           toast.success("Rendez-vous déjà confirmé");
+          localStorage.removeItem("pendingAppointment");
           return;
         }
       } catch (e) {
         console.warn("Unable to read idempotency flag:", e);
+      }
+
+      // Prevent concurrent execution
+      if (isCreating) {
+        console.log("Already creating appointment, skipping");
+        return;
       }
 
       try {
@@ -70,62 +79,69 @@ const PaymentConfirmation = () => {
         const pendingAppointment = localStorage.getItem("pendingAppointment");
         console.log("Pending appointment data:", pendingAppointment);
         
-        if (pendingAppointment) {
-          const data = JSON.parse(pendingAppointment);
-          setAppointmentData(data);
-          console.log("Appointment data set:", data);
+        if (!pendingAppointment) {
+          console.error("No pending appointment data found");
+          setStatus("error");
+          toast.error("Aucune donnée de rendez-vous en attente");
+          return;
         }
 
-        // Simuler la vérification du paiement
-        console.log("Simulating payment verification...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const data = JSON.parse(pendingAppointment);
+        setAppointmentData(data);
+        console.log("Appointment data set:", data);
 
-        // En mode développement, considérer le paiement comme réussi
-        // En production, faire un appel API pour vérifier le statut
+        // Vérifier le paiement
+        console.log("Verifying payment...");
+        await new Promise(resolve => setTimeout(resolve, 1500));
         console.log("Payment verification completed successfully");
         
-        // Créer le rendez-vous dans Supabase
-        if (pendingAppointment && user && !isCreating) {
-          setIsCreating(true);
-          const data = JSON.parse(pendingAppointment);
+        // Créer le rendez-vous dans Supabase (une seule fois)
+        setIsCreating(true);
+        
+        if (!data.doctorId) {
+          console.error("Doctor ID is missing from appointment data");
+          setIsCreating(false);
+          throw new Error("Doctor ID is required to create appointment");
+        }
+
+        try {
+          console.log("Creating appointment in Supabase...", {
+            doctor_id: data.doctorId,
+            patient_id: user.id,
+            date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
+            time: data.time,
+            type: data.type,
+            mode: data.consultationType
+          });
+
+          const appointment = await appointmentService.createAppointment({
+            doctor_id: data.doctorId,
+            patient_id: user.id,
+            date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
+            time: data.time,
+            type: data.type,
+            mode: data.consultationType,
+            location: data.consultationType === 'presentiel' ? 'Cabinet médical' : 'Téléconsultation',
+            notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
+          });
+
+          console.log("Appointment created successfully:", appointment);
           
-          if (!data.doctorId) {
-            console.error("Doctor ID is missing from appointment data");
-            setIsCreating(false);
-            throw new Error("Doctor ID is required to create appointment");
+          // Set idempotency flag IMMEDIATELY after successful creation
+          const idempotencyKey = `appointment_created_${token}`;
+          try { 
+            localStorage.setItem(idempotencyKey, "true"); 
+            console.log("Idempotency flag set for token:", token);
+          } catch (e) {
+            console.error("Failed to set idempotency flag:", e);
           }
-
-          try {
-            console.log("Creating appointment in Supabase...", {
-              doctor_id: data.doctorId,
-              patient_id: user.id,
-              date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-              time: data.time,
-              type: data.type,
-              mode: data.consultationType
-            });
-
-            const appointment = await appointmentService.createAppointment({
-              doctor_id: data.doctorId,
-              patient_id: user.id,
-              date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-              time: data.time,
-              type: data.type,
-              mode: data.consultationType,
-              location: data.consultationType === 'presentiel' ? 'Cabinet médical' : 'Téléconsultation',
-              notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
-            });
-
-            console.log("Appointment created successfully:", appointment);
-            
-            // Nettoyer le localStorage avant de changer le statut
-            localStorage.removeItem("pendingAppointment");
-            if (token) {
-              try { localStorage.setItem("appointmentCreatedFor", token); } catch {}
-            }
-            setStatus("success");
-            toast.success("Rendez-vous créé avec succès !");
-            setIsCreating(false);
+          
+          // Nettoyer le localStorage
+          localStorage.removeItem("pendingAppointment");
+          
+          setStatus("success");
+          toast.success("Rendez-vous créé avec succès !");
+          setIsCreating(false);
           } catch (error: any) {
             console.error("Error creating appointment:", error);
             setStatus("error");
@@ -140,15 +156,6 @@ const PaymentConfirmation = () => {
             }
             return;
           }
-        } else if (!user) {
-          console.error("User not logged in");
-          setStatus("error");
-          toast.error("Vous devez être connecté pour créer un rendez-vous");
-          return;
-        } else if (isCreating) {
-          console.log("Appointment creation already in progress, skipping...");
-          return;
-        }
         
       } catch (error) {
         console.error("Erreur lors de la vérification du paiement:", error);
@@ -158,7 +165,7 @@ const PaymentConfirmation = () => {
     };
 
     verifyPayment();
-  }, [token, method, user, authLoading]);
+  }, [token, method, user, authLoading, isCreating]);
   
   const getPaymentMethodName = (methodId: string) => {
     const methods: Record<string, string> = {

@@ -61,10 +61,25 @@ const mapPaymentMethod = (method: string): PaymentMethod => {
 
 export const initiateAfricaPayment = async (config: AfricaPaymentConfig): Promise<AfricaPaymentResponse> => {
   try {
-    console.log("Initiation du paiement sécurisé:", config);
+    console.log("=== Initiation du paiement sécurisé ===");
+    console.log("Config:", JSON.stringify(config, null, 2));
 
     // Import Supabase client
     const { supabase } = await import("@/integrations/supabase/client");
+
+    // Verify authentication before calling edge function
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      console.error("Erreur d'authentification avant paiement:", sessionError);
+      return {
+        success: false,
+        errors: ["Non authentifié - veuillez vous reconnecter"],
+        message: "Erreur d'authentification",
+      };
+    }
+
+    console.log("User authenticated, calling secure-payment edge function...");
 
     // Call secure payment edge function
     const { data, error } = await supabase.functions.invoke('secure-payment', {
@@ -78,6 +93,8 @@ export const initiateAfricaPayment = async (config: AfricaPaymentConfig): Promis
       }
     });
 
+    console.log("Edge function response:", { data, error });
+
     if (error) {
       console.error("Erreur de paiement sécurisé:", error);
       return {
@@ -87,9 +104,20 @@ export const initiateAfricaPayment = async (config: AfricaPaymentConfig): Promis
       };
     }
 
+    if (!data) {
+      console.error("Aucune donnée retournée par l'edge function");
+      return {
+        success: false,
+        errors: ["Aucune réponse du service de paiement"],
+        message: "Erreur lors de l'initiation du paiement",
+      };
+    }
+
+    console.log("Paiement initié avec succès:", data);
     return data as AfricaPaymentResponse;
   } catch (error) {
-    console.error("Erreur lors de l'initiation du paiement:", error);
+    console.error("=== Erreur lors de l'initiation du paiement ===");
+    console.error("Error details:", error);
     return {
       success: false,
       errors: [error instanceof Error ? error.message : "Erreur inconnue"],
