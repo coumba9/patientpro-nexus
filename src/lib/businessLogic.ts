@@ -34,7 +34,9 @@ export const getAvailableTimeSlots = (date: string, bookedSlots: string[] = []):
 
 // Check if appointment time is within business hours
 export const isWithinBusinessHours = (time: string): boolean => {
-  const [hours, minutes] = time.split(':').map(Number);
+  // Normalize time format (handle both HH:MM and HH:MM:SS)
+  const normalizedTime = time.substring(0, 5);
+  const [hours, minutes] = normalizedTime.split(':').map(Number);
   const totalMinutes = hours * 60 + minutes;
   const startMinutes = BUSINESS_HOURS.start * 60;
   const endMinutes = BUSINESS_HOURS.end * 60;
@@ -103,8 +105,11 @@ export const hasAppointmentConflict = (
   newAppointment: { date: string; time: string; type: string; doctorId: string },
   existingAppointments: Appointment[]
 ): boolean => {
+  // Normalize time format (HH:MM or HH:MM:SS to HH:MM)
+  const normalizedNewTime = newAppointment.time.substring(0, 5);
+  
   const newDuration = getAppointmentDuration(newAppointment.type);
-  const newStart = new Date(`${newAppointment.date}T${newAppointment.time}`);
+  const newStart = new Date(`${newAppointment.date}T${normalizedNewTime}:00`);
   const newEnd = new Date(newStart.getTime() + newDuration * 60000);
   
   return existingAppointments.some(existing => {
@@ -112,8 +117,9 @@ export const hasAppointmentConflict = (
     if (existing.date !== newAppointment.date) return false;
     if (existing.status === 'cancelled') return false;
     
+    const normalizedExistingTime = existing.time.substring(0, 5);
     const existingDuration = getAppointmentDuration(existing.type);
-    const existingStart = new Date(`${existing.date}T${existing.time}`);
+    const existingStart = new Date(`${existing.date}T${normalizedExistingTime}:00`);
     const existingEnd = new Date(existingStart.getTime() + existingDuration * 60000);
     
     // Check for overlap
@@ -153,8 +159,9 @@ export const validateAppointmentScheduling = (
 ): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
   
-  // Check future date
-  const appointmentDate = new Date(`${appointment.date}T${appointment.time}`);
+  // Check future date - normalize time format
+  const normalizedTime = appointment.time.substring(0, 5);
+  const appointmentDate = new Date(`${appointment.date}T${normalizedTime}:00`);
   const now = new Date();
   
   if (appointmentDate <= now) {

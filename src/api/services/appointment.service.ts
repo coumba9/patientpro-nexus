@@ -253,15 +253,18 @@ class AppointmentService extends BaseService<Appointment> {
       throw new Error(`Error fetching slots: ${error.message}`);
     }
 
-    // Horaires de travail: 9h-18h, créneaux de 30 min
+    // Horaires de travail: 8h-18h, créneaux de 30 min
     const allSlots = [];
-    for (let hour = 9; hour < 18; hour++) {
-      allSlots.push(`${hour.toString().padStart(2, '0')}:00:00`);
-      allSlots.push(`${hour.toString().padStart(2, '0')}:30:00`);
+    for (let hour = 8; hour < 18; hour++) {
+      allSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+      allSlots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
 
-    // Filtrer les créneaux déjà pris
-    const bookedTimes = (existingAppointments || []).map((apt: any) => apt.time);
+    // Filtrer les créneaux déjà pris - normaliser le format
+    const bookedTimes = (existingAppointments || []).map((apt: any) => {
+      // Normaliser le format HH:MM:SS vers HH:MM
+      return apt.time?.substring(0, 5) || apt.time;
+    });
     return allSlots.filter(slot => !bookedTimes.includes(slot));
   }
 
