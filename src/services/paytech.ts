@@ -2,21 +2,24 @@
 // PayTech API Documentation: https://paytech.sn/api
 
 interface PayTechPaymentConfig {
-  amount: number;
-  currency: string;
-  description: string;
+  item_name: string;
+  item_price: number;
+  ref_command: string;
+  command_name: string;
+  currency?: string;
+  env?: string;
   ipn_url?: string;
   success_url: string;
   cancel_url: string;
-  reference?: string;
-  customField?: Record<string, string>;
+  custom_field?: string;
+  target_payment?: string;
 }
 
 interface PayTechResponse {
-  success: boolean;
+  success: number; // 1 for success, 0 for failure
   token?: string;
   redirect_url?: string;
-  errors?: string[];
+  redirectUrl?: string;
   message?: string;
 }
 
@@ -45,37 +48,27 @@ export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Prom
     if (error) {
       console.error("PayTech edge function error:", error);
       return {
-        success: false,
-        errors: ["Erreur de connexion au service de paiement"],
+        success: 0,
         message: error.message
       };
     }
 
-    if (data.success) {
-      // For development mode, handle redirect directly
-      if (DEV_MODE && data.redirect_url) {
-        setTimeout(() => {
-          window.location.href = data.redirect_url;
-        }, 1000);
-      }
-      
+    if (data.success === 1) {
       return {
-        success: true,
+        success: 1,
         token: data.token,
-        redirect_url: data.redirect_url
+        redirect_url: data.redirect_url || data.redirectUrl
       };
     } else {
       return {
-        success: false,
-        errors: data.errors || ["Une erreur s'est produite"],
-        message: data.message
+        success: 0,
+        message: data.message || "Une erreur s'est produite"
       };
     }
   } catch (error) {
     console.error("PayTech payment error:", error);
     return {
-      success: false,
-      errors: ["Erreur de connexion à PayTech"],
+      success: 0,
       message: error instanceof Error ? error.message : "Erreur inconnue"
     };
   }

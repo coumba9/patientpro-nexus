@@ -7,13 +7,17 @@ const corsHeaders = {
 }
 
 interface PayTechPaymentConfig {
-  amount: number;
-  currency: string;
-  description: string;
+  item_name: string;
+  item_price: number;
+  ref_command: string;
+  command_name: string;
+  currency?: string;
+  env?: string;
+  ipn_url?: string;
   success_url: string;
   cancel_url: string;
-  reference?: string;
-  customField?: Record<string, string>;
+  custom_field?: string;
+  target_payment?: string;
 }
 
 serve(async (req) => {
@@ -43,12 +47,24 @@ serve(async (req) => {
     }
 
     // Parse payment details
-    const { amount, currency, description, success_url, cancel_url, reference, customField }: PayTechPaymentConfig = await req.json();
+    const { 
+      item_name, 
+      item_price, 
+      ref_command, 
+      command_name, 
+      currency = "XOF",
+      env = "test",
+      success_url, 
+      cancel_url, 
+      custom_field,
+      target_payment,
+      ipn_url
+    }: PayTechPaymentConfig = await req.json();
 
     // Validate required fields
-    if (!amount || !currency || !description || !success_url || !cancel_url) {
+    if (!item_name || !item_price || !ref_command || !command_name || !success_url || !cancel_url) {
       return new Response(
-        JSON.stringify({ error: 'Missing required payment fields' }),
+        JSON.stringify({ error: 'Missing required payment fields: item_name, item_price, ref_command, command_name, success_url, cancel_url' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -64,41 +80,41 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Generate unique transaction ID
-    const transactionId = `APPOINTMENT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Log payment initiation
-    console.log(`Initiating payment for user ${user.id}, amount: ${amount} ${currency}`);
-
-    // Production mode only - no dev simulation
+    console.log(`Initiating PayTech payment: item=${item_name}, price=${item_price} ${currency}`);
 
     // Production: Call actual PayTech API
     const paytechResponse = await fetch("https://paytech.sn/api/payment/request-payment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-KEY": paytechApiKey,
-        "X-API-SECRET": paytechApiSecret
+        "API_KEY": paytechApiKey,
+        "API_SECRET": paytechApiSecret
       },
       body: JSON.stringify({
-        amount,
+        item_name,
+        item_price,
         currency,
-        description,
+        ref_command,
+        command_name,
+        env,
         success_url,
         cancel_url,
-        reference: reference || transactionId,
-        customField
+        custom_field,
+        target_payment,
+        ipn_url
       })
     });
 
     if (!paytechResponse.ok) {
-      throw new Error(`PayTech API error: ${paytechResponse.status}`);
+      const errorText = await paytechResponse.text();
+      console.error(`PayTech API error: ${paytechResponse.status}`, errorText);
+      throw new Error(`PayTech API error: ${paytechResponse.status} - ${errorText}`);
     }
 
     const paytechData = await paytechResponse.json();
     
-    console.log('PayTech response received', { success: paytechData.success, transactionId });
+    console.log('PayTech response received successfully');
 
     return new Response(
       JSON.stringify(paytechData),

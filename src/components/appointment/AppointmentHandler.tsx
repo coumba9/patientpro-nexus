@@ -87,21 +87,24 @@ export const AppointmentHandler = ({
         const cancelUrl = `${window.location.origin}/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}&cancelled=1`;
         
         const paymentResponse = await initiatePayTechPayment({
-          amount: fee,
+          item_name: `Consultation ${specialty || "médicale"}`,
+          item_price: fee,
           currency: "XOF",
-          description: `Rendez-vous médical (${data.type}) avec ${doctorName || "Médecin"} - ${specialty || "Spécialité non spécifiée"}`,
+          ref_command: `APPOINTMENT-${Date.now()}`,
+          command_name: `Rendez-vous ${data.type} avec ${doctorName || "Médecin"}`,
+          env: "test",
           success_url: successUrl,
           cancel_url: cancelUrl,
-          reference: `APPOINTMENT-${Date.now()}`,
-          customField: {
+          custom_field: JSON.stringify({
             doctorName: doctorName || "Non spécifié",
             specialty: specialty || "Non spécifié",
             appointmentType: data.type,
             hasMedicalInfo: data.medicalInfo ? "true" : "false"
-          }
+          }),
+          target_payment: methodName
         });
         
-        if (paymentResponse.success) {
+        if (paymentResponse.success === 1) {
           if (paymentResponse.token) {
             try { localStorage.setItem("paytech_last_token", paymentResponse.token); } catch {}
           }
