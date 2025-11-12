@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -12,23 +13,7 @@ const corsHeaders = {
 interface SharePrescriptionRequest {
   email: string;
   message?: string;
-  prescription: {
-    id: number;
-    date: string;
-    doctor: string;
-    medications: Array<{
-      name: string;
-      dosage: string;
-      frequency: string;
-    }>;
-    duration: string;
-    signed: boolean;
-    patientName: string;
-    patientAge: string;
-    diagnosis?: string;
-    doctorSpecialty: string;
-    doctorAddress: string;
-  };
+  document_id: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,7 +23,99 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, message, prescription }: SharePrescriptionRequest = await req.json();
+    // Get the authorization header for authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create Supabase client with user's JWT
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { email, message, document_id }: SharePrescriptionRequest = await req.json();
+
+    // Validate input
+    if (!email || !document_id) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: email and document_id' }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Query the document with RLS - this will automatically verify ownership
+    const { data: document, error: docError } = await supabase
+      .from('documents')
+      .select(`
+        *,
+        patient:patient_id(id, birth_date),
+        doctor:doctor_id(
+          profile:id(first_name, last_name, phone),
+          specialty:specialty_id(name)
+        )
+      `)
+      .eq('id', document_id)
+      .eq('type', 'prescription')
+      .single();
+
+    if (docError || !document) {
+      console.error('Document query error:', docError);
+      return new Response(
+        JSON.stringify({ error: 'Prescription not found or access denied' }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Verify user has access (either patient or doctor)
+    if (document.patient_id !== user.id && document.doctor_id !== user.id) {
+      console.warn(`Unauthorized access attempt by user ${user.id} to document ${document_id}`);
+      return new Response(
+        JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Parse prescription data from document
+    const prescription = {
+      id: document.id,
+      date: document.created_at,
+      doctor: `Dr. ${document.doctor?.profile?.first_name} ${document.doctor?.profile?.last_name}`,
+      medications: [], // TODO: Parse from document content or related table
+      duration: "À compléter",
+      signed: document.is_signed,
+      patientName: "Patient", // TODO: Get from patient profile
+      patientAge: document.patient?.birth_date ? String(new Date().getFullYear() - new Date(document.patient.birth_date).getFullYear()) : "N/A",
+      diagnosis: "",
+      doctorSpecialty: document.doctor?.specialty?.name || "Médecin généraliste",
+      doctorAddress: "Cabinet médical",
+    };
+
+    console.log(`User ${user.id} sharing prescription ${document_id} to ${email}`);
 
     // Générer le contenu HTML de l'ordonnance
     const prescriptionHTML = `

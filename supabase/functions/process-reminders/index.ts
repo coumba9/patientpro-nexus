@@ -12,6 +12,18 @@ serve(async (req) => {
   }
 
   try {
+    // Validate authorization for cron job
+    const authHeader = req.headers.get('Authorization');
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      console.warn('Unauthorized access attempt to process-reminders');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -53,6 +65,18 @@ serve(async (req) => {
     for (const reminder of reminders || []) {
       try {
         const appointment = reminder.appointment;
+        
+        // Validate reminder data
+        if (!reminder.patient_id || !reminder.appointment_id || !appointment) {
+          console.error(`Invalid reminder data: ${reminder.id}`);
+          continue;
+        }
+
+        // Validate appointment data
+        if (!appointment.date || !appointment.time) {
+          console.error(`Invalid appointment data for reminder: ${reminder.id}`);
+          continue;
+        }
         
         // Create notification
         await supabase
