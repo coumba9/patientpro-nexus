@@ -19,14 +19,9 @@ const PaymentConfirmation = () => {
   const token = searchParams.get("token");
   const method = searchParams.get("method");
 
-  // Ajouter des logs pour déboguer
   useEffect(() => {
     console.log("PaymentConfirmation component loaded");
-    console.log("Current URL:", window.location.href);
-    console.log("Token:", token);
-    console.log("Method:", method);
-    console.log("Search params:", searchParams.toString());
-  }, [token, method, searchParams]);
+  }, []);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -77,7 +72,6 @@ const PaymentConfirmation = () => {
       try {
         // Récupérer les données de rendez-vous en attente
         const pendingAppointment = localStorage.getItem("pendingAppointment");
-        console.log("Pending appointment data:", pendingAppointment);
         
         if (!pendingAppointment) {
           console.error("No pending appointment data found");
@@ -88,7 +82,6 @@ const PaymentConfirmation = () => {
 
         const data = JSON.parse(pendingAppointment);
         setAppointmentData(data);
-        console.log("Appointment data set:", data);
 
         // Vérifier le paiement
         console.log("Verifying payment...");
@@ -105,14 +98,7 @@ const PaymentConfirmation = () => {
         }
 
         try {
-          console.log("Creating appointment in Supabase...", {
-            doctor_id: data.doctorId,
-            patient_id: user.id,
-            date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-            time: data.time,
-            type: data.type,
-            mode: data.consultationType
-          });
+          console.log("Creating appointment in Supabase...");
 
           const appointment = await appointmentService.createAppointment({
             doctor_id: data.doctorId,
@@ -125,13 +111,12 @@ const PaymentConfirmation = () => {
             notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
           });
 
-          console.log("Appointment created successfully:", appointment);
+          console.log("Appointment created successfully");
           
           // Set idempotency flag IMMEDIATELY after successful creation
           const idempotencyKey = `appointment_created_${token}`;
           try { 
             localStorage.setItem(idempotencyKey, "true"); 
-            console.log("Idempotency flag set for token:", token);
           } catch (e) {
             console.error("Failed to set idempotency flag:", e);
           }
@@ -187,9 +172,6 @@ const PaymentConfirmation = () => {
             <p className="text-gray-600">
               Nous vérifions votre paiement, veuillez patienter...
             </p>
-            <div className="mt-4 text-xs text-gray-500">
-              Token: {token || "Non disponible"}
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -261,9 +243,6 @@ const PaymentConfirmation = () => {
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-700">
                   <strong>Méthode de paiement:</strong> {getPaymentMethodName(method)}
-                </p>
-                <p className="text-sm text-blue-700">
-                  <strong>Token de transaction:</strong> {token}
                 </p>
               </div>
             )}
