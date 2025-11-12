@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.secure-paytech]
 verify_jwt = true
 
+[functions.secure-paytech-status]
+verify_jwt = true
+
 [functions.share-prescription]
 verify_jwt = true
 

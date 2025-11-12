@@ -21,7 +21,7 @@ interface PayTechResponse {
 }
 
 // Option pour simuler un paiement réussi en mode développement
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Promise<PayTechResponse> => {
   try {
