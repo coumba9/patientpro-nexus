@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BookingForm } from "./BookingForm";
 import { DoctorInfo } from "./doctorTypes";
-import { initiateAfricaPayment, getSupportedPaymentMethods } from "@/services/africaPayment";
+import { initiatePayTechPayment } from "@/services/paytech";
+import { getSupportedPaymentMethods } from "@/services/africaPayment";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AppointmentHandlerProps {
@@ -75,76 +76,50 @@ export const AppointmentHandler = ({
     const supportedMethods = getSupportedPaymentMethods().map(m => m.id);
     
     if (supportedMethods.includes(data.paymentMethod)) {
-      // Intégration Africa Payment SDK
+      // Intégration PayTech
       const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
       
       try {
-        const methodName = getSupportedPaymentMethods().find(m => m.id === data.paymentMethod)?.name || "Africa Payment";
+        const methodName = getSupportedPaymentMethods().find(m => m.id === data.paymentMethod)?.name || "PayTech";
         toast.info(`Préparation du paiement via ${methodName}...`);
         
-        const paymentResponse = await initiateAfricaPayment({
+        const successUrl = `${window.location.origin}/payment-confirmation?method=${encodeURIComponent(data.paymentMethod)}`;
+        const cancelUrl = `${window.location.origin}/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}&cancelled=1`;
+        
+        const paymentResponse = await initiatePayTechPayment({
           amount: fee,
           currency: "XOF",
           description: `Rendez-vous médical (${data.type}) avec ${doctorName || "Médecin"} - ${specialty || "Spécialité non spécifiée"}`,
-          customer: {
-            firstName: data.firstName || "Prénom",
-            lastName: data.lastName || "Nom",
-            phoneNumber: data.phone || "+221000000000",
-            email: data.email,
-          },
-          metadata: {
-            appointmentId: `APPOINTMENT-${Date.now()}`,
-            patientId: "PATIENT-001", // Dans une vraie application, ceci viendrait du profil utilisateur
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+          reference: `APPOINTMENT-${Date.now()}`,
+          customField: {
             doctorName: doctorName || "Non spécifié",
             specialty: specialty || "Non spécifié",
             appointmentType: data.type,
             hasMedicalInfo: data.medicalInfo ? "true" : "false"
-          },
-          paymentMethod: data.paymentMethod
+          }
         });
         
         if (paymentResponse.success) {
-          if (paymentResponse.redirectUrl) {
+          if (paymentResponse.token) {
+            try { localStorage.setItem("paytech_last_token", paymentResponse.token); } catch {}
+          }
+          if (paymentResponse.redirect_url) {
             toast.loading(`Redirection vers la plateforme de paiement ${methodName}...`);
-            // Redirection externe vers le fournisseur de paiement
-            window.location.href = paymentResponse.redirectUrl;
+            window.location.href = paymentResponse.redirect_url;
+          } else if (paymentResponse.token) {
+            navigate(`/payment-confirmation?token=${paymentResponse.token}&method=${data.paymentMethod}`);
           } else {
-            // Paiement traité directement (mode test)
-            navigate("/payment-confirmation?token=" + paymentResponse.token);
+            toast.error("Réponse de paiement invalide");
           }
         } else {
           toast.error(paymentResponse.message || "Erreur lors de l'initialisation du paiement");
         }
       } catch (error) {
-        console.error("Africa Payment error:", error);
+        console.error("PayTech error:", error);
         toast.error("Une erreur est survenue lors de la connexion au service de paiement");
       }
-      
-      return;
-    } else if (["wave", "orange-money", "mobile-money"].includes(data.paymentMethod)) {
-      // Comportement pour les autres méthodes de paiement mobile
-      const paymentMethodName = 
-        data.paymentMethod === "wave" ? "Wave" : 
-        data.paymentMethod === "orange-money" ? "Orange Money" : "Mobile Money";
-      
-      toast.info(`Préparation du paiement via ${paymentMethodName}...`, {
-        duration: 2000
-      });
-      
-      const redirectUrls = {
-        "wave": "https://wave.com/senegal",
-        "orange-money": "https://orangemoney.orange.sn",
-        "mobile-money": "https://mobilemoney.sn"
-      };
-      
-      setTimeout(() => {
-        window.open(redirectUrls[data.paymentMethod as keyof typeof redirectUrls], "_blank");
-        
-        // Rediriger l'utilisateur vers la même page mais avec un statut de paiement en attente
-        navigate(`/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}&pending=true`);
-        
-        toast.success("Après avoir effectué votre paiement, vous pouvez confirmer votre rendez-vous.");
-      }, 1500);
       
       return;
     }

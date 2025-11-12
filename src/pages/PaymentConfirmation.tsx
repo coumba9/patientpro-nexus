@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { appointmentService } from "@/api";
+import { checkPaymentStatus } from "@/services/paytech";
 import { useAuth } from "@/hooks/useAuth";
 
 const PaymentConfirmation = () => {
@@ -84,9 +85,15 @@ const PaymentConfirmation = () => {
         setAppointmentData(data);
 
         // Vérifier le paiement
-        console.log("Verifying payment...");
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log("Payment verification completed successfully");
+        console.log("Verifying payment with PayTech...");
+        const isPaid = await checkPaymentStatus(token);
+        if (!isPaid) {
+          console.error("Payment not confirmed");
+          setStatus("error");
+          toast.error("Paiement non confirmé");
+          return;
+        }
+        console.log("Payment verified successfully");
         
         // Créer le rendez-vous dans Supabase (une seule fois)
         setIsCreating(true);
