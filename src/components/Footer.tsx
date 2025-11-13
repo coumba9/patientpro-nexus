@@ -92,7 +92,7 @@ export const Footer = () => {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t text-center text-gray-600">
-          <p>© 2024 MediConnect. Tous droits réservés.</p>
+          <p>© 2024 JàmmSanté. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

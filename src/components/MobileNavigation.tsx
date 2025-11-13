@@ -29,7 +29,7 @@ export const MobileNavigation = ({ isLoggedIn, userRole }: MobileNavigationProps
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between mb-8">
             <Link to="/" onClick={closeMenu} className="text-2xl font-bold text-primary">
-              MediConnect
+              JàmmSanté
             </Link>
             <ThemeToggle />
           </div>

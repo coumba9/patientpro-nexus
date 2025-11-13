@@ -47,7 +47,7 @@ export const Hero = () => {
             >
               {user && userRole === "doctor"
                 ? "Gérez vos rendez-vous, vos patients et vos consultations en toute simplicité"
-                : "Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et 7j/7 sur MediConnect"}
+                : "Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et 7j/7 sur JàmmSanté"}
             </motion.p>
             <motion.div 
               initial={{ opacity: 0 }}
@@ -120,7 +120,7 @@ export const Hero = () => {
               <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                 <img 
                   src="/placeholder.svg" 
-                  alt="MediConnect" 
+                  alt="JàmmSanté" 
                   className="w-full h-auto object-cover aspect-square"
                 />
               </div>

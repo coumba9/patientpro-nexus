@@ -15,7 +15,7 @@ export const ClassDiagram = () => {
     <div className="border-t pt-8">
       <h2 className="text-2xl font-bold mb-4">Diagramme de Classes</h2>
       <p className="text-gray-600 dark:text-gray-300 mb-4">
-        Ce diagramme illustre les principales classes de l'application MediConnect et leurs relations.
+        Ce diagramme illustre les principales classes de l'application JàmmSanté et leurs relations.
       </p>
       <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
         <div ref={diagramRef} className="mermaid">

@@ -9,7 +9,7 @@ const About = () => {
       <div className="relative bg-gradient-to-b from-sky-50 to-white pt-24 pb-32">
         <div className="container relative z-10">
           <h1 className="text-5xl font-bold text-center mb-8 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-            À propos de MediConnect
+            À propos de JàmmSanté
           </h1>
           <p className="text-xl text-gray-600 text-center max-w-3xl mx-auto mb-12">
             Notre mission est de révolutionner l'accès aux soins de santé en France en connectant patients et professionnels de santé sur une plateforme innovante.

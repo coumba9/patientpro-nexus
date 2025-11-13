@@ -49,7 +49,7 @@ const PatientDashboard = () => {
               <Menu className="h-5 w-5" />
             </button>
             <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-              MediConnect
+              JàmmSanté
             </Link>
           </div>
           

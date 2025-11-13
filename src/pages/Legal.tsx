@@ -11,7 +11,7 @@ const Legal = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Éditeur du site</h2>
               <p className="text-gray-600">
-                MediConnect SAS<br />
+                JàmmSanté SAS<br />
                 Capital social : 100 000 €<br />
                 RCS Paris B 123 456 789<br />
                 123 rue de la Santé<br />

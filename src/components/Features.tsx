@@ -55,7 +55,7 @@ export const Features = () => {
             Une plateforme complète pour votre santé
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Découvrez toutes les fonctionnalités qui font de MediConnect la meilleure solution pour gérer votre santé
+            Découvrez toutes les fonctionnalités qui font de JàmmSanté la meilleure solution pour gérer votre santé
           </p>
         </motion.div>
         

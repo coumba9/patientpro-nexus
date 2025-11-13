@@ -115,7 +115,7 @@ const AdminDashboard = () => {
         <div className="container flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-              MediConnect
+              JàmmSanté
             </Link>
             <span className="text-sm bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>
           </div>

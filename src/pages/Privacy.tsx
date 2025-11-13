@@ -11,7 +11,7 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">Protection de vos données</h2>
               <p className="text-gray-600">
-                Chez MediConnect, la protection de vos données personnelles et médicales est notre priorité absolue. Nous mettons en œuvre les mesures techniques et organisationnelles les plus strictes pour garantir la sécurité de vos informations.
+                Chez JàmmSanté, la protection de vos données personnelles et médicales est notre priorité absolue. Nous mettons en œuvre les mesures techniques et organisationnelles les plus strictes pour garantir la sécurité de vos informations.
               </p>
             </section>
 
@@ -59,7 +59,7 @@ const Privacy = () => {
               <h2 className="text-2xl font-semibold mb-4">Contact</h2>
               <p className="text-gray-600">
                 Pour toute question concernant vos données personnelles, contactez notre Délégué à la Protection des Données :<br />
-                Email : dpo@mediconnect.fr<br />
+                Email : dpo@jammsante.fr<br />
                 Téléphone : +33 1 23 45 67 89
               </p>
             </section>

@@ -11,14 +11,14 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">1. Objet</h2>
               <p className="text-gray-600">
-                Les présentes Conditions Générales d'Utilisation (CGU) définissent les modalités d'utilisation de la plateforme MediConnect, service de mise en relation entre patients et professionnels de santé.
+                Les présentes Conditions Générales d'Utilisation (CGU) définissent les modalités d'utilisation de la plateforme JàmmSanté, service de mise en relation entre patients et professionnels de santé.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold mb-4">2. Services proposés</h2>
               <p className="text-gray-600">
-                MediConnect propose les services suivants :
+                JàmmSanté propose les services suivants :
               </p>
               <ul className="list-disc list-inside mt-4 space-y-2 text-gray-600">
                 <li>Prise de rendez-vous médicaux en ligne</li>
@@ -38,7 +38,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">4. Responsabilités</h2>
               <p className="text-gray-600">
-                MediConnect ne peut être tenu responsable :
+                JàmmSanté ne peut être tenu responsable :
               </p>
               <ul className="list-disc list-inside mt-4 space-y-2 text-gray-600">
                 <li>Des annulations de rendez-vous par les praticiens</li>
@@ -57,7 +57,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4">6. Modification des CGU</h2>
               <p className="text-gray-600">
-                MediConnect se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés des modifications importantes.
+                JàmmSanté se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés des modifications importantes.
               </p>
             </section>
           </div>

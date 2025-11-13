@@ -15,7 +15,7 @@ export const UseCaseDiagram = () => {
     <div className="border-t pt-8">
       <h2 className="text-2xl font-bold mb-4">Diagramme de Cas d'Utilisation</h2>
       <p className="text-gray-600 dark:text-gray-300 mb-4">
-        Ce diagramme illustre tous les cas d'utilisation pour les différents acteurs du système MediConnect.
+        Ce diagramme illustre tous les cas d'utilisation pour les différents acteurs du système JàmmSanté.
       </p>
       <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto">
         <div ref={diagramRef} className="mermaid">

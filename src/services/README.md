@@ -1,5 +1,5 @@
 
-# Architecture de l'API MediConnect
+# Architecture de l'API JàmmSanté
 
 Ce répertoire contient une architecture modulaire qui facilite la migration vers un backend NestJS dans le futur.
 

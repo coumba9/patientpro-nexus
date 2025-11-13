@@ -56,7 +56,7 @@ const Values = () => {
 
         <div className="mt-24 bg-gradient-to-r from-primary to-blue-600 rounded-2xl p-12 text-white text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Rejoignez l'aventure MediConnect
+            Rejoignez l'aventure JàmmSanté
           </h2>
           <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
             Ensemble, construisons l'avenir de la santé en France. Notre engagement est de rendre les soins de santé plus accessibles et efficaces pour tous.
