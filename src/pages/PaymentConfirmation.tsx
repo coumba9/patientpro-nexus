@@ -41,7 +41,8 @@ const PaymentConfirmation = () => {
       const paymentToken = token || 
                           searchParams.get("payment_token") || 
                           searchParams.get("transaction_id") ||
-                          searchParams.get("ref");
+                          searchParams.get("ref") ||
+                          (() => { try { return localStorage.getItem("paytech_last_token"); } catch { return null; } })();
       
       if (!paymentToken) {
         console.error("No payment token found in URL. Available params:", Object.fromEntries(searchParams.entries()));
@@ -68,6 +69,7 @@ const PaymentConfirmation = () => {
           setStatus("success");
           toast.success("Rendez-vous déjà confirmé");
           localStorage.removeItem("pendingAppointment");
+          try { localStorage.removeItem("paytech_last_token"); } catch {}
           return;
         }
       } catch (e) {
@@ -140,6 +142,7 @@ const PaymentConfirmation = () => {
           
           // Nettoyer le localStorage
           localStorage.removeItem("pendingAppointment");
+          try { localStorage.removeItem("paytech_last_token"); } catch {}
           
           setStatus("success");
           toast.success("Rendez-vous créé avec succès !");
