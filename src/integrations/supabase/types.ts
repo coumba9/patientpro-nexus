@@ -430,6 +430,7 @@ export type Database = {
           gender: string | null
           id: string
           medical_record_id: string | null
+          phone_number: string | null
           updated_at: string
         }
         Insert: {
@@ -440,6 +441,7 @@ export type Database = {
           gender?: string | null
           id: string
           medical_record_id?: string | null
+          phone_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -450,6 +452,7 @@ export type Database = {
           gender?: string | null
           id?: string
           medical_record_id?: string | null
+          phone_number?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -461,6 +464,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          phone_number: string | null
           updated_at: string
         }
         Insert: {
@@ -469,6 +473,7 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          phone_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -477,6 +482,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          phone_number?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -556,6 +562,42 @@ export type Database = {
           scheduled_for?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          phone_number: string
+          provider_response: Json | null
+          sent_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          phone_number: string
+          provider_response?: Json | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          phone_number?: string
+          provider_response?: Json | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
