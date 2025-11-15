@@ -78,6 +78,26 @@ serve(async (req) => {
           continue;
         }
         
+        // Get patient profile with phone number
+        const { data: patientProfile } = await supabase
+          .from('profiles')
+          .select('phone_number, first_name, last_name')
+          .eq('id', appointment.patient_id)
+          .single();
+        
+        // Get patient data (backup phone number)
+        const { data: patientData } = await supabase
+          .from('patients')
+          .select('phone_number')
+          .eq('id', appointment.patient_id)
+          .single();
+        
+        // Use phone from profiles, fallback to patients table
+        const phoneNumber = patientProfile?.phone_number || patientData?.phone_number;
+        
+        // Create notification message
+        const notificationMessage = `Rappel: Vous avez un rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}`;
+        
         // Create notification
         await supabase
           .from('notifications')
@@ -85,11 +105,38 @@ serve(async (req) => {
             user_id: reminder.patient_id,
             type: 'reminder',
             title: 'Rappel de rendez-vous',
-            message: `Rappel: Vous avez un rendez-vous le ${appointment.date} à ${appointment.time}`,
+            message: notificationMessage,
             appointment_id: reminder.appointment_id,
             priority: 'high',
             is_read: false
           });
+
+        // Send SMS if method is SMS or both and phone number exists
+        if ((reminder.method === 'sms' || reminder.method === 'both') && phoneNumber) {
+          console.log(`Sending SMS to ${phoneNumber}`);
+          
+          const smsMessage = `Bonjour ${patientProfile?.first_name || ''}, rappel: rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}. JàmmSanté`;
+          
+          try {
+            // Call send-sms edge function
+            const { error: smsError } = await supabase.functions.invoke('send-sms', {
+              body: {
+                phoneNumber: phoneNumber,
+                message: smsMessage,
+                userId: appointment.patient_id,
+                signature: 'JàmmSanté'
+              }
+            });
+
+            if (smsError) {
+              console.error('Error sending SMS:', smsError);
+            } else {
+              console.log('SMS sent successfully');
+            }
+          } catch (smsError) {
+            console.error('SMS sending failed:', smsError);
+          }
+        }
 
         // Update reminder status
         await supabase
