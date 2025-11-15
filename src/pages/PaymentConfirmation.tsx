@@ -28,6 +28,8 @@ const PaymentConfirmation = () => {
     const verifyPayment = async () => {
       toast.dismiss();
       console.log("Starting payment verification...");
+      console.log("URL search params:", window.location.search);
+      console.log("All params:", Object.fromEntries(searchParams.entries()));
       
       // Wait for auth to load
       if (authLoading) {
@@ -35,12 +37,20 @@ const PaymentConfirmation = () => {
         return;
       }
       
-      if (!token) {
-        console.error("No token found in URL");
+      // Check for different possible token parameter names from PayTech
+      const paymentToken = token || 
+                          searchParams.get("payment_token") || 
+                          searchParams.get("transaction_id") ||
+                          searchParams.get("ref");
+      
+      if (!paymentToken) {
+        console.error("No payment token found in URL. Available params:", Object.fromEntries(searchParams.entries()));
         setStatus("error");
-        toast.error("Token de paiement manquant");
+        toast.error("Token de paiement manquant. Paramètres reçus: " + Array.from(searchParams.keys()).join(", "));
         return;
       }
+      
+      console.log("Payment token found:", paymentToken);
 
       if (!user) {
         console.error("User not authenticated");
@@ -50,7 +60,7 @@ const PaymentConfirmation = () => {
       }
 
       // Idempotency guard - check FIRST before any processing
-      const idempotencyKey = `appointment_created_${token}`;
+      const idempotencyKey = `appointment_created_${paymentToken}`;
       try {
         const alreadyCreated = localStorage.getItem(idempotencyKey);
         if (alreadyCreated === "true") {
@@ -85,8 +95,8 @@ const PaymentConfirmation = () => {
         setAppointmentData(data);
 
         // Vérifier le paiement
-        console.log("Verifying payment with PayTech...");
-        const isPaid = await checkPaymentStatus(token);
+        console.log("Verifying payment with PayTech using token:", paymentToken);
+        const isPaid = await checkPaymentStatus(paymentToken);
         if (!isPaid) {
           console.error("Payment not confirmed");
           setStatus("error");
@@ -121,7 +131,7 @@ const PaymentConfirmation = () => {
           console.log("Appointment created successfully");
           
           // Set idempotency flag IMMEDIATELY after successful creation
-          const idempotencyKey = `appointment_created_${token}`;
+          const idempotencyKey = `appointment_created_${paymentToken}`;
           try { 
             localStorage.setItem(idempotencyKey, "true"); 
           } catch (e) {
