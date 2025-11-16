@@ -89,7 +89,19 @@ serve(async (req) => {
       })
     });
 
-    const responseData = await dexchangeResponse.json();
+    console.log('Dexchange Response Status:', dexchangeResponse.status);
+    
+    let responseData;
+    const contentType = dexchangeResponse.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await dexchangeResponse.json();
+    } else {
+      const textResponse = await dexchangeResponse.text();
+      console.log('Non-JSON Response:', textResponse);
+      responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
+    }
+    
     console.log('Dexchange API Response:', responseData);
 
     const success = dexchangeResponse.ok;
