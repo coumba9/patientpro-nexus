@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -7,13 +7,16 @@ import {
   MapPin, 
   Download,
   Clock,
-  User
+  User,
+  Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { Card } from "@/components/ui/card";
 import { Appointment } from "@/api/interfaces";
+import { QRCodeSVG } from "qrcode.react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AppointmentTicketProps {
   appointment: Appointment;
@@ -21,6 +24,7 @@ interface AppointmentTicketProps {
 
 export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
   const ticketRef = useRef<HTMLDivElement | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Extraire les données du médecin
   const doctorName = appointment.doctor?.profile 
@@ -30,6 +34,34 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
   const specialtyName = appointment.doctor?.specialty?.name || 
                         appointment.doctor?.specialties?.name || 
                         'Non spécifiée';
+
+  const handleSendEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-ticket-email', {
+        body: { 
+          appointmentId: appointment.id,
+          patientEmail: appointment.patient?.profile?.email,
+          doctorName,
+          specialtyName,
+          date: formatDate(appointment.date),
+          time: appointment.time,
+          mode: appointment.mode,
+          location: appointment.location,
+          type: getTypeLabel()
+        }
+      });
+
+      if (error) throw error;
+      
+      toast.success("Ticket envoyé par email avec succès");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email:", error);
+      toast.error("Erreur lors de l'envoi de l'email");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   const handleDownloadTicket = async () => {
     if (!ticketRef.current) {
@@ -169,6 +201,21 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
               </div>
             </div>
           )}
+
+          {/* QR Code pour check-in rapide */}
+          <div className="flex items-center justify-center pt-4 mt-4 border-t border-border">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-3">QR Code - Check-in rapide</p>
+              <div className="bg-white p-3 rounded-lg inline-block">
+                <QRCodeSVG 
+                  value={appointment.id} 
+                  size={120}
+                  level="H"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">ID: {appointment.id.substring(0, 8).toUpperCase()}</p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 pt-4 border-t border-border">
@@ -179,14 +226,25 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
       </div>
 
       <div className="p-4 bg-muted/30 border-t border-border">
-        <Button 
-          onClick={handleDownloadTicket}
-          className="w-full"
-          variant="default"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Télécharger en PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleDownloadTicket}
+            className="flex-1"
+            variant="default"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Télécharger PDF
+          </Button>
+          <Button 
+            onClick={handleSendEmail}
+            className="flex-1"
+            variant="outline"
+            disabled={isSendingEmail}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            {isSendingEmail ? "Envoi..." : "Envoyer par email"}
+          </Button>
+        </div>
       </div>
     </Card>
   );
