@@ -93,7 +93,7 @@ export const AppointmentHandler = ({
           currency: "XOF",
           ref_command: `APPOINTMENT-${Date.now()}`,
           command_name: `Rendez-vous ${data.type} avec ${doctorName || "Médecin"}`,
-          env: "prod",
+          env: "test",
           success_url: successUrl,
           cancel_url: cancelUrl,
           ipn_url: ipnUrl,
