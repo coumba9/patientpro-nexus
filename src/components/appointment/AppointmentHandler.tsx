@@ -110,6 +110,11 @@ export const AppointmentHandler = ({
           if (paymentResponse.token) {
             try { localStorage.setItem("paytech_last_token", paymentResponse.token); } catch {}
           }
+          try {
+            localStorage.setItem("paytech_last_method", data.paymentMethod);
+            localStorage.setItem("paytech_last_env", "test");
+            localStorage.setItem("paytech_last_amount", String(fee));
+          } catch {}
           if (paymentResponse.redirect_url) {
             toast.loading(`Redirection vers la plateforme de paiement ${methodName}...`);
             window.location.href = paymentResponse.redirect_url;
