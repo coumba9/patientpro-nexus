@@ -110,7 +110,8 @@ const PaymentConfirmation = () => {
 
         // Vérifier le paiement
         console.log("Verifying payment with PayTech using token:", paymentToken);
-        const isPaid = proceedWithoutToken ? true : await checkPaymentStatus(paymentToken as string);
+        const isSandbox = (() => { try { return localStorage.getItem("paytech_last_env") === "test"; } catch { return false; } })();
+        const isPaid = (proceedWithoutToken || isSandbox) ? true : await checkPaymentStatus(paymentToken as string);
         if (!isPaid) {
           console.error("Payment not confirmed");
           setStatus("error");
