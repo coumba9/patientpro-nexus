@@ -47,7 +47,7 @@ export interface Appointment extends BaseEntity {
   patient_id: string;
   date: string;
   time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'awaiting_patient_confirmation';
   type: 'consultation' | 'follow_up' | 'emergency';
   mode: 'in_person' | 'teleconsultation';
   location?: string;

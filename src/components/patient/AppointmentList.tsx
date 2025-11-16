@@ -16,25 +16,84 @@ export const AppointmentList = ({
   onReschedule,
   onConfirm,
 }: AppointmentListProps) => {
+  // Séparer les rendez-vous à venir et passés
+  const now = new Date();
+  
+  const upcomingAppointments = appointments.filter(apt => {
+    const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
+    return appointmentDateTime >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
+  });
+
+  const pastAppointments = appointments.filter(apt => {
+    const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
+    return appointmentDateTime < now || apt.status === 'completed' || apt.status === 'cancelled';
+  });
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Mes prochains rendez-vous</h2>
-        <Link to="/find-doctor">
-          <Button>Prendre un rendez-vous</Button>
-        </Link>
+    <div className="space-y-6">
+      {/* Rendez-vous à venir */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Mes prochains rendez-vous</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {upcomingAppointments.length} rendez-vous à venir
+            </p>
+          </div>
+          <Link to="/find-doctor">
+            <Button>Prendre un rendez-vous</Button>
+          </Link>
+        </div>
+        <div className="space-y-4">
+          {upcomingAppointments.length > 0 ? (
+            upcomingAppointments.map((appointment) => (
+              <AppointmentCard
+                key={appointment.id}
+                appointment={appointment}
+                onSendMessage={onSendMessage}
+                onReschedule={onReschedule}
+                onConfirm={onConfirm}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Aucun rendez-vous à venir. Prenez rendez-vous avec un médecin.
+            </div>
+          )}
+        </div>
       </div>
-      <div className="space-y-4">
-        {appointments.map((appointment) => (
-          <AppointmentCard
-            key={appointment.id}
-            appointment={appointment}
-            onSendMessage={onSendMessage}
-            onReschedule={onReschedule}
-            onConfirm={onConfirm}
-          />
-        ))}
-      </div>
+
+      {/* Rendez-vous passés */}
+      {pastAppointments.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-foreground">Historique</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {pastAppointments.length} rendez-vous passé{pastAppointments.length > 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="space-y-4 opacity-75">
+            {pastAppointments.slice(0, 5).map((appointment) => (
+              <AppointmentCard
+                key={appointment.id}
+                appointment={appointment}
+                onSendMessage={onSendMessage}
+                onReschedule={onReschedule}
+                onConfirm={onConfirm}
+              />
+            ))}
+            {pastAppointments.length > 5 && (
+              <div className="text-center pt-4">
+                <Link to="/patient/appointments">
+                  <Button variant="outline" size="sm">
+                    Voir tout l'historique ({pastAppointments.length})
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
