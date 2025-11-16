@@ -58,8 +58,8 @@ serve(async (req) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-API-KEY": paytechApiKey,
-        "X-API-SECRET": paytechApiSecret
+        "API_KEY": paytechApiKey,
+        "API_SECRET": paytechApiSecret
       }
     });
 
