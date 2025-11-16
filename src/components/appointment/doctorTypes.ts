@@ -18,9 +18,9 @@ export const getDefaultDoctorInfo = (doctorName: string | null, specialty: strin
     name: doctorName || "Dr. Non spécifié",
     specialty: specialty || "Non spécifié",
     fees: {
-      consultation: 25000,
-      followup: 15000,
-      urgent: 35000,
+      consultation: 10,
+      followup: 10,
+      urgent: 10,
     },
     languages: ["Français", "Anglais"],
     experience: "15 ans",
