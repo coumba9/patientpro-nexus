@@ -59,7 +59,9 @@ const PaymentConfirmation = () => {
         console.log("Payment token found:", paymentToken);
       }
       
-      console.log("Payment token found:", paymentToken);
+       if (paymentToken) {
+         console.log("Payment token found:", paymentToken);
+       }
 
       if (!user) {
         console.error("User not authenticated");
@@ -108,8 +110,23 @@ const PaymentConfirmation = () => {
         const data = JSON.parse(pendingAppointment);
         setAppointmentData(data);
 
-        // En mode test/sandbox, créer directement le rendez-vous sans vérification PayTech
-        console.log("Creating appointment directly in test mode...");
+        // Vérifier le paiement en production avant de créer le rendez-vous
+        if (!isSandbox) {
+          if (!paymentToken) {
+            console.error('Missing payment token in production');
+            setStatus('error');
+            toast.error('Token de paiement manquant');
+            return;
+          }
+          const verified = await checkPaymentStatus(paymentToken);
+          if (!verified) {
+            setStatus('error');
+            toast.error("Échec de la vérification du paiement");
+            return;
+          }
+        }
+
+        console.log("Creating appointment...");
         setIsCreating(true);
         
         if (!data.doctorId) {
@@ -134,6 +151,11 @@ const PaymentConfirmation = () => {
 
           console.log("Appointment created successfully");
           
+          // Idempotency flag for this token
+          if (idempotencyKey) {
+            try { localStorage.setItem(idempotencyKey, "true"); } catch {}
+          }
+          
           // Nettoyer le localStorage
           localStorage.removeItem("pendingAppointment");
           try { localStorage.removeItem("paytech_last_token"); } catch {}
@@ -146,11 +168,46 @@ const PaymentConfirmation = () => {
           setIsCreating(false);
         } catch (error: any) {
           console.error("Error creating appointment:", error);
+          
+          // Fallback: si le créneau est marqué indisponible, vérifier si un rendez-vous existe déjà pour ce créneau
+          try {
+            const { supabase } = await import("@/integrations/supabase/client");
+            const dateStr = data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0];
+            const { data: existing } = await supabase
+              .from('appointments')
+              .select('*')
+              .eq('doctor_id', data.doctorId)
+              .eq('patient_id', user.id)
+              .eq('date', dateStr)
+              .eq('time', data.time)
+              .maybeSingle();
+
+            if (existing) {
+              // Idempotency flag
+              if (idempotencyKey) {
+                try { localStorage.setItem(idempotencyKey, "true"); } catch {}
+              }
+              // Nettoyage et succès
+              localStorage.removeItem("pendingAppointment");
+              try { localStorage.removeItem("paytech_last_token"); } catch {}
+              try { localStorage.removeItem("paytech_last_method"); } catch {}
+              try { localStorage.removeItem("paytech_last_env"); } catch {}
+              try { localStorage.removeItem("paytech_last_amount"); } catch {}
+
+              setStatus("success");
+              toast.success("Rendez-vous confirmé !");
+              setIsCreating(false);
+              return;
+            }
+          } catch (fallbackErr) {
+            console.warn("Fallback appointment check failed:", fallbackErr);
+          }
+
           setStatus("error");
           setIsCreating(false);
           
           // Message d'erreur plus clair
-          const errorMessage = error.message || "Une erreur s'est produite";
+          const errorMessage = (error as any)?.message || "Une erreur s'est produite";
           if (errorMessage.includes("créneau")) {
             toast.error("Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
           } else {

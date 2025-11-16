@@ -93,7 +93,7 @@ export const AppointmentHandler = ({
           currency: "XOF",
           ref_command: `APPOINTMENT-${Date.now()}`,
           command_name: `Rendez-vous ${data.type} avec ${doctorName || "Médecin"}`,
-          env: "test",
+          env: "prod",
           success_url: successUrl,
           cancel_url: cancelUrl,
           ipn_url: ipnUrl,
@@ -112,7 +112,7 @@ export const AppointmentHandler = ({
           }
           try {
             localStorage.setItem("paytech_last_method", data.paymentMethod);
-            localStorage.setItem("paytech_last_env", "test");
+            localStorage.setItem("paytech_last_env", "prod");
             localStorage.setItem("paytech_last_amount", String(fee));
           } catch {}
           if (paymentResponse.redirect_url) {
