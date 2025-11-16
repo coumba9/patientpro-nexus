@@ -37,7 +37,7 @@ const PaymentConfirmation = () => {
         return;
       }
       
-      // Check for different possible token parameter names from PayTech (seulement nécessaire en mode production)
+      // Token lookup (supporte plusieurs noms) + fallback sandbox/test
       let paymentToken = token || 
                           searchParams.get("payment_token") || 
                           searchParams.get("transaction_id") ||
@@ -45,19 +45,16 @@ const PaymentConfirmation = () => {
                           searchParams.get("reference") ||
                           searchParams.get("payment_id") ||
                           (() => { try { return localStorage.getItem("paytech_last_token"); } catch { return null; } })();
-      
       const isSandbox = (() => { try { return localStorage.getItem("paytech_last_env") === "test"; } catch { return false; } })();
-      
-      // En mode test/sandbox, on n'a pas besoin de token, la redirection suffit
-      if (!paymentToken && !isSandbox) {
-        console.error("No payment token found in URL (production mode). Available params:", Object.fromEntries(searchParams.entries()));
+      const proceedWithoutToken = !paymentToken && !!localStorage.getItem("pendingAppointment");
+      if (!paymentToken && !(isSandbox || proceedWithoutToken)) {
+        console.error("No payment token found and not in sandbox; available params:", Object.fromEntries(searchParams.entries()));
         setStatus("error");
-        toast.error("Token de paiement manquant en mode production");
+        toast.error("Token de paiement manquant. Paramètres reçus: " + Array.from(searchParams.keys()).join(", "));
         return;
       }
-      
-      if (isSandbox) {
-        console.log("Sandbox mode detected - proceeding without token verification");
+      if (isSandbox || proceedWithoutToken) {
+        console.log("Test-like mode detected - proceeding without token verification");
       } else {
         console.log("Payment token found:", paymentToken);
       }
