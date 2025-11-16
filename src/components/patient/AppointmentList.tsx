@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppointmentCard } from "./AppointmentCard";
+import { AppointmentFilters } from "./AppointmentFilters";
 import { Appointment } from "./types";
 
 interface AppointmentListProps {
@@ -16,37 +18,94 @@ export const AppointmentList = ({
   onReschedule,
   onConfirm,
 }: AppointmentListProps) => {
-  // Séparer les rendez-vous à venir et passés
+  const [activeFilter, setActiveFilter] = useState('all');
   const now = new Date();
   
-  const upcomingAppointments = appointments.filter(apt => {
-    const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
-    return appointmentDateTime >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
+  // Calculer les compteurs pour chaque filtre
+  const counts = {
+    all: appointments.length,
+    upcoming: appointments.filter(apt => {
+      const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
+      return appointmentDateTime >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
+    }).length,
+    completed: appointments.filter(apt => apt.status === 'completed').length,
+    cancelled: appointments.filter(apt => apt.status === 'cancelled').length,
+    pending: appointments.filter(apt => 
+      apt.status === 'pending' || apt.status === 'awaiting_patient_confirmation'
+    ).length,
+  };
+
+  // Filtrer les rendez-vous selon le filtre actif
+  const getFilteredAppointments = () => {
+    switch (activeFilter) {
+      case 'upcoming':
+        return appointments.filter(apt => {
+          const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
+          return appointmentDateTime >= now && apt.status !== 'cancelled' && apt.status !== 'completed';
+        });
+      case 'completed':
+        return appointments.filter(apt => apt.status === 'completed');
+      case 'cancelled':
+        return appointments.filter(apt => apt.status === 'cancelled');
+      case 'pending':
+        return appointments.filter(apt => 
+          apt.status === 'pending' || apt.status === 'awaiting_patient_confirmation'
+        );
+      default:
+        return appointments;
+    }
+  };
+
+  const filteredAppointments = getFilteredAppointments();
+  
+  // Trier par date (les plus récents en premier)
+  const sortedAppointments = [...filteredAppointments].sort((a, b) => {
+    const dateA = new Date(`${a.date}T${a.time}`);
+    const dateB = new Date(`${b.date}T${b.time}`);
+    return dateB.getTime() - dateA.getTime();
   });
 
-  const pastAppointments = appointments.filter(apt => {
-    const appointmentDateTime = new Date(`${apt.date}T${apt.time}`);
-    return appointmentDateTime < now || apt.status === 'completed' || apt.status === 'cancelled';
-  });
+  const getFilterTitle = () => {
+    switch (activeFilter) {
+      case 'upcoming':
+        return 'Rendez-vous à venir';
+      case 'completed':
+        return 'Rendez-vous terminés';
+      case 'cancelled':
+        return 'Rendez-vous annulés';
+      case 'pending':
+        return 'Rendez-vous en attente';
+      default:
+        return 'Tous les rendez-vous';
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Rendez-vous à venir */}
+      {/* Filtres */}
+      <AppointmentFilters
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        counts={counts}
+      />
+
+      {/* Liste des rendez-vous */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Mes prochains rendez-vous</h2>
+            <h2 className="text-2xl font-bold text-foreground">{getFilterTitle()}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {upcomingAppointments.length} rendez-vous à venir
+              {sortedAppointments.length} rendez-vous
             </p>
           </div>
           <Link to="/find-doctor">
             <Button>Prendre un rendez-vous</Button>
           </Link>
         </div>
+        
         <div className="space-y-4">
-          {upcomingAppointments.length > 0 ? (
-            upcomingAppointments.map((appointment) => (
+          {sortedAppointments.length > 0 ? (
+            sortedAppointments.map((appointment) => (
               <AppointmentCard
                 key={appointment.id}
                 appointment={appointment}
@@ -56,44 +115,23 @@ export const AppointmentList = ({
               />
             ))
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucun rendez-vous à venir. Prenez rendez-vous avec un médecin.
+            <div className="text-center py-12">
+              <div className="text-muted-foreground mb-4">
+                {activeFilter === 'upcoming' && "Aucun rendez-vous à venir"}
+                {activeFilter === 'completed' && "Aucun rendez-vous terminé"}
+                {activeFilter === 'cancelled' && "Aucun rendez-vous annulé"}
+                {activeFilter === 'pending' && "Aucun rendez-vous en attente"}
+                {activeFilter === 'all' && "Aucun rendez-vous"}
+              </div>
+              {activeFilter === 'upcoming' && (
+                <Link to="/find-doctor">
+                  <Button>Prendre un rendez-vous</Button>
+                </Link>
+              )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Rendez-vous passés */}
-      {pastAppointments.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-foreground">Historique</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {pastAppointments.length} rendez-vous passé{pastAppointments.length > 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="space-y-4 opacity-75">
-            {pastAppointments.slice(0, 5).map((appointment) => (
-              <AppointmentCard
-                key={appointment.id}
-                appointment={appointment}
-                onSendMessage={onSendMessage}
-                onReschedule={onReschedule}
-                onConfirm={onConfirm}
-              />
-            ))}
-            {pastAppointments.length > 5 && (
-              <div className="text-center pt-4">
-                <Link to="/patient/appointments">
-                  <Button variant="outline" size="sm">
-                    Voir tout l'historique ({pastAppointments.length})
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
