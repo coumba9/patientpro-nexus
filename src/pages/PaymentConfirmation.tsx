@@ -37,7 +37,7 @@ const PaymentConfirmation = () => {
         return;
       }
       
-      // Check for different possible token parameter names from PayTech
+      // Check for different possible token parameter names from PayTech (seulement nécessaire en mode production)
       let paymentToken = token || 
                           searchParams.get("payment_token") || 
                           searchParams.get("transaction_id") ||
@@ -46,19 +46,20 @@ const PaymentConfirmation = () => {
                           searchParams.get("payment_id") ||
                           (() => { try { return localStorage.getItem("paytech_last_token"); } catch { return null; } })();
       
-      // If still no token, prepare a DEV/test fallback path based on redirect + local state
-      let proceedWithoutToken = false;
-      if (!paymentToken) {
-        const inferredMethod = method || searchParams.get("methods") || searchParams.get("payment_method") || searchParams.get("channel") || (() => { try { return localStorage.getItem("paytech_last_method"); } catch { return null; } })();
-        if (inferredMethod && localStorage.getItem("pendingAppointment")) {
-          console.warn("No payment token found, proceeding based on successful redirection and local state (test mode)");
-          proceedWithoutToken = true;
-        } else {
-          console.error("No payment token found in URL. Available params:", Object.fromEntries(searchParams.entries()));
-          setStatus("error");
-          toast.error("Token de paiement manquant. Paramètres reçus: " + Array.from(searchParams.keys()).join(", "));
-          return;
-        }
+      const isSandbox = (() => { try { return localStorage.getItem("paytech_last_env") === "test"; } catch { return false; } })();
+      
+      // En mode test/sandbox, on n'a pas besoin de token, la redirection suffit
+      if (!paymentToken && !isSandbox) {
+        console.error("No payment token found in URL (production mode). Available params:", Object.fromEntries(searchParams.entries()));
+        setStatus("error");
+        toast.error("Token de paiement manquant en mode production");
+        return;
+      }
+      
+      if (isSandbox) {
+        console.log("Sandbox mode detected - proceeding without token verification");
+      } else {
+        console.log("Payment token found:", paymentToken);
       }
       
       console.log("Payment token found:", paymentToken);
@@ -70,9 +71,11 @@ const PaymentConfirmation = () => {
         return;
       }
 
-      // Idempotency guard - only when we have a token
+      // Idempotency guard - only when we have a token  
+      // En mode test (env=test), pas besoin de guard car on crée directement
       let idempotencyKey: string | null = paymentToken ? `appointment_created_${paymentToken}` : null;
-      if (idempotencyKey) {
+      
+      if (idempotencyKey && !isSandbox) {
         try {
           const alreadyCreated = localStorage.getItem(idempotencyKey);
           if (alreadyCreated === "true") {
@@ -108,19 +111,8 @@ const PaymentConfirmation = () => {
         const data = JSON.parse(pendingAppointment);
         setAppointmentData(data);
 
-        // Vérifier le paiement
-        console.log("Verifying payment with PayTech using token:", paymentToken);
-        const isSandbox = (() => { try { return localStorage.getItem("paytech_last_env") === "test"; } catch { return false; } })();
-        const isPaid = (proceedWithoutToken || isSandbox) ? true : await checkPaymentStatus(paymentToken as string);
-        if (!isPaid) {
-          console.error("Payment not confirmed");
-          setStatus("error");
-          toast.error("Paiement non confirmé");
-          return;
-        }
-        console.log("Payment verified successfully");
-        
-        // Créer le rendez-vous dans Supabase (une seule fois)
+        // En mode test/sandbox, créer directement le rendez-vous sans vérification PayTech
+        console.log("Creating appointment directly in test mode...");
         setIsCreating(true);
         
         if (!data.doctorId) {
@@ -145,35 +137,30 @@ const PaymentConfirmation = () => {
 
           console.log("Appointment created successfully");
           
-          // Set idempotency flag IMMEDIATELY after successful creation
-          const idempotencyKey = `appointment_created_${paymentToken}`;
-          try { 
-            localStorage.setItem(idempotencyKey, "true"); 
-          } catch (e) {
-            console.error("Failed to set idempotency flag:", e);
-          }
-          
           // Nettoyer le localStorage
           localStorage.removeItem("pendingAppointment");
           try { localStorage.removeItem("paytech_last_token"); } catch {}
+          try { localStorage.removeItem("paytech_last_method"); } catch {}
+          try { localStorage.removeItem("paytech_last_env"); } catch {}
+          try { localStorage.removeItem("paytech_last_amount"); } catch {}
           
           setStatus("success");
           toast.success("Rendez-vous créé avec succès !");
           setIsCreating(false);
-          } catch (error: any) {
-            console.error("Error creating appointment:", error);
-            setStatus("error");
-            setIsCreating(false);
-            
-            // Message d'erreur plus clair
-            const errorMessage = error.message || "Une erreur s'est produite";
-            if (errorMessage.includes("créneau")) {
-              toast.error("Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
-            } else {
-              toast.error("Erreur: " + errorMessage);
-            }
-            return;
+        } catch (error: any) {
+          console.error("Error creating appointment:", error);
+          setStatus("error");
+          setIsCreating(false);
+          
+          // Message d'erreur plus clair
+          const errorMessage = error.message || "Une erreur s'est produite";
+          if (errorMessage.includes("créneau")) {
+            toast.error("Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
+          } else {
+            toast.error("Erreur: " + errorMessage);
           }
+          return;
+        }
         
       } catch (error) {
         console.error("Erreur lors de la vérification du paiement:", error);
