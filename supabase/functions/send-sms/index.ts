@@ -107,13 +107,16 @@ serve(async (req) => {
     const success = dexchangeResponse.ok;
 
     // Log SMS attempt in database
+    const statusCode = dexchangeResponse.status;
+    const logStatus = success ? 'sent' : (statusCode === 521 ? 'provider_down' : 'failed');
+
     const { error: logError } = await supabase
       .from('sms_logs')
       .insert({
         user_id: userId,
         phone_number: formattedPhone,
         message: message,
-        status: success ? 'sent' : 'failed',
+        status: logStatus,
         provider_response: responseData,
         sent_at: success ? new Date().toISOString() : null
       });
@@ -123,7 +126,19 @@ serve(async (req) => {
     }
 
     if (!success) {
-      throw new Error(`SMS sending failed: ${JSON.stringify(responseData)}`);
+      // Do not throw — return a 200 so the client can handle gracefully
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: statusCode === 521 ? 'SMS provider unavailable (521)' : 'SMS sending failed',
+          provider_status: statusCode,
+          provider_response: responseData
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
     }
 
     return new Response(
