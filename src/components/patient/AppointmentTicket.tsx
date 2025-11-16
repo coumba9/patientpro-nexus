@@ -16,27 +16,21 @@ import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { Card, CardContent } from "@/components/ui/card";
-
-export interface AppointmentTicket {
-  id: string;
-  doctor: string;
-  specialty: string;
-  date: string;
-  time: string;
-  type: "consultation" | "teleconsultation";
-  status: "confirmed" | "completed";
-  location: string;
-  price: number;
-  paymentStatus: "paid" | "pending";
-  paymentMethod: "card" | "cash" | "wave" | "orange-money" | "mobile-money" | "thirdparty";
-}
+import { Appointment } from "@/api/interfaces";
 
 interface AppointmentTicketProps {
-  appointment: AppointmentTicket;
+  appointment: Appointment;
 }
 
 export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
   const ticketRef = useRef<HTMLDivElement | null>(null);
+
+  // Extraire les données du médecin
+  const doctorName = appointment.doctor?.profile 
+    ? `Dr. ${appointment.doctor.profile.first_name} ${appointment.doctor.profile.last_name}`
+    : 'Médecin non spécifié';
+  
+  const specialtyName = appointment.doctor?.specialty?.name || 'Non spécifiée';
 
   const handleDownloadTicket = async () => {
     if (!ticketRef.current) {
@@ -62,7 +56,7 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Ticket_${appointment.id}_${appointment.doctor.replace(/\s+/g, "_")}.pdf`);
+      pdf.save(`Ticket_${appointment.id}_${doctorName.replace(/\s+/g, "_")}.pdf`);
 
       toast.success("Ticket téléchargé avec succès");
     } catch (error) {
@@ -71,7 +65,7 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
     }
   };
 
-  const getPaymentMethodIcon = (method: AppointmentTicket["paymentMethod"]) => {
+  const getPaymentMethodIcon = (method: string) => {
     switch (method) {
       case "card":
         return <Euro className="h-4 w-4" />;
@@ -90,7 +84,7 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
     }
   };
 
-  const getPaymentMethodName = (method: AppointmentTicket["paymentMethod"]) => {
+  const getPaymentMethodName = (method: string) => {
     switch (method) {
       case "card":
         return "Carte bancaire";
