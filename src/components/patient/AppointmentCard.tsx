@@ -40,12 +40,17 @@ export const AppointmentCard = ({
   const { user } = useAuth();
 
   const getStatusBadge = (status: string) => {
-    if (status === "confirmed") {
-      return <Badge className="bg-green-100 text-green-800">Confirmé</Badge>;
-    } else if (status === "awaiting_patient_confirmation") {
-      return <Badge className="bg-blue-100 text-blue-800">En attente de votre confirmation</Badge>;
-    } else {
-      return <Badge className="bg-yellow-100 text-yellow-800">En attente de validation médecin</Badge>;
+    switch (status) {
+      case "confirmed":
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Confirmé</Badge>;
+      case "awaiting_patient_confirmation":
+        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">En attente de votre confirmation</Badge>;
+      case "completed":
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">Terminé</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">Annulé</Badge>;
+      default:
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">En attente</Badge>;
     }
   };
 
