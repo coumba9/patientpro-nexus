@@ -6,6 +6,6 @@ export interface Appointment {
   time: string;
   location: string;
   type: string;
-  status: "confirmed" | "pending" | "awaiting_patient_confirmation";
+  status: "confirmed" | "pending" | "awaiting_patient_confirmation" | "cancelled" | "completed";
   doctorId?: string;
 }

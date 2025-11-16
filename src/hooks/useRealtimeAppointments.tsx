@@ -6,6 +6,43 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Fonction pour vérifier et mettre à jour les rendez-vous passés
+  const updatePastAppointments = async (appointmentsList: Appointment[]) => {
+    const now = new Date();
+    const updatesToMake = [];
+
+    for (const appointment of appointmentsList) {
+      // Créer la date et heure du rendez-vous
+      const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+      
+      // Si le rendez-vous est passé et toujours en statut pending ou confirmed
+      if (appointmentDateTime < now && 
+          (appointment.status === 'pending' || 
+           appointment.status === 'confirmed' || 
+           appointment.status === 'awaiting_patient_confirmation')) {
+        updatesToMake.push(appointment.id);
+      }
+    }
+
+    // Mettre à jour tous les rendez-vous passés en batch
+    if (updatesToMake.length > 0) {
+      try {
+        const { error } = await supabase
+          .from('appointments')
+          .update({ status: 'completed' })
+          .in('id', updatesToMake);
+
+        if (error) {
+          console.error('Error updating past appointments:', error);
+        } else {
+          console.log(`${updatesToMake.length} rendez-vous passés mis à jour`);
+        }
+      } catch (error) {
+        console.error('Error updating past appointments:', error);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!userId || !userRole) {
       setLoading(false);
@@ -88,6 +125,9 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
         );
 
         setAppointments(enrichedAppointments as Appointment[]);
+        
+        // Vérifier et mettre à jour les rendez-vous passés
+        await updatePastAppointments(enrichedAppointments as Appointment[]);
       } catch (error) {
         console.error('Error fetching appointments:', error);
       } finally {
@@ -96,6 +136,11 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
     };
 
     fetchAppointments();
+
+    // Vérifier les rendez-vous passés toutes les 5 minutes
+    const intervalId = setInterval(() => {
+      fetchAppointments();
+    }, 5 * 60 * 1000); // 5 minutes
 
     // Set up realtime subscription
     const channel = supabase
@@ -124,7 +169,8 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
+      clearInterval(intervalId);
     };
   }, [userId, userRole]);
 
