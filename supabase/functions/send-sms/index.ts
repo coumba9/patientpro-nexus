@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface SMSRequest {
-  phoneNumber: string;
+  phoneNumber?: string;
   message: string;
   userId: string;
   signature?: string;
@@ -24,8 +24,8 @@ serve(async (req) => {
 
     console.log('SMS Request:', { phoneNumber, message, userId, signature });
 
-    if (!phoneNumber || !message || !userId) {
-      throw new Error('Missing required fields: phoneNumber, message, or userId');
+    if (!message || !userId) {
+      throw new Error('Missing required fields: message or userId');
     }
 
     // Initialize Supabase client
@@ -39,8 +39,35 @@ serve(async (req) => {
       throw new Error('DEXCHANGE_API_KEY not configured');
     }
 
+    // Resolve phone number: request -> patients -> profiles
+    let phoneToUse = phoneNumber || '';
+
+    if (!phoneToUse) {
+      const { data: patient, error: patErr } = await supabase
+        .from('patients')
+        .select('phone_number')
+        .eq('id', userId)
+        .single();
+      if (patErr) console.warn('Patient lookup error:', patErr);
+      if (patient?.phone_number) phoneToUse = patient.phone_number;
+    }
+
+    if (!phoneToUse) {
+      const { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('id', userId)
+        .single();
+      if (profErr) console.warn('Profile lookup error:', profErr);
+      if (profile?.phone_number) phoneToUse = profile.phone_number;
+    }
+
+    if (!phoneToUse) {
+      return new Response(JSON.stringify({ success: false, error: 'No phone number found for user' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Format phone number (ensure it starts with country code)
-    let formattedPhone = phoneNumber.replace(/\s/g, '');
+    let formattedPhone = phoneToUse.replace(/\s/g, '');
     if (!formattedPhone.startsWith('221') && !formattedPhone.startsWith('+221')) {
       formattedPhone = '221' + formattedPhone;
     }
