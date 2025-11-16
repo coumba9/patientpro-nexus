@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const PaymentConfirmation = () => {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [appointmentData, setAppointmentData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const processedRef = useRef(false);
 
   const token = searchParams.get("token");
   const method = searchParams.get("method") || searchParams.get("methods") || searchParams.get("payment_method") || searchParams.get("channel") || (() => { try { return localStorage.getItem("paytech_last_method"); } catch { return null; } })();
@@ -30,38 +31,47 @@ const PaymentConfirmation = () => {
       console.log("Starting payment verification...");
       console.log("URL search params:", window.location.search);
       console.log("All params:", Object.fromEntries(searchParams.entries()));
-      
+
       // Wait for auth to load
       if (authLoading) {
         console.log("Auth still loading, waiting...");
         return;
       }
-      
+
+      // Prevent multiple runs of this effect
+      if (processedRef.current) {
+        console.log("Payment verification already processed, skipping");
+        return;
+      }
+      processedRef.current = true;
+
       // Token lookup (supporte plusieurs noms) + fallback sandbox/test
-      let paymentToken = token || 
-                          searchParams.get("payment_token") || 
-                          searchParams.get("transaction_id") ||
-                          searchParams.get("ref") ||
-                          searchParams.get("reference") ||
-                          searchParams.get("payment_id") ||
-                          (() => { try { return localStorage.getItem("paytech_last_token"); } catch { return null; } })();
+      let paymentToken = token ||
+        searchParams.get("payment_token") ||
+        searchParams.get("transaction_id") ||
+        searchParams.get("ref") ||
+        searchParams.get("reference") ||
+        searchParams.get("payment_id") ||
+        (() => { try { return localStorage.getItem("paytech_last_token"); } catch { return null; } })();
       const isSandbox = (() => { try { return localStorage.getItem("paytech_last_env") === "test"; } catch { return false; } })();
       const proceedWithoutToken = !paymentToken && !!localStorage.getItem("pendingAppointment");
+
       if (!paymentToken && !(isSandbox || proceedWithoutToken)) {
         console.error("No payment token found and not in sandbox; available params:", Object.fromEntries(searchParams.entries()));
         setStatus("error");
         toast.error("Token de paiement manquant. Paramètres reçus: " + Array.from(searchParams.keys()).join(", "));
         return;
       }
+
       if (isSandbox || proceedWithoutToken) {
         console.log("Test-like mode detected - proceeding without token verification");
       } else {
         console.log("Payment token found:", paymentToken);
       }
-      
-       if (paymentToken) {
-         console.log("Payment token found:", paymentToken);
-       }
+
+      if (paymentToken) {
+        console.log("Payment token found:", paymentToken);
+      }
 
       if (!user) {
         console.error("User not authenticated");
@@ -70,23 +80,30 @@ const PaymentConfirmation = () => {
         return;
       }
 
-      // Idempotency guard - only when we have a token  
-      // En mode test (env=test), pas besoin de guard car on crée directement
+      // Idempotency guard - create early lock to avoid duplicate creations
       let idempotencyKey: string | null = paymentToken ? `appointment_created_${paymentToken}` : null;
-      
-      if (idempotencyKey && !isSandbox) {
+      if (idempotencyKey) {
         try {
-          const alreadyCreated = localStorage.getItem(idempotencyKey);
-          if (alreadyCreated === "true") {
+          const flag = localStorage.getItem(idempotencyKey);
+          if (flag === "true") {
             console.log("Appointment already created for this token, showing success");
             setStatus("success");
             toast.success("Rendez-vous déjà confirmé");
             localStorage.removeItem("pendingAppointment");
             try { localStorage.removeItem("paytech_last_token"); } catch {}
+            try { localStorage.removeItem("paytech_last_method"); } catch {}
+            try { localStorage.removeItem("paytech_last_env"); } catch {}
+            try { localStorage.removeItem("paytech_last_amount"); } catch {}
             return;
           }
+          if (flag === "processing") {
+            console.log("Appointment creation already in progress, skipping duplicate run");
+            setStatus("loading");
+            return;
+          }
+          localStorage.setItem(idempotencyKey, "processing");
         } catch (e) {
-          console.warn("Unable to read idempotency flag:", e);
+          console.warn("Unable to set/read idempotency flag:", e);
         }
       }
 
@@ -99,7 +116,6 @@ const PaymentConfirmation = () => {
       try {
         // Récupérer les données de rendez-vous en attente
         const pendingAppointment = localStorage.getItem("pendingAppointment");
-        
         if (!pendingAppointment) {
           console.error("No pending appointment data found");
           setStatus("error");
@@ -128,7 +144,7 @@ const PaymentConfirmation = () => {
 
         console.log("Creating appointment...");
         setIsCreating(true);
-        
+
         if (!data.doctorId) {
           console.error("Doctor ID is missing from appointment data");
           setIsCreating(false);
@@ -150,7 +166,7 @@ const PaymentConfirmation = () => {
           });
 
           console.log("Appointment created successfully");
-          
+
           // Mettre à jour le numéro de téléphone du patient s'il a été fourni
           if (data.phone) {
             console.log("Updating patient phone number:", data.phone);
@@ -159,32 +175,32 @@ const PaymentConfirmation = () => {
               .from('patients')
               .update({ phone_number: data.phone })
               .eq('id', user.id);
-            
+
             if (updateError) {
               console.error("Error updating patient phone:", updateError);
             } else {
               console.log("Patient phone number updated successfully");
             }
           }
-          
+
           // Idempotency flag for this token
           if (idempotencyKey) {
             try { localStorage.setItem(idempotencyKey, "true"); } catch {}
           }
-          
+
           // Nettoyer le localStorage
           localStorage.removeItem("pendingAppointment");
           try { localStorage.removeItem("paytech_last_token"); } catch {}
           try { localStorage.removeItem("paytech_last_method"); } catch {}
           try { localStorage.removeItem("paytech_last_env"); } catch {}
           try { localStorage.removeItem("paytech_last_amount"); } catch {}
-          
+
           setStatus("success");
           toast.success("Rendez-vous créé avec succès !");
           setIsCreating(false);
         } catch (error: any) {
           console.error("Error creating appointment:", error);
-          
+
           // Fallback: si le créneau est marqué indisponible, vérifier si un rendez-vous existe déjà pour ce créneau
           try {
             const { supabase } = await import("@/integrations/supabase/client");
@@ -221,7 +237,7 @@ const PaymentConfirmation = () => {
 
           setStatus("error");
           setIsCreating(false);
-          
+
           // Message d'erreur plus clair
           const errorMessage = (error as any)?.message || "Une erreur s'est produite";
           if (errorMessage.includes("créneau")) {
@@ -231,7 +247,7 @@ const PaymentConfirmation = () => {
           }
           return;
         }
-        
+
       } catch (error) {
         console.error("Erreur lors de la vérification du paiement:", error);
         setStatus("error");
@@ -240,7 +256,7 @@ const PaymentConfirmation = () => {
     };
 
     verifyPayment();
-  }, [token, method, user, authLoading, isCreating]);
+  }, [token, method, user, authLoading]);
   
   const getPaymentMethodName = (methodId: string) => {
     const methods: Record<string, string> = {
