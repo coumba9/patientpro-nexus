@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { useRealtimeAppointments } from "@/hooks/useRealtimeAppointments";
 import { appointmentService } from "@/api/services/appointment.service";
+import { smsService } from "@/api/services/sms.service";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { RescheduleAppointmentDialog } from "./RescheduleAppointmentDialog";
@@ -33,6 +35,41 @@ export const RealtimeAppointmentsList = ({
   const handleConfirm = async (appointmentId: string) => {
     try {
       await appointmentService.confirmAppointment(appointmentId, doctorId);
+      
+      // Récupérer les détails du rendez-vous avec les informations du patient et du médecin
+      const appointment = appointments.find(apt => apt.id === appointmentId);
+      
+      if (appointment) {
+        // Récupérer le numéro de téléphone du patient
+        const { data: patientData } = await supabase
+          .from('patients')
+          .select('phone_number')
+          .eq('id', appointment.patient_id)
+          .single();
+
+        // Récupérer le nom du médecin
+        const { data: doctorProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', doctorId)
+          .single();
+
+        if (patientData?.phone_number && doctorProfile) {
+          const doctorName = `${doctorProfile.first_name} ${doctorProfile.last_name}`;
+          
+          // Envoyer le SMS de confirmation au patient
+          await smsService.sendAppointmentConfirmation(
+            appointment.patient_id,
+            patientData.phone_number,
+            appointment.date,
+            appointment.time,
+            doctorName
+          );
+          
+          console.log('SMS de confirmation envoyé au patient');
+        }
+      }
+      
       toast.success("Rendez-vous validé. En attente de confirmation du patient.");
     } catch (error) {
       console.error('Error confirming appointment:', error);
