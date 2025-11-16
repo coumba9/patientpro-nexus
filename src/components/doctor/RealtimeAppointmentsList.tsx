@@ -62,15 +62,15 @@ export const RealtimeAppointmentsList = ({
 
           console.log('Profil médecin récupéré:', doctorProfile, 'Erreur:', doctorError);
 
-          if (patientData?.phone_number && doctorProfile) {
+          if (doctorProfile) {
             const doctorName = `${doctorProfile.first_name} ${doctorProfile.last_name}`;
             
-            console.log('Envoi du SMS au:', patientData.phone_number);
+            console.log('Envoi du SMS au:', patientData?.phone_number || '(sera résolu côté serveur)');
             
-            // Envoyer le SMS de confirmation au patient
+            // Envoyer le SMS de confirmation au patient (le numéro sera résolu côté serveur si manquant)
             const smsResult = await smsService.sendAppointmentConfirmation(
               appointment.patient_id,
-              patientData.phone_number,
+              patientData?.phone_number || '',
               appointment.date,
               appointment.time,
               doctorName
