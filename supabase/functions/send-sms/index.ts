@@ -89,7 +89,8 @@ serve(async (req) => {
       })
     });
 
-    console.log('Dexchange Response Status:', dexchangeResponse.status);
+    const statusCode = dexchangeResponse.status;
+    console.log('Dexchange Response Status:', statusCode);
     
     let responseData;
     const contentType = dexchangeResponse.headers.get('content-type');
@@ -107,7 +108,6 @@ serve(async (req) => {
     const success = dexchangeResponse.ok;
 
     // Log SMS attempt in database
-    const statusCode = dexchangeResponse.status;
     const logStatus = success ? 'sent' : (statusCode === 521 ? 'provider_down' : 'failed');
 
     const { error: logError } = await supabase
