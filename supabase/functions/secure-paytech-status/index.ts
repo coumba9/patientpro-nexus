@@ -54,13 +54,14 @@ serve(async (req) => {
     }
 
     // Call PayTech API to check payment status
-    const paytechResponse = await fetch(`https://paytech.sn/api/payment/status/${token}`, {
-      method: "GET",
+    const paytechResponse = await fetch('https://paytech.sn/api/payment/check', {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "API_KEY": paytechApiKey,
         "API_SECRET": paytechApiSecret
-      }
+      },
+      body: JSON.stringify({ token })
     });
 
     if (!paytechResponse.ok) {
