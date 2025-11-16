@@ -35,42 +35,64 @@ export const RealtimeAppointmentsList = ({
   const handleConfirm = async (appointmentId: string) => {
     try {
       await appointmentService.confirmAppointment(appointmentId, doctorId);
+      toast.success("Rendez-vous validé. En attente de confirmation du patient.");
       
-      // Récupérer les détails du rendez-vous avec les informations du patient et du médecin
+      // Envoyer le SMS en arrière-plan (ne pas bloquer la confirmation)
       const appointment = appointments.find(apt => apt.id === appointmentId);
       
       if (appointment) {
-        // Récupérer le numéro de téléphone du patient
-        const { data: patientData } = await supabase
-          .from('patients')
-          .select('phone_number')
-          .eq('id', appointment.patient_id)
-          .single();
+        console.log('Tentative d\'envoi de SMS pour le rendez-vous:', appointmentId);
+        
+        try {
+          // Récupérer le numéro de téléphone du patient
+          const { data: patientData, error: patientError } = await supabase
+            .from('patients')
+            .select('phone_number')
+            .eq('id', appointment.patient_id)
+            .single();
 
-        // Récupérer le nom du médecin
-        const { data: doctorProfile } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', doctorId)
-          .single();
+          console.log('Données patient récupérées:', patientData, 'Erreur:', patientError);
 
-        if (patientData?.phone_number && doctorProfile) {
-          const doctorName = `${doctorProfile.first_name} ${doctorProfile.last_name}`;
-          
-          // Envoyer le SMS de confirmation au patient
-          await smsService.sendAppointmentConfirmation(
-            appointment.patient_id,
-            patientData.phone_number,
-            appointment.date,
-            appointment.time,
-            doctorName
-          );
-          
-          console.log('SMS de confirmation envoyé au patient');
+          // Récupérer le nom du médecin
+          const { data: doctorProfile, error: doctorError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', doctorId)
+            .single();
+
+          console.log('Profil médecin récupéré:', doctorProfile, 'Erreur:', doctorError);
+
+          if (patientData?.phone_number && doctorProfile) {
+            const doctorName = `${doctorProfile.first_name} ${doctorProfile.last_name}`;
+            
+            console.log('Envoi du SMS au:', patientData.phone_number);
+            
+            // Envoyer le SMS de confirmation au patient
+            const smsResult = await smsService.sendAppointmentConfirmation(
+              appointment.patient_id,
+              patientData.phone_number,
+              appointment.date,
+              appointment.time,
+              doctorName
+            );
+            
+            console.log('Résultat envoi SMS:', smsResult);
+            
+            if (smsResult.success) {
+              console.log('SMS de confirmation envoyé avec succès au patient');
+            } else {
+              console.error('Échec envoi SMS:', smsResult.error);
+            }
+          } else {
+            console.warn('Impossible d\'envoyer le SMS - données manquantes:', {
+              phoneNumber: patientData?.phone_number,
+              doctorProfile
+            });
+          }
+        } catch (smsError) {
+          console.error('Erreur lors de l\'envoi du SMS (non bloquant):', smsError);
         }
       }
-      
-      toast.success("Rendez-vous validé. En attente de confirmation du patient.");
     } catch (error) {
       console.error('Error confirming appointment:', error);
       toast.error("Erreur lors de la validation du rendez-vous");
