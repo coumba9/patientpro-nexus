@@ -151,6 +151,22 @@ const PaymentConfirmation = () => {
 
           console.log("Appointment created successfully");
           
+          // Mettre à jour le numéro de téléphone du patient s'il a été fourni
+          if (data.phone) {
+            console.log("Updating patient phone number:", data.phone);
+            const { supabase } = await import("@/integrations/supabase/client");
+            const { error: updateError } = await supabase
+              .from('patients')
+              .update({ phone_number: data.phone })
+              .eq('id', user.id);
+            
+            if (updateError) {
+              console.error("Error updating patient phone:", updateError);
+            } else {
+              console.log("Patient phone number updated successfully");
+            }
+          }
+          
           // Idempotency flag for this token
           if (idempotencyKey) {
             try { localStorage.setItem(idempotencyKey, "true"); } catch {}
