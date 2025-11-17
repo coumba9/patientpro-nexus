@@ -76,12 +76,8 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center p-8">Chargement de vos rendez-vous...</div>;
-  }
-
   // Transform appointments to match the expected format
-  const transformedAppointments = appointments.map(apt => ({
+  const transformedAppointments = useMemo(() => appointments.map(apt => ({
     id: apt.id,
     doctor: (apt as any).doctor?.profile ? 
       `Dr. ${(apt as any).doctor.profile.first_name} ${(apt as any).doctor.profile.last_name}` : 
@@ -96,7 +92,7 @@ export const RealAppointmentsPage = () => {
     status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation" | "completed" | "cancelled",
     doctorId: apt.doctor_id,
     mode: apt.mode,
-  }));
+  })), [appointments]);
 
   // Appliquer les filtres
   const filteredAppointments = useMemo(() => {
@@ -156,6 +152,10 @@ export const RealAppointmentsPage = () => {
       pending: transformedAppointments.filter(apt => apt.status === "pending").length,
     };
   }, [transformedAppointments]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center p-8">Chargement de vos rendez-vous...</div>;
+  }
 
   return (
     <div className="space-y-6">
