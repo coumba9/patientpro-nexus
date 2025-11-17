@@ -95,18 +95,18 @@ export const DoctorInfoCard = ({ doctorInfo }: DoctorInfoCardProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell>Consultation</TableCell>
-                <TableCell className="text-right">{doctorInfo.fees.consultation}€</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Suivi</TableCell>
-                <TableCell className="text-right">{doctorInfo.fees.followup}€</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Urgence</TableCell>
-                <TableCell className="text-right">{doctorInfo.fees.urgent}€</TableCell>
-              </TableRow>
+                <TableRow>
+                  <TableCell>Consultation</TableCell>
+                  <TableCell className="text-right">{doctorInfo.fees.consultation.toLocaleString('fr-FR')} CFA</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Suivi</TableCell>
+                  <TableCell className="text-right">{doctorInfo.fees.followup.toLocaleString('fr-FR')} CFA</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Urgence</TableCell>
+                  <TableCell className="text-right">{doctorInfo.fees.urgent.toLocaleString('fr-FR')} CFA</TableCell>
+                </TableRow>
             </TableBody>
           </Table>
         </CardContent>

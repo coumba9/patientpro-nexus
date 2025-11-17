@@ -97,11 +97,11 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
             if (doctorError) console.error('Error fetching doctor:', doctorError);
             if (profileError) console.error('Error fetching doctor profile:', profileError);
 
-            if (doctorData && doctorProfile) {
+            if (doctorProfile || doctorData) {
               (enrichedAppointment as any).doctor = {
-                ...doctorData,
-                profile: doctorProfile,
-                specialty: doctorData.specialties
+                ...(doctorData || { id: appointment.doctor_id }),
+                profile: doctorProfile || null,
+                specialty: (doctorData as any)?.specialties || null,
               };
             }
 
