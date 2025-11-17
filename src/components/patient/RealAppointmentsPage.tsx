@@ -76,34 +76,33 @@ export const RealAppointmentsPage = () => {
     }
   };
 
-  // Transform appointments to match the expected format
-  const transformedAppointments = useMemo(() => appointments.map(apt => ({
-    id: apt.id,
-    doctor: (apt as any).doctor?.profile ? 
-      `Dr. ${(apt as any).doctor.profile.first_name} ${(apt as any).doctor.profile.last_name}` : 
-      `Médecin ${apt.doctor_id.slice(0, 8)}...`,
-    specialty: (apt as any).doctor?.specialty?.name || 
-      (apt as any).doctor?.specialties?.name || 
-      'Spécialité à définir',
-    date: apt.date,
-    time: apt.time,
-    location: apt.location || 'À définir',
-    type: apt.type,
-    status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation" | "completed" | "cancelled",
-    doctorId: apt.doctor_id,
-    mode: apt.mode,
-  })), [appointments]);
-
-  // Appliquer les filtres
+  // Transform and filter appointments in one pass for better performance
   const filteredAppointments = useMemo(() => {
-    let filtered = transformedAppointments;
+    // Transform appointments
+    let filtered = appointments.map(apt => ({
+      id: apt.id,
+      doctor: (apt as any).doctor?.profile ? 
+        `Dr. ${(apt as any).doctor.profile.first_name} ${(apt as any).doctor.profile.last_name}` : 
+        `Médecin ${apt.doctor_id.slice(0, 8)}...`,
+      specialty: (apt as any).doctor?.specialty?.name || 
+        (apt as any).doctor?.specialties?.name || 
+        'Spécialité à définir',
+      date: apt.date,
+      time: apt.time,
+      location: apt.location || 'À définir',
+      type: apt.type,
+      status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation" | "completed" | "cancelled",
+      doctorId: apt.doctor_id,
+      mode: apt.mode,
+    }));
 
     // Filtre par statut
     if (activeFilter !== "all") {
+      const now = new Date();
       if (activeFilter === "upcoming") {
         filtered = filtered.filter(apt => 
           ["confirmed", "awaiting_patient_confirmation"].includes(apt.status) &&
-          new Date(apt.date) >= new Date()
+          new Date(apt.date) >= now
         );
       } else if (activeFilter === "completed") {
         filtered = filtered.filter(apt => apt.status === "completed");
@@ -135,23 +134,28 @@ export const RealAppointmentsPage = () => {
       filtered = filtered.filter(apt => apt.mode === advancedFilters.consultationMode);
     }
 
-    return filtered;
-  }, [transformedAppointments, activeFilter, advancedFilters]);
+    // Sort by date (most recent first)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}`);
+      const dateB = new Date(`${b.date}T${b.time}`);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [appointments, activeFilter, advancedFilters]);
 
-  // Calculer les comptes pour chaque filtre
+  // Calculate filter counts
   const filterCounts = useMemo(() => {
     const now = new Date();
     return {
-      all: transformedAppointments.length,
-      upcoming: transformedAppointments.filter(apt => 
+      all: appointments.length,
+      upcoming: appointments.filter(apt => 
         ["confirmed", "awaiting_patient_confirmation"].includes(apt.status) &&
         new Date(apt.date) >= now
       ).length,
-      completed: transformedAppointments.filter(apt => apt.status === "completed").length,
-      cancelled: transformedAppointments.filter(apt => apt.status === "cancelled").length,
-      pending: transformedAppointments.filter(apt => apt.status === "pending").length,
+      completed: appointments.filter(apt => apt.status === "completed").length,
+      cancelled: appointments.filter(apt => apt.status === "cancelled").length,
+      pending: appointments.filter(apt => apt.status === "pending").length,
     };
-  }, [transformedAppointments]);
+  }, [appointments]);
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">Chargement de vos rendez-vous...</div>;
