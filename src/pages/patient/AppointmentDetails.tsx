@@ -4,16 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { appointmentService } from "@/api";
-import { Loader2, ArrowLeft, Calendar, Clock, User, MapPin, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Clock, User, MapPin, FileText, Star } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { RatingDialog } from "@/components/appointment/RatingDialog";
+import { LocationMap } from "@/components/appointment/LocationMap";
+import { supabase } from "@/integrations/supabase/client";
 
 const AppointmentDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [hasRating, setHasRating] = useState(false);
 
   useEffect(() => {
     const fetchAppointment = async () => {
@@ -22,6 +27,15 @@ const AppointmentDetails = () => {
       try {
         const data = await appointmentService.getById(id);
         setAppointment(data);
+
+        // Vérifier si le patient a déjà noté ce rendez-vous
+        const { data: ratingData } = await supabase
+          .from("ratings")
+          .select("id")
+          .eq("appointment_id", id)
+          .single();
+
+        setHasRating(!!ratingData);
       } catch (error) {
         console.error("Error fetching appointment:", error);
         toast.error("Erreur lors du chargement du rendez-vous");
@@ -135,9 +149,27 @@ const AppointmentDetails = () => {
                 <p className="text-lg font-semibold">
                   {appointment.mode === "presentiel" ? appointment.location || "Cabinet" : "Téléconsultation"}
                 </p>
+                {appointment.mode === "presentiel" && appointment.doctor?.address && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {appointment.doctor.address}
+                  </p>
+                )}
               </div>
             </div>
           </div>
+
+          {appointment.mode === "presentiel" && 
+           appointment.doctor?.latitude && 
+           appointment.doctor?.longitude && (
+            <div className="border-t pt-4">
+              <LocationMap
+                address={appointment.doctor.address}
+                latitude={appointment.doctor.latitude}
+                longitude={appointment.doctor.longitude}
+                doctorName={doctorName}
+              />
+            </div>
+          )}
 
           <div className="border-t pt-4">
             <div className="flex items-start gap-3">
@@ -171,8 +203,32 @@ const AppointmentDetails = () => {
               </div>
             </div>
           )}
+
+          {appointment.status === "completed" && (
+            <div className="border-t pt-4">
+              <Button
+                onClick={() => setRatingDialogOpen(true)}
+                disabled={hasRating}
+                className="w-full gap-2"
+                variant={hasRating ? "outline" : "default"}
+              >
+                <Star className={`h-4 w-4 ${hasRating ? "fill-yellow-400 text-yellow-400" : ""}`} />
+                {hasRating ? "Vous avez déjà noté ce rendez-vous" : "Évaluer ce médecin"}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {appointment && (
+        <RatingDialog
+          open={ratingDialogOpen}
+          onOpenChange={setRatingDialogOpen}
+          appointmentId={appointment.id}
+          doctorId={appointment.doctor_id}
+          doctorName={doctorName}
+        />
+      )}
     </div>
   );
 };

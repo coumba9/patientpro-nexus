@@ -157,28 +157,37 @@ export type Database = {
       }
       doctors: {
         Row: {
+          address: string | null
           created_at: string
           id: string
           is_verified: boolean | null
+          latitude: number | null
           license_number: string
+          longitude: number | null
           specialty_id: string | null
           updated_at: string
           years_of_experience: number | null
         }
         Insert: {
+          address?: string | null
           created_at?: string
           id: string
           is_verified?: boolean | null
+          latitude?: number | null
           license_number: string
+          longitude?: number | null
           specialty_id?: string | null
           updated_at?: string
           years_of_experience?: number | null
         }
         Update: {
+          address?: string | null
           created_at?: string
           id?: string
           is_verified?: boolean | null
+          latitude?: number | null
           license_number?: string
+          longitude?: number | null
           specialty_id?: string | null
           updated_at?: string
           years_of_experience?: number | null
@@ -523,6 +532,39 @@ export type Database = {
           status?: string
           updated_at?: string
           urgency?: string
+        }
+        Relationships: []
+      }
+      ratings: {
+        Row: {
+          appointment_id: string
+          comment: string | null
+          created_at: string
+          doctor_id: string
+          id: string
+          patient_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          comment?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: string
+          patient_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          comment?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          patient_id?: string
+          rating?: number
+          updated_at?: string
         }
         Relationships: []
       }

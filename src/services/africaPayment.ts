@@ -5,7 +5,7 @@
 export enum PaymentMethod {
   WAVE = "wave",
   ORANGE_MONEY = "orange_money", 
-  MTN_MOBILE_MONEY = "mtn_mobile_money",
+  FREE_MONEY = "free_money",
   CREDIT_CARD = "credit_card"
 }
 
@@ -50,8 +50,8 @@ const mapPaymentMethod = (method: string): PaymentMethod => {
       return PaymentMethod.WAVE;
     case "orange-money":
       return PaymentMethod.ORANGE_MONEY;
-    case "mobile-money":
-      return PaymentMethod.MTN_MOBILE_MONEY;
+    case "free-money":
+      return PaymentMethod.FREE_MONEY;
     case "card":
       return PaymentMethod.CREDIT_CARD;
     default:
@@ -157,11 +157,11 @@ export const getSupportedPaymentMethods = () => [
     description: "Paiement mobile Orange Money"
   },
   {
-    id: "mobile-money",
-    name: "MTN Mobile Money",
+    id: "free-money",
+    name: "Free Money",
     icon: "Phone",
-    color: "yellow-500",
-    description: "Paiement mobile MTN"
+    color: "purple-500",
+    description: "Paiement mobile Free Money"
   },
   {
     id: "card",

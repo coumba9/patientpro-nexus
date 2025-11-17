@@ -6,6 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Lock, Shield, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,12 +225,21 @@ const Profile = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">Sexe</Label>
-              <Input 
-                id="gender" 
+              <Select
                 value={patientInfo.gender}
-                onChange={(e) => setPatientInfo({...patientInfo, gender: e.target.value})}
-                placeholder="Masculin/Féminin"
-              />
+                onValueChange={(value) =>
+                  setPatientInfo({ ...patientInfo, gender: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez votre sexe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Masculin">Masculin</SelectItem>
+                  <SelectItem value="Féminin">Féminin</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bloodType">Groupe sanguin</Label>
