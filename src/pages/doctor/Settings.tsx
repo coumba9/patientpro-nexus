@@ -12,6 +12,7 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { TeleconsultationSettings } from "@/components/settings/TeleconsultationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AvailabilitySettings } from "@/components/settings/AvailabilitySettings";
+import { LocationSettings } from "@/components/doctor/LocationSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientRecord } from "@/components/doctor/PatientRecord";
 
@@ -161,6 +162,10 @@ const Settings = () => {
               teleconsultation={settings.teleconsultation}
               setSettings={setSettings}
             />
+            
+            <Separator />
+            
+            <LocationSettings />
             
             <Separator />
             
