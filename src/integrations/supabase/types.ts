@@ -678,6 +678,17 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_doctor_brief: {
+        Args: { doctor_id: string }
+        Returns: {
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          specialty_id: string
+          specialty_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

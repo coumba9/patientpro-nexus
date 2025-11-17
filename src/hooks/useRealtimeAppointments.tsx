@@ -74,34 +74,28 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
           appointmentsData.map(async (appointment) => {
             let enrichedAppointment = { ...appointment };
 
-            // Récupérer les infos du médecin
-            const { data: doctorData, error: doctorError } = await supabase
-              .from('doctors')
-              .select(`
-                id,
-                license_number,
-                years_of_experience,
-                specialty_id,
-                specialties(name, description)
-              `)
-              .eq('id', appointment.doctor_id)
-              .maybeSingle();
+            // Utiliser la fonction sécurisée pour récupérer les infos du médecin
+            const { data: doctorBrief, error: doctorError } = await supabase
+              .rpc('get_doctor_brief', { doctor_id: appointment.doctor_id })
+              .single();
 
-            // Récupérer le profil du médecin
-            const { data: doctorProfile, error: profileError } = await supabase
-              .from('profiles')
-              .select('first_name, last_name, email')
-              .eq('id', appointment.doctor_id)
-              .maybeSingle();
-
-            if (doctorError) console.error('Error fetching doctor:', doctorError);
-            if (profileError) console.error('Error fetching doctor profile:', profileError);
-
-            if (doctorProfile || doctorData) {
+            if (doctorError) {
+              console.error('Error fetching doctor brief:', doctorError);
+            } else if (doctorBrief) {
               (enrichedAppointment as any).doctor = {
-                ...(doctorData || { id: appointment.doctor_id }),
-                profile: doctorProfile || null,
-                specialty: (doctorData as any)?.specialties || null,
+                id: doctorBrief.id,
+                license_number: '',
+                years_of_experience: 0,
+                specialty_id: doctorBrief.specialty_id,
+                profile: {
+                  first_name: doctorBrief.first_name,
+                  last_name: doctorBrief.last_name,
+                  email: doctorBrief.email
+                },
+                specialty: doctorBrief.specialty_name ? {
+                  id: doctorBrief.specialty_id,
+                  name: doctorBrief.specialty_name
+                } : null
               };
             }
 
