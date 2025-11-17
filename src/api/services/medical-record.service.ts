@@ -26,7 +26,26 @@ class MedicalRecordService extends BaseService<MedicalRecord> {
       throw error;
     }
     
-    return data as unknown as MedicalRecord[];
+    const records = (data as any[]) || [];
+    const enriched = await Promise.all(records.map(async (record: any) => {
+      if (!record.doctor || !record.doctor.profile) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', record.doctor_id)
+          .maybeSingle();
+        return {
+          ...record,
+          doctor: {
+            ...(record.doctor || {}),
+            profile: prof || null,
+          },
+        };
+      }
+      return record;
+    }));
+    
+    return enriched as unknown as MedicalRecord[];
   }
 
   async addMedicalRecord(record: Omit<MedicalRecord, 'id' | 'created_at' | 'updated_at'>): Promise<MedicalRecord> {

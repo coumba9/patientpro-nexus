@@ -105,13 +105,13 @@ const Profile = () => {
 
       const { error: patientError } = await supabase
         .from('patients')
-        .update({
+        .upsert({
+          id: user.id,
           birth_date: patientInfo.birth_date || null,
           gender: patientInfo.gender || null,
           blood_type: patientInfo.blood_type || null,
           allergies: patientInfo.allergies || []
-        })
-        .eq('id', user.id);
+        });
 
       if (patientError) throw patientError;
 
