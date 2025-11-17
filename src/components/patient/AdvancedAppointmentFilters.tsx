@@ -116,16 +116,16 @@ export const AdvancedAppointmentFilters = ({
           <div className="space-y-2">
             <Label>Spécialité</Label>
             <Select
-              value={localFilters.specialty || ""}
+              value={localFilters.specialty || "all"}
               onValueChange={(value) =>
-                setLocalFilters({ ...localFilters, specialty: value })
+                setLocalFilters({ ...localFilters, specialty: value === "all" ? undefined : value })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Toutes les spécialités" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les spécialités</SelectItem>
+                <SelectItem value="all">Toutes les spécialités</SelectItem>
                 {specialties.map((specialty) => (
                   <SelectItem key={specialty.id} value={specialty.name}>
                     {specialty.name}
@@ -138,16 +138,16 @@ export const AdvancedAppointmentFilters = ({
           <div className="space-y-2">
             <Label>Type de rendez-vous</Label>
             <Select
-              value={localFilters.appointmentType || ""}
+              value={localFilters.appointmentType || "all"}
               onValueChange={(value) =>
-                setLocalFilters({ ...localFilters, appointmentType: value })
+                setLocalFilters({ ...localFilters, appointmentType: value === "all" ? undefined : value })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les types</SelectItem>
+                <SelectItem value="all">Tous les types</SelectItem>
                 <SelectItem value="consultation">Consultation</SelectItem>
                 <SelectItem value="followup">Suivi</SelectItem>
                 <SelectItem value="urgent">Urgence</SelectItem>
@@ -158,16 +158,16 @@ export const AdvancedAppointmentFilters = ({
           <div className="space-y-2">
             <Label>Mode de consultation</Label>
             <Select
-              value={localFilters.consultationMode || ""}
+              value={localFilters.consultationMode || "all"}
               onValueChange={(value) =>
-                setLocalFilters({ ...localFilters, consultationMode: value })
+                setLocalFilters({ ...localFilters, consultationMode: value === "all" ? undefined : value })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tous les modes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les modes</SelectItem>
+                <SelectItem value="all">Tous les modes</SelectItem>
                 <SelectItem value="in_person">Présentiel</SelectItem>
                 <SelectItem value="teleconsultation">Téléconsultation</SelectItem>
               </SelectContent>
