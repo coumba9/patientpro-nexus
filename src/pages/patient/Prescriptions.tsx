@@ -1,61 +1,58 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PrescriptionCard } from "@/components/patient/PrescriptionCard";
+import { useAuth } from "@/hooks/useAuth";
 
 const Prescriptions = () => {
   const navigate = useNavigate();
-  const [prescriptions, setPrescriptions] = useState([
-    {
-      id: 1,
-      date: "2024-02-15",
-      doctor: "Dr. Martin",
-      medications: [
-        { name: "Paracétamol", dosage: "1000mg", frequency: "3x par jour" },
-        { name: "Ibuprofène", dosage: "400mg", frequency: "2x par jour" },
-      ],
-      duration: "7 jours",
-      signed: true,
-      patientName: "Marie Dubois",
-      patientAge: "45 ans",
-      diagnosis: "Syndrome grippal",
-      doctorSpecialty: "Médecin généraliste",
-      doctorAddress: "123 Avenue de la Santé, Dakar"
-    },
-    {
-      id: 2,
-      date: "2024-01-20",
-      doctor: "Dr. Bernard",
-      medications: [
-        { name: "Amoxicilline", dosage: "500mg", frequency: "2x par jour" },
-      ],
-      duration: "5 jours",
-      signed: true,
-      patientName: "Marie Dubois", 
-      patientAge: "45 ans",
-      diagnosis: "Infection bactérienne",
-      doctorSpecialty: "Infectiologue",
-      doctorAddress: "456 Rue des Spécialistes, Dakar"
-    },
-    {
-      id: 3,
-      date: "2024-03-05",
-      doctor: "Dr. Martin",
-      medications: [
-        { name: "Doliprane", dosage: "500mg", frequency: "3x par jour" },
-      ],
-      duration: "3 jours",
-      signed: false,
-      patientName: "Marie Dubois",
-      patientAge: "45 ans", 
-      diagnosis: "Maux de tête",
-      doctorSpecialty: "Médecin généraliste",
-      doctorAddress: "123 Avenue de la Santé, Dakar"
-    },
-  ]);
+  const { user } = useAuth();
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const { medicalRecordService } = await import("@/api");
+        const records = await medicalRecordService.getRecordsByPatient(user.id);
+        
+        // Transformer les records en format prescription
+        const transformedPrescriptions = records
+          .filter(record => record.prescription)
+          .map((record, index) => ({
+            id: index + 1,
+            recordId: record.id,
+            date: record.date,
+            doctor: `Dr. ${(record as any).doctor?.profile?.first_name || ''} ${(record as any).doctor?.profile?.last_name || ''}`.trim() || "Médecin",
+            medications: record.prescription ? [
+              { name: record.prescription, dosage: "Selon prescription", frequency: "Voir ordonnance" }
+            ] : [],
+            duration: "Voir ordonnance",
+            signed: true,
+            patientName: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim(),
+            patientAge: "N/A",
+            diagnosis: record.diagnosis,
+            doctorSpecialty: (record as any).doctor?.specialty?.name || "Médecin généraliste",
+            doctorAddress: "Cabinet médical"
+          }));
+        
+        setPrescriptions(transformedPrescriptions);
+      } catch (error) {
+        console.error("Erreur lors du chargement des ordonnances:", error);
+        toast.error("Erreur lors du chargement des ordonnances");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrescriptions();
+  }, [user]);
 
   const handleDownload = async (prescriptionId: number) => {
     const prescription = prescriptions.find(p => p.id === prescriptionId);

@@ -107,20 +107,26 @@ export const AppointmentCard = ({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <User className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">{appointment.doctor}</h3>
+                <h3 className="font-semibold text-lg">
+                  {(appointment as any).doctor?.profile?.first_name && (appointment as any).doctor?.profile?.last_name
+                    ? `Dr. ${(appointment as any).doctor.profile.first_name} ${(appointment as any).doctor.profile.last_name}`
+                    : appointment.doctor || 'Médecin non spécifié'}
+                </h3>
                 {getStatusBadge(appointment.status)}
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Stethoscope className="h-4 w-4" />
-                  <span>{appointment.specialty}</span>
+                  <span>
+                    {(appointment as any).doctor?.specialty?.name || appointment.specialty || 'Spécialité non spécifiée'}
+                  </span>
                 </div>
                 
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{appointment.date}</span>
+                    <span>{new Date(appointment.date).toLocaleDateString('fr-FR')}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
