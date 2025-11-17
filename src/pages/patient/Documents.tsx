@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,12 +9,14 @@ import {
   Calendar,
   Paperclip,
   FolderOpen,
-  ClipboardList,
   History,
   Heart,
   BookOpen,
-  Plus,
+  Loader2,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { documentService } from "@/api";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -24,55 +25,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PatientNotes } from "@/components/patient/PatientNotes";
 import { AppointmentHistory } from "@/components/patient/AppointmentHistory";
 import { HealthRecommendations } from "@/components/patient/HealthRecommendations";
 
-interface Document {
-  id: number;
-  name: string;
-  type: string;
-  date: string;
-  size: string;
-  doctor: string;
-}
-
 const Documents = () => {
-  const [documents] = useState<Document[]>([
-    {
-      id: 1,
-      name: "Ordonnance - Traitement cardiaque",
-      type: "Ordonnance",
-      date: "2024-02-19",
-      size: "245 KB",
-      doctor: "Dr. Sarah Martin"
-    },
-    {
-      id: 2,
-      name: "Résultats analyse sanguine",
-      type: "Analyse",
-      date: "2024-02-15",
-      size: "1.2 MB",
-      doctor: "Dr. Thomas Bernard"
-    }
-  ]);
-
+  const { user } = useAuth();
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
-  const handleDownload = (documentId: number) => {
-    // Logique de téléchargement
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        const docs = await documentService.getDocumentsByPatient(user.id);
+        setDocuments(docs);
+      } catch (error) {
+        console.error("Erreur lors du chargement des documents:", error);
+        toast.error("Erreur lors du chargement des documents");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [user]);
+
+  const handleDownload = (documentId: string) => {
+    const doc = documents.find(d => d.id === documentId);
+    if (doc?.file_url) {
+      window.open(doc.file_url, '_blank');
+    } else {
+      toast.error("Ce document n'a pas de fichier associé");
+    }
   };
 
   const filteredDocuments = documents.filter(doc =>
-    (doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.doctor.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (doc.title.toLowerCase().includes(searchQuery.toLowerCase())) &&
     (typeFilter === "all" || doc.type === typeFilter)
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm h-[calc(100vh-8rem)]">
+    <div className="bg-background rounded-lg shadow-sm h-[calc(100vh-8rem)]">
       <Tabs defaultValue="documents" className="h-full">
         <div className="p-6 border-b">
           <div className="flex items-center gap-4 mb-4">
@@ -99,76 +97,82 @@ const Documents = () => {
         </div>
 
         <TabsContent value="documents" className="h-[calc(100%-8rem)]">
-          <div className="p-6 border-b">
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  className="pl-10"
-                  placeholder="Rechercher un document..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Type de document" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="Ordonnance">Ordonnances</SelectItem>
-                  <SelectItem value="Analyse">Analyses</SelectItem>
-                  <SelectItem value="Compte-rendu">Comptes-rendus</SelectItem>
-                </SelectContent>
-              </Select>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          </div>
-
-          <ScrollArea className="h-[calc(100%-8rem)] p-6">
-            {filteredDocuments.length === 0 ? (
-              <div className="text-center py-8">
-                <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Aucun document trouvé</p>
+          ) : (
+            <>
+              <div className="p-6 border-b">
+                <div className="flex gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      className="pl-10"
+                      placeholder="Rechercher un document..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Type de document" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les types</SelectItem>
+                      <SelectItem value="Ordonnance">Ordonnances</SelectItem>
+                      <SelectItem value="Analyse">Analyses</SelectItem>
+                      <SelectItem value="Compte-rendu">Comptes-rendus</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredDocuments.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-start gap-3">
-                        <FileText className="h-5 w-5 text-primary mt-1" />
-                        <div>
-                          <h3 className="font-semibold">{doc.name}</h3>
-                          <p className="text-sm text-gray-500">{doc.doctor}</p>
-                          <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-4 w-4" />
-                              {doc.date}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Paperclip className="h-4 w-4" />
-                              {doc.size}
-                            </span>
+              <ScrollArea className="h-[calc(100vh-22rem)] px-6">
+                {filteredDocuments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucun document trouvé</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 py-4">
+                    {filteredDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <FileText className="h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <h3 className="font-medium text-sm">{doc.title}</h3>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(doc.created_at).toLocaleDateString('fr-FR')}
+                              </span>
+                              {doc.file_size && (
+                                <span className="flex items-center gap-1">
+                                  <Paperclip className="h-3 w-3" />
+                                  {(doc.file_size / 1024).toFixed(0)} KB
+                                </span>
+                              )}
+                              <span>Type: {doc.type}</span>
+                            </div>
                           </div>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDownload(doc.id)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(doc.id)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Télécharger
-                      </Button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+                )}
+              </ScrollArea>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="history" className="p-6 h-[calc(100%-8rem)] overflow-auto">
