@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Eye, FileText, Download } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAdminNotifications } from "@/hooks/useAdminNotifications";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DoctorApplication {
   id: string;
@@ -26,9 +28,14 @@ interface DoctorApplication {
   rejection_reason: string | null;
   created_at: string;
   reviewed_at: string | null;
+  diploma_url: string | null;
+  license_url: string | null;
+  other_documents_urls: string[] | null;
 }
 
 const DoctorApplications = () => {
+  const { user } = useAuth();
+  const { newApplicationsCount } = useAdminNotifications(user?.id || null);
   const [selectedApplication, setSelectedApplication] = useState<DoctorApplication | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -154,6 +161,29 @@ const DoctorApplications = () => {
     }
   };
 
+  const downloadDocument = async (path: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('doctor-documents')
+        .download(path);
+      
+      if (error) throw error;
+      
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Document téléchargé avec succès");
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast.error("Erreur lors du téléchargement du document");
+    }
+  };
+
   const pendingCount = applications?.filter(app => app.status === 'pending').length || 0;
 
   return (
@@ -209,6 +239,52 @@ const DoctorApplications = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Documents section */}
+                  {(application.diploma_url || application.license_url || (application.other_documents_urls && application.other_documents_urls.length > 0)) && (
+                    <div className="border-t pt-4 mb-4">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Documents justificatifs</p>
+                      <div className="space-y-2">
+                        {application.diploma_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadDocument(application.diploma_url!, 'diplome.pdf')}
+                            className="w-full justify-start"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Diplôme médical
+                            <Download className="w-4 h-4 ml-auto" />
+                          </Button>
+                        )}
+                        {application.license_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadDocument(application.license_url!, 'licence.pdf')}
+                            className="w-full justify-start"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Licence d'exercice
+                            <Download className="w-4 h-4 ml-auto" />
+                          </Button>
+                        )}
+                        {application.other_documents_urls && application.other_documents_urls.map((url, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadDocument(url, `document-${index + 1}.pdf`)}
+                            className="w-full justify-start"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Document additionnel {index + 1}
+                            <Download className="w-4 h-4 ml-auto" />
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {application.rejection_reason && (
                     <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">

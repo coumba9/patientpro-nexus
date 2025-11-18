@@ -158,11 +158,14 @@ export type Database = {
       doctor_applications: {
         Row: {
           created_at: string
+          diploma_url: string | null
           email: string
           first_name: string
           id: string
           last_name: string
           license_number: string
+          license_url: string | null
+          other_documents_urls: string[] | null
           rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -173,11 +176,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          diploma_url?: string | null
           email: string
           first_name: string
           id?: string
           last_name: string
           license_number: string
+          license_url?: string | null
+          other_documents_urls?: string[] | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -188,11 +194,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          diploma_url?: string | null
           email?: string
           first_name?: string
           id?: string
           last_name?: string
           license_number?: string
+          license_url?: string | null
+          other_documents_urls?: string[] | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null

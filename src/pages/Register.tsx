@@ -23,6 +23,16 @@ const Register = () => {
     yearsOfExperience: "",
   });
 
+  const [documents, setDocuments] = useState<{
+    diploma: File | null;
+    license: File | null;
+    others: File[];
+  }>({
+    diploma: null,
+    license: null,
+    others: []
+  });
+
   useEffect(() => {
     if (isDoctor) {
       setFormData((prev) => ({ ...prev, userType: "doctor" }));
@@ -50,6 +60,44 @@ const Register = () => {
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         
+        // Upload documents first
+        let diplomaUrl = null;
+        let licenseUrl = null;
+        let otherUrls: string[] = [];
+
+        if (documents.diploma) {
+          const diplomaPath = `${formData.email}/diploma-${Date.now()}.${documents.diploma.name.split('.').pop()}`;
+          const { error: diplomaError } = await supabase.storage
+            .from('doctor-documents')
+            .upload(diplomaPath, documents.diploma);
+          
+          if (!diplomaError) {
+            diplomaUrl = diplomaPath;
+          }
+        }
+
+        if (documents.license) {
+          const licensePath = `${formData.email}/license-${Date.now()}.${documents.license.name.split('.').pop()}`;
+          const { error: licenseError } = await supabase.storage
+            .from('doctor-documents')
+            .upload(licensePath, documents.license);
+          
+          if (!licenseError) {
+            licenseUrl = licensePath;
+          }
+        }
+
+        for (const file of documents.others) {
+          const otherPath = `${formData.email}/other-${Date.now()}-${file.name}`;
+          const { error: otherError } = await supabase.storage
+            .from('doctor-documents')
+            .upload(otherPath, file);
+          
+          if (!otherError) {
+            otherUrls.push(otherPath);
+          }
+        }
+
         const { error } = await supabase
           .from('doctor_applications')
           .insert({
@@ -58,7 +106,10 @@ const Register = () => {
             last_name: formData.lastName,
             specialty_id: formData.speciality,
             license_number: formData.licenseNumber,
-            years_of_experience: parseInt(formData.yearsOfExperience)
+            years_of_experience: parseInt(formData.yearsOfExperience),
+            diploma_url: diplomaUrl,
+            license_url: licenseUrl,
+            other_documents_urls: otherUrls.length > 0 ? otherUrls : null
           });
 
         if (error) {
@@ -121,6 +172,33 @@ const Register = () => {
     }));
   };
 
+  const handleFileChange = (type: 'diploma' | 'license' | 'others', files: FileList | null) => {
+    if (!files) return;
+
+    if (type === 'others') {
+      setDocuments(prev => ({
+        ...prev,
+        others: [...prev.others, ...Array.from(files)]
+      }));
+    } else {
+      setDocuments(prev => ({
+        ...prev,
+        [type]: files[0]
+      }));
+    }
+  };
+
+  const removeFile = (type: 'diploma' | 'license' | 'others', index?: number) => {
+    if (type === 'diploma' || type === 'license') {
+      setDocuments(prev => ({ ...prev, [type]: null }));
+    } else if (type === 'others' && index !== undefined) {
+      setDocuments(prev => ({
+        ...prev,
+        others: prev.others.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-sm">
@@ -136,6 +214,9 @@ const Register = () => {
           handleChange={handleChange}
           handleSubmit={handleSubmit}
           handleSelectChange={handleSelectChange}
+          documents={documents}
+          handleFileChange={handleFileChange}
+          removeFile={removeFile}
         />
       </div>
     </div>
