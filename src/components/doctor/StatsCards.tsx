@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import {
   Calendar,
   AlertCircle,
@@ -14,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useRealtimeAppointments } from "@/hooks/useRealtimeAppointments";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StatsCardsProps {
   doctorId: string;
@@ -21,6 +23,9 @@ interface StatsCardsProps {
 
 export const StatsCards = ({ doctorId }: StatsCardsProps) => {
   const { appointments, loading } = useRealtimeAppointments(doctorId, 'doctor');
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [totalDocuments, setTotalDocuments] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const today = new Date().toISOString().split('T')[0];
   
@@ -35,7 +40,38 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
     return aptDate.getMonth() === currentMonth && aptDate.getFullYear() === currentYear;
   });
 
-  if (loading) {
+  // Fetch real statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Get unread messages count
+        const { count: messagesCount } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('receiver_id', doctorId)
+          .eq('is_read', false);
+
+        // Get total documents count
+        const { count: documentsCount } = await supabase
+          .from('documents')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId);
+
+        setUnreadMessages(messagesCount || 0);
+        setTotalDocuments(documentsCount || 0);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    if (doctorId) {
+      fetchStats();
+    }
+  }, [doctorId]);
+
+  if (loading || statsLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {[...Array(6)].map((_, i) => (
@@ -95,7 +131,7 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
           <div className="flex items-center">
             <MessageCircle className="h-8 w-8 text-blue-500 mr-2" />
             <div>
-              <p className="text-2xl font-bold">0</p>
+              <p className="text-2xl font-bold">{unreadMessages}</p>
               <p className="text-xs text-gray-500">À traiter</p>
             </div>
           </div>
@@ -139,17 +175,15 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">
-            Rendez-vous confirmés
+            Documents médicaux
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center">
             <FileText className="h-8 w-8 text-green-500 mr-2" />
             <div>
-              <p className="text-2xl font-bold">
-                {appointments.filter(apt => apt.status === 'confirmed').length}
-              </p>
-              <p className="text-xs text-gray-500">Confirmés</p>
+              <p className="text-2xl font-bold">{totalDocuments}</p>
+              <p className="text-xs text-gray-500">Total créés</p>
             </div>
           </div>
         </CardContent>
