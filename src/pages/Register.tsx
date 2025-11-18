@@ -45,8 +45,41 @@ const Register = () => {
         toast.error("Le numéro de licence doit contenir au moins 6 caractères");
         return;
       }
+
+      // For doctors, create an application instead of registering directly
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        
+        const { error } = await supabase
+          .from('doctor_applications')
+          .insert({
+            email: formData.email,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            specialty_id: formData.speciality,
+            license_number: formData.licenseNumber,
+            years_of_experience: parseInt(formData.yearsOfExperience)
+          });
+
+        if (error) {
+          if (error.message?.includes("duplicate key")) {
+            toast.error("Une demande avec cette adresse email existe déjà");
+          } else {
+            throw error;
+          }
+          return;
+        }
+
+        toast.success("Votre demande d'inscription a été envoyée avec succès ! Un administrateur va l'examiner et vous recevrez un email une fois qu'elle sera traitée.");
+        navigate("/login");
+      } catch (error: any) {
+        console.error("Application submission error:", error);
+        toast.error("Erreur lors de l'envoi de votre demande. Veuillez réessayer.");
+      }
+      return;
     }
 
+    // For patients, proceed with normal registration
     try {
       await register({
         email: formData.email,
@@ -54,16 +87,12 @@ const Register = () => {
         first_name: formData.firstName,
         last_name: formData.lastName,
         role: formData.userType,
-        specialty_id: formData.speciality || null,
-        license_number: formData.licenseNumber || null,
-        years_of_experience: formData.yearsOfExperience ? parseInt(formData.yearsOfExperience) : null
+        specialty_id: null,
+        license_number: null,
+        years_of_experience: null
       });
       
-      if (isDoctor) {
-        toast.success("Votre demande d'inscription a été envoyée. Veuillez vérifier votre email pour confirmer votre compte.");
-      } else {
-        toast.success("Inscription réussie. Veuillez vérifier votre email pour confirmer votre compte.");
-      }
+      toast.success("Inscription réussie. Veuillez vérifier votre email pour confirmer votre compte.");
       navigate("/login");
     } catch (error: any) {
       console.error("Registration error:", error);

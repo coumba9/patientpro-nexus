@@ -20,3 +20,9 @@ verify_jwt = true
 
 [functions.send-sms]
 verify_jwt = true
+
+[functions.approve-doctor-application]
+verify_jwt = true
+
+[functions.reject-doctor-application]
+verify_jwt = true
