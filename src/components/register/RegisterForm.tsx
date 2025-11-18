@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { DoctorFields } from "./DoctorFields";
+import { DocumentUpload } from "./DocumentUpload";
 
 interface RegisterFormProps {
   formData: {
@@ -20,6 +21,13 @@ interface RegisterFormProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
   handleSelectChange?: (name: string, value: string) => void;
+  documents?: {
+    diploma: File | null;
+    license: File | null;
+    others: File[];
+  };
+  handleFileChange?: (type: 'diploma' | 'license' | 'others', files: FileList | null) => void;
+  removeFile?: (type: 'diploma' | 'license' | 'others', index?: number) => void;
 }
 
 export const RegisterForm = ({
@@ -28,6 +36,9 @@ export const RegisterForm = ({
   handleChange,
   handleSubmit,
   handleSelectChange,
+  documents,
+  handleFileChange,
+  removeFile,
 }: RegisterFormProps) => {
   return (
     <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -70,11 +81,20 @@ export const RegisterForm = ({
         </div>
 
         {isDoctor && (
-          <DoctorFields 
-            formData={formData} 
-            handleChange={handleChange} 
-            handleSelectChange={handleSelectChange}
-          />
+          <>
+            <DoctorFields 
+              formData={formData} 
+              handleChange={handleChange} 
+              handleSelectChange={handleSelectChange}
+            />
+            {documents && handleFileChange && removeFile && (
+              <DocumentUpload
+                documents={documents}
+                handleFileChange={handleFileChange}
+                removeFile={removeFile}
+              />
+            )}
+          </>
         )}
 
         <div>
