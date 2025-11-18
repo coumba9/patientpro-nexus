@@ -27,6 +27,7 @@ import AdminModeration from "./pages/admin/Moderation";
 import AdminSettings from "./pages/admin/Settings";
 import AdminAnalytics from "./pages/admin/Analytics";
 import DoctorManagement from "./pages/admin/DoctorManagement";
+import DoctorApplications from "./pages/admin/DoctorApplications";
 import About from "./pages/About";
 import Values from "./pages/Values";
 import Contact from "./pages/Contact";
@@ -157,6 +158,11 @@ const App = () => {
               <Route path="/admin/doctors" element={
                 <ProtectedRoute requiredRole={['admin']}>
                   <DoctorManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/doctor-applications" element={
+                <ProtectedRoute requiredRole={['admin']}>
+                  <DoctorApplications />
                 </ProtectedRoute>
               } />
               <Route path="/admin/patients" element={

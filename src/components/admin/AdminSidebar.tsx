@@ -76,6 +76,17 @@ export const AdminSidebar = () => {
           </Button>
         </Link>
 
+        <Link to="/admin/doctor-applications">
+          <Button
+            variant="ghost"
+            className={`w-full justify-start ${isActive("/admin/doctor-applications") ? "bg-gray-100" : ""}`}
+            size="lg"
+          >
+            <UserCheck className="mr-2 h-5 w-5" />
+            Demandes médecins
+          </Button>
+        </Link>
+
         <h3 className="font-medium text-sm text-gray-500 px-4 pt-4 pb-2">Contenu</h3>
         
         <Link to="/admin/specialties">
