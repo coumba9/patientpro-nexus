@@ -33,6 +33,7 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
   useEffect(() => {
     const fetchSpecialties = async () => {
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from('specialties')
           .select('id, name')
@@ -41,11 +42,14 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
         
         if (error) {
           console.error('Error fetching specialties:', error);
+          setSpecialties([]);
         } else {
+          console.log('Specialties loaded:', data);
           setSpecialties(data || []);
         }
       } catch (error) {
         console.error('Error fetching specialties:', error);
+        setSpecialties([]);
       } finally {
         setLoading(false);
       }
