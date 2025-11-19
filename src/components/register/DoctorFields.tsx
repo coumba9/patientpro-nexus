@@ -56,6 +56,26 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
     };
 
     fetchSpecialties();
+    
+    // Set up realtime subscription for specialty changes
+    const channel = supabase
+      .channel('specialties-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'specialties'
+        },
+        () => {
+          fetchSpecialties();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
   return (
     <>

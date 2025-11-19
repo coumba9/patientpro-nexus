@@ -14,6 +14,10 @@ import { Eye, MoreVertical, FileText, UserCog } from "lucide-react";
 import { PatientDetailsDialog } from "./PatientDetailsDialog";
 import { PatientFilters } from "./PatientFilters";
 import { toast } from "sonner";
+import { useAdminPatients, AdminPatient } from "@/hooks/useAdminPatients";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface Patient {
   id: string;
@@ -26,48 +30,19 @@ interface Patient {
   appointments: number;
 }
 
-const mockPatients: Patient[] = [
-  {
-    id: "1",
-    name: "Fatou Diallo",
-    birthDate: "1985-03-15",
-    email: "fatou.diallo@example.com",
-    phone: "+221 77 123 45 67",
-    lastVisit: "2024-03-20",
-    status: "active",
-    appointments: 8
-  },
-  {
-    id: "2",
-    name: "Moussa Sow",
-    birthDate: "1990-07-22",
-    email: "moussa.sow@example.com",
-    phone: "+221 76 234 56 78",
-    lastVisit: "2024-04-05",
-    status: "active",
-    appointments: 3
-  },
-  {
-    id: "3",
-    name: "Aminata Ndiaye",
-    birthDate: "1978-11-30",
-    email: "aminata.ndiaye@example.com",
-    phone: "+221 70 345 67 89",
-    lastVisit: "2024-02-15",
-    status: "inactive",
-    appointments: 12
-  }
-];
 
 export const PatientsTable = () => {
+  const { patients, loading } = useAdminPatients();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<AdminPatient | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  const filteredPatients = mockPatients.filter(patient =>
-    patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPatients = patients.filter(patient => {
+    const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.toLowerCase();
+    const email = patient.email?.toLowerCase() || '';
+    const query = searchQuery.toLowerCase();
+    return fullName.includes(query) || email.includes(query);
+  });
 
   const handleStatusChange = (patientId: string, newStatus: "active" | "inactive") => {
     toast.success(`Statut du patient mis à jour`);
@@ -76,6 +51,15 @@ export const PatientsTable = () => {
   const handleViewMedicalRecord = (patientId: string) => {
     toast.info("Affichage du dossier médical");
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -104,24 +88,38 @@ export const PatientsTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredPatients.map((patient) => (
-            <TableRow key={patient.id}>
-              <TableCell className="font-medium">{patient.name}</TableCell>
-              <TableCell>{patient.birthDate}</TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div>{patient.email}</div>
-                  <div className="text-sm text-muted-foreground">{patient.phone}</div>
-                </div>
+          {filteredPatients.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                Aucun patient trouvé
               </TableCell>
-              <TableCell>{patient.lastVisit}</TableCell>
-              <TableCell>
-                <Badge variant={patient.status === "active" ? "success" : "secondary"}>
-                  {patient.status === "active" ? "Actif" : "Inactif"}
-                </Badge>
-              </TableCell>
-              <TableCell>{patient.appointments}</TableCell>
-              <TableCell className="text-right">
+            </TableRow>
+          ) : (
+            filteredPatients.map((patient) => {
+              const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Non renseigné';
+              
+              return (
+                <TableRow key={patient.id}>
+                  <TableCell className="font-medium">{fullName}</TableCell>
+                  <TableCell>
+                    {patient.birth_date ? format(new Date(patient.birth_date), 'dd/MM/yyyy', { locale: fr }) : 'Non renseigné'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div>{patient.email || 'Non renseigné'}</div>
+                      <div className="text-sm text-muted-foreground">{patient.phone_number || 'Non renseigné'}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {patient.last_appointment ? format(new Date(patient.last_appointment), 'dd/MM/yyyy', { locale: fr }) : 'Aucune visite'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={patient.status === 'active' ? "success" : "secondary"}>
+                      {patient.status === 'active' ? "Actif" : "Inactif"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{patient.appointment_count || 0}</TableCell>
+                  <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
@@ -146,9 +144,11 @@ export const PatientsTable = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
         </TableBody>
       </Table>
 
