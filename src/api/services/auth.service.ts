@@ -35,7 +35,45 @@ class AuthService {
       throw error;
     }
 
-    return { user: data.user, session: data.session };
+    const user = data.user;
+    const session = data.session;
+
+    // Empêcher la connexion des médecins non approuvés
+    if (user) {
+      try {
+        const { data: roles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+
+        if (!rolesError) {
+          const isDoctor = roles?.some((r: { role: string }) => r.role === 'doctor');
+
+          if (isDoctor) {
+            const { data: applications, error: appError } = await supabase
+              .from('doctor_applications')
+              .select('status, email')
+              .eq('email', user.email)
+              .order('created_at', { ascending: false })
+              .limit(1);
+
+            if (!appError) {
+              const application = applications && applications[0];
+
+              if (!application || application.status !== 'approved') {
+                await supabase.auth.signOut();
+                throw new Error("Votre compte médecin n'a pas encore été approuvé par un administrateur.");
+              }
+            }
+          }
+        }
+      } catch (checkError) {
+        console.error('Error while checking doctor approval status:', checkError);
+        throw checkError;
+      }
+    }
+
+    return { user, session };
   }
 
   async register(userData: RegisterData): Promise<{ user: User | null; session: Session | null }> {

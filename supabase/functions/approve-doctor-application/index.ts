@@ -104,6 +104,22 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to update application status");
     }
 
+    // Mark doctor as verified so patients can see them
+    const { error: doctorUpdateError } = await supabaseAdmin
+      .from("doctors")
+      .update({
+        is_verified: true,
+        specialty_id: application.specialty_id,
+        license_number: application.license_number,
+        years_of_experience: application.years_of_experience
+      })
+      .eq("id", newUser.user?.id);
+
+    if (doctorUpdateError) {
+      console.error("Error updating doctor profile:", doctorUpdateError);
+      throw new Error("Failed to update doctor profile");
+    }
+
     // Get specialty name
     let specialtyName = "Médecin";
     if (application.specialty_id) {
@@ -118,12 +134,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send approval email
-    const emailResponse = await resend.emails.send({
-      from: "JàmmSanté <onboarding@resend.dev>",
-      to: [application.email],
-      subject: "✅ Votre demande d'inscription a été approuvée - JàmmSanté",
-      html: `
+    // Send approval email (non bloquant en cas d'erreur d'envoi)
+    let emailResponse;
+    try {
+      emailResponse = await resend.emails.send({
+        from: "JàmmSanté <onboarding@resend.dev>",
+        to: [application.email],
+        subject: "✅ Votre demande d'inscription a été approuvée - JàmmSanté",
+        html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -187,15 +205,20 @@ const handler = async (req: Request): Promise<Response> => {
           </body>
         </html>
       `,
-    });
+      });
 
-    console.log("Email sent successfully:", emailResponse);
+      console.log("Email sent successfully:", emailResponse);
+    } catch (emailError) {
+      console.error("Error sending approval email:", emailError);
+      // On ne bloque pas l'approbation si l'email échoue
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Application approved and email sent",
-        userId: newUser.user?.id 
+        message: "Application approved",
+        userId: newUser.user?.id,
+        emailSent: !!emailResponse 
       }),
       {
         status: 200,
