@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { specialtyService } from "@/api";
 
 interface DoctorFieldsProps {
   formData: {
@@ -34,21 +35,14 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
     const fetchSpecialties = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('specialties')
-          .select('id, name')
-          .eq('status', 'active')
-          .order('name');
-        
-        if (error) {
-          console.error('Error fetching specialties:', error);
-          setSpecialties([]);
-        } else {
-          console.log('Specialties loaded:', data);
-          setSpecialties(data || []);
-        }
+        const specialtiesData = await specialtyService.getActiveSpecialties();
+
+        console.log("Specialties loaded from service:", specialtiesData);
+        setSpecialties(
+          (specialtiesData || []).map((spec) => ({ id: spec.id, name: spec.name }))
+        );
       } catch (error) {
-        console.error('Error fetching specialties:', error);
+        console.error("Error fetching specialties via service:", error);
         setSpecialties([]);
       } finally {
         setLoading(false);
