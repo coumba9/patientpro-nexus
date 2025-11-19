@@ -20,17 +20,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { name: "Jan", users: 400, consultations: 240 },
-  { name: "Fév", users: 300, consultations: 139 },
-  { name: "Mar", users: 200, consultations: 980 },
-  { name: "Avr", users: 278, consultations: 390 },
-  { name: "Mai", users: 189, consultations: 480 },
-  { name: "Jun", users: 239, consultations: 380 },
-];
+import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
+import { useAdminStats } from "@/hooks/useAdminStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AdminAnalytics = () => {
+  const { data, loading: analyticsLoading } = useAdminAnalytics();
+  const { stats, loading: statsLoading } = useAdminStats();
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container py-8">
@@ -83,65 +80,108 @@ const AdminAnalytics = () => {
           {/* Main Content */}
           <div className="md:col-span-3 space-y-6">
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex items-center space-x-2">
-                  <User className="h-5 w-5 text-blue-500" />
-                  <h3 className="font-semibold">Total Utilisateurs</h3>
-                </div>
-                <p className="text-2xl font-bold mt-2">1,234</p>
-                <p className="text-sm text-green-600">+12% ce mois</p>
+            {statsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-white p-4 rounded-lg shadow-sm">
+                    <Skeleton className="h-5 w-32 mb-2" />
+                    <Skeleton className="h-8 w-20 mb-1" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
               </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex items-center space-x-2">
-                  <Video className="h-5 w-5 text-purple-500" />
-                  <h3 className="font-semibold">Téléconsultations</h3>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-5 w-5 text-blue-500" />
+                    <h3 className="font-semibold">Total Utilisateurs</h3>
+                  </div>
+                  <p className="text-2xl font-bold mt-2">{stats.totalUsers}</p>
+                  <p className="text-sm text-muted-foreground">Tous les profils</p>
                 </div>
-                <p className="text-2xl font-bold mt-2">856</p>
-                <p className="text-sm text-green-600">+8% ce mois</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5 text-orange-500" />
-                  <h3 className="font-semibold">RDV ce mois</h3>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="flex items-center space-x-2">
+                    <Video className="h-5 w-5 text-purple-500" />
+                    <h3 className="font-semibold">Consultations</h3>
+                  </div>
+                  <p className="text-2xl font-bold mt-2">{stats.completedAppointments}</p>
+                  <p className="text-sm text-muted-foreground">Terminées</p>
                 </div>
-                <p className="text-2xl font-bold mt-2">342</p>
-                <p className="text-sm text-green-600">+15% ce mois</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  <h3 className="font-semibold">Taux de satisfaction</h3>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-5 w-5 text-orange-500" />
+                    <h3 className="font-semibold">Total RDV</h3>
+                  </div>
+                  <p className="text-2xl font-bold mt-2">{stats.totalAppointments}</p>
+                  <p className="text-sm text-muted-foreground">Tous statuts</p>
                 </div>
-                <p className="text-2xl font-bold mt-2">95%</p>
-                <p className="text-sm text-green-600">+2% ce mois</p>
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                    <h3 className="font-semibold">En Attente</h3>
+                  </div>
+                  <p className="text-2xl font-bold mt-2">{stats.pendingAppointments}</p>
+                  <p className="text-sm text-muted-foreground">À confirmer</p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Charts */}
+            {/* Chart */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-xl font-bold mb-4">Évolution sur 6 mois</h2>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <h3 className="text-lg font-semibold mb-4">Évolution des activités</h3>
+              {analyticsLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={data}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="users"
-                      stroke="#8884d8"
-                      name="Utilisateurs"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="consultations"
-                      stroke="#82ca9d"
-                      name="Consultations"
-                    />
+                    <Line type="monotone" dataKey="users" stroke="#8884d8" name="Nouveaux utilisateurs" />
+                    <Line type="monotone" dataKey="consultations" stroke="#82ca9d" name="Consultations" />
+                    <Line type="monotone" dataKey="appointments" stroke="#ffc658" name="Rendez-vous" />
                   </LineChart>
                 </ResponsiveContainer>
+              )}
+            </div>
+
+            {/* Activity Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h4 className="font-semibold mb-3">Résumé des activités</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Rendez-vous confirmés</span>
+                    <span className="font-semibold">{stats.totalAppointments - stats.pendingAppointments - stats.cancelledAppointments}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Rendez-vous en attente</span>
+                    <span className="font-semibold">{stats.pendingAppointments}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Rendez-vous annulés</span>
+                    <span className="font-semibold">{stats.cancelledAppointments}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm">
+                <h4 className="font-semibold mb-3">Statistiques des médecins</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Médecins vérifiés</span>
+                    <span className="font-semibold">{stats.verifiedDoctors}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Applications en attente</span>
+                    <span className="font-semibold">{stats.pendingDoctors}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Total médecins</span>
+                    <span className="font-semibold">{stats.totalDoctors}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

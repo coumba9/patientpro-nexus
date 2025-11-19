@@ -66,7 +66,9 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
           value={formData.speciality || ""}
           onValueChange={(value) => {
             console.log('Specialty selected:', value);
-            handleSelectChange && handleSelectChange("speciality", value);
+            if (handleSelectChange) {
+              handleSelectChange("speciality", value);
+            }
           }}
           disabled={loading}
         >
@@ -74,11 +76,17 @@ export const DoctorFields = ({ formData, handleChange, handleSelectChange }: Doc
             <SelectValue placeholder={loading ? "Chargement..." : "Sélectionnez votre spécialité"} />
           </SelectTrigger>
           <SelectContent>
-            {specialties.map((specialty) => (
-              <SelectItem key={specialty.id} value={specialty.id}>
-                {specialty.name}
-              </SelectItem>
-            ))}
+            {loading ? (
+              <SelectItem value="loading" disabled>Chargement...</SelectItem>
+            ) : specialties.length === 0 ? (
+              <SelectItem value="empty" disabled>Aucune spécialité disponible</SelectItem>
+            ) : (
+              specialties.map((specialty) => (
+                <SelectItem key={specialty.id} value={specialty.id}>
+                  {specialty.name}
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
