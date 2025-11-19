@@ -252,7 +252,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: "Application approved",
-        userId: newUser.user?.id,
+        userId,
         emailSent: !!emailResponse 
       }),
       {
