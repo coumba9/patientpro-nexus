@@ -8,20 +8,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Mail, Phone, User } from "lucide-react";
-
-interface Patient {
-  id: string;
-  name: string;
-  birthDate: string;
-  email: string;
-  phone: string;
-  lastVisit: string;
-  status: "active" | "inactive";
-  appointments: number;
-}
+import { AdminPatient } from "@/hooks/useAdminPatients";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface PatientDetailsDialogProps {
-  patient: Patient;
+  patient: AdminPatient | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -31,6 +23,10 @@ export const PatientDetailsDialog = ({
   open,
   onOpenChange,
 }: PatientDetailsDialogProps) => {
+  if (!patient) return null;
+  
+  const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || 'Non renseigné';
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -59,11 +55,13 @@ export const PatientDetailsDialog = ({
               <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span>{patient.name}</span>
+                  <span>{fullName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{patient.birthDate}</span>
+                  <span>
+                    {patient.birth_date ? format(new Date(patient.birth_date), 'dd MMMM yyyy', { locale: fr }) : 'Non renseigné'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -73,11 +71,11 @@ export const PatientDetailsDialog = ({
               <div className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>{patient.email}</span>
+                  <span>{patient.email || 'Non renseigné'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{patient.phone}</span>
+                  <span>{patient.phone_number || 'Non renseigné'}</span>
                 </div>
               </div>
             </div>
@@ -85,8 +83,10 @@ export const PatientDetailsDialog = ({
             <div className="space-y-2">
               <Label>Statistiques</Label>
               <div className="rounded-lg border p-4 space-y-3">
-                <div>Dernière visite : {patient.lastVisit}</div>
-                <div>Nombre total de rendez-vous : {patient.appointments}</div>
+                <div>
+                  Dernière visite : {patient.last_appointment ? format(new Date(patient.last_appointment), 'dd MMMM yyyy', { locale: fr }) : 'Aucune visite'}
+                </div>
+                <div>Nombre total de rendez-vous : {patient.appointment_count}</div>
               </div>
             </div>
           </div>
