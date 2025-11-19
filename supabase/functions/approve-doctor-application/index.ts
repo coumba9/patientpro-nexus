@@ -67,27 +67,49 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Application not found or already processed");
     }
 
-    // Create the user account
-    const { data: newUser, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-      email: application.email,
-      password: password,
-      email_confirm: false, // We'll send a custom verification email
-      user_metadata: {
-        first_name: application.first_name,
-        last_name: application.last_name,
-        role: 'doctor',
-        speciality: application.specialty_id,
-        licenseNumber: application.license_number,
-        yearsOfExperience: application.years_of_experience
-      }
-    });
+    // Determine if a user already exists for this email
+    const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", application.email)
+      .maybeSingle();
 
-    if (signUpError) {
-      console.error("Error creating user:", signUpError);
-      throw new Error(`Failed to create user account: ${signUpError.message}`);
+    if (existingProfileError) {
+      console.error("Error checking existing profile:", existingProfileError);
     }
 
-    console.log("User created successfully:", newUser.user?.id);
+    let userId: string | null = existingProfile?.id ?? null;
+
+    // Create the user account only if it doesn't already exist
+    if (!userId) {
+      const { data: newUser, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+        email: application.email,
+        password: password,
+        email_confirm: false, // We'll send a custom verification email
+        user_metadata: {
+          first_name: application.first_name,
+          last_name: application.last_name,
+          role: 'doctor',
+          speciality: application.specialty_id,
+          licenseNumber: application.license_number,
+          yearsOfExperience: application.years_of_experience
+        }
+      });
+
+      if (signUpError || !newUser.user) {
+        console.error("Error creating user:", signUpError);
+        throw new Error(`Failed to create user account: ${signUpError?.message ?? 'Unknown error'}`);
+      }
+
+      userId = newUser.user.id;
+      console.log("User created successfully:", userId);
+    } else {
+      console.log("Existing user found for email, using user id:", userId);
+    }
+
+    if (!userId) {
+      throw new Error("Unable to resolve user id for doctor application");
+    }
 
     // Update application status
     const { error: updateError } = await supabaseAdmin
@@ -104,19 +126,32 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to update application status");
     }
 
-    // Mark doctor as verified so patients can see them
-    const { error: doctorUpdateError } = await supabaseAdmin
+    // Ensure doctor role exists for this user
+    const { error: roleUpsertError } = await supabaseAdmin
+      .from("user_roles")
+      .upsert(
+        { user_id: userId, role: "doctor" },
+        { onConflict: "user_id,role" }
+      );
+
+    if (roleUpsertError) {
+      console.error("Error upserting doctor role:", roleUpsertError);
+      throw new Error("Failed to update doctor role");
+    }
+
+    // Mark doctor as verified so patients can see them and sync profile data
+    const { error: doctorUpsertError } = await supabaseAdmin
       .from("doctors")
-      .update({
+      .upsert({
+        id: userId,
         is_verified: true,
         specialty_id: application.specialty_id,
         license_number: application.license_number,
         years_of_experience: application.years_of_experience
-      })
-      .eq("id", newUser.user?.id);
+      });
 
-    if (doctorUpdateError) {
-      console.error("Error updating doctor profile:", doctorUpdateError);
+    if (doctorUpsertError) {
+      console.error("Error upserting doctor profile:", doctorUpsertError);
       throw new Error("Failed to update doctor profile");
     }
 
