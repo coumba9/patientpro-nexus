@@ -6,8 +6,65 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { NotificationCenter } from "@/components/admin/notifications/NotificationCenter";
 import { ReminderSystem } from "@/components/admin/reminders/ReminderSystem";
 import { WaitingQueue } from "@/components/admin/queue/WaitingQueue";
+import { useAdminQueue } from "@/hooks/useAdminQueue";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 const NotificationManagement = () => {
+  const { stats: queueStats, loading: queueLoading } = useAdminQueue();
+  const [notificationStats, setNotificationStats] = useState({ unread: 0, total: 0 });
+  const [reminderStats, setReminderStats] = useState({ pending: 0, today: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch notification stats
+      const { count: unreadCount } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("is_read", false);
+
+      const { count: totalCount } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true });
+
+      setNotificationStats({
+        unread: unreadCount || 0,
+        total: totalCount || 0,
+      });
+
+      // Fetch reminder stats
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const { count: pendingReminders } = await supabase
+        .from("reminders")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      const { count: todayReminders } = await supabase
+        .from("reminders")
+        .select("*", { count: "exact", head: true })
+        .gte("scheduled_for", today.toISOString())
+        .lt("scheduled_for", tomorrow.toISOString());
+
+      setReminderStats({
+        pending: pendingReminders || 0,
+        today: todayReminders || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <AdminSidebar />
@@ -25,10 +82,16 @@ const NotificationManagement = () => {
                 <Bell className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">12</div>
-                <p className="text-xs text-muted-foreground">
-                  +3 depuis hier
-                </p>
+                {loading ? (
+                  <div className="text-2xl font-bold">...</div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{notificationStats.unread}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Sur {notificationStats.total} total
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
             
@@ -40,10 +103,16 @@ const NotificationManagement = () => {
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8</div>
-                <p className="text-xs text-muted-foreground">
-                  Pour aujourd'hui
-                </p>
+                {loading ? (
+                  <div className="text-2xl font-bold">...</div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{reminderStats.pending}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {reminderStats.today} pour aujourd'hui
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
             
@@ -55,25 +124,37 @@ const NotificationManagement = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">5</div>
-                <p className="text-xs text-muted-foreground">
-                  Patients en attente
-                </p>
+                {queueLoading ? (
+                  <div className="text-2xl font-bold">...</div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{queueStats.waiting}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Patients en attente
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Taux de rappel
+                  Urgences
                 </CardTitle>
                 <BarChart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">94%</div>
-                <p className="text-xs text-muted-foreground">
-                  Cette semaine
-                </p>
+                {queueLoading ? (
+                  <div className="text-2xl font-bold">...</div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">{queueStats.urgent}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Cas urgents
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

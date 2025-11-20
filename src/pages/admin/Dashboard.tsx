@@ -30,45 +30,13 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
-const pendingDoctors = [
-  {
-    id: 1,
-    name: "Dr. Marie Faye",
-    specialty: "Cardiologue",
-    registrationDate: "2024-02-18",
-    email: "marie.faye@example.com",
-    phone: "+221 77 123 45 67",
-    address: "123 Avenue Cheikh Anta Diop, Dakar",
-    education: "Université Cheikh Anta Diop, Faculté de Médecine",
-    experience: "8 ans",
-    certifications: [
-      "Certificat de spécialisation en cardiologie",
-      "Diplôme en réanimation cardiaque avancée"
-    ],
-    about: "Spécialiste des maladies cardiovasculaires avec une expertise particulière dans le traitement des arythmies cardiaques et de l'hypertension."
-  },
-  {
-    id: 2,
-    name: "Dr. Ibrahima Sarr",
-    specialty: "Pédiatre",
-    registrationDate: "2024-02-19",
-    email: "ibrahima.sarr@example.com",
-    phone: "+221 76 234 56 78",
-    address: "45 Rue des Médecins, Thies",
-    education: "Université de Médecine de Dakar",
-    experience: "5 ans",
-    certifications: [
-      "Certificat de spécialisation en pédiatrie",
-      "Formation en urgences pédiatriques"
-    ],
-    about: "Pédiatre spécialisé dans le développement de l'enfant et les maladies infantiles courantes. Approche basée sur l'écoute et la prévention."
-  },
-];
+import { useRealDoctorApplications } from "@/hooks/useRealDoctorApplications";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { applications, loading } = useRealDoctorApplications();
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -83,23 +51,44 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleValidateDoctor = (doctorId: number) => {
-    // Simulation de la validation d'un médecin
-    console.log("Validation du médecin:", doctorId);
-    toast.success("Le compte médecin a été validé avec succès");
-    
-    if (openDialog) {
-      setOpenDialog(false);
+  const handleValidateDoctor = async (applicationId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("approve-doctor-application", {
+        body: { applicationId },
+      });
+
+      if (error) throw error;
+      
+      toast.success("Le compte médecin a été validé avec succès");
+      
+      if (openDialog) {
+        setOpenDialog(false);
+      }
+    } catch (error) {
+      console.error("Validation error:", error);
+      toast.error("Erreur lors de la validation");
     }
   };
 
-  const handleRejectDoctor = (doctorId: number) => {
-    // Simulation du rejet d'un médecin
-    console.log("Rejet du médecin:", doctorId);
-    toast.error("Le compte médecin a été rejeté");
-    
-    if (openDialog) {
-      setOpenDialog(false);
+  const handleRejectDoctor = async (applicationId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("reject-doctor-application", {
+        body: { 
+          applicationId,
+          rejectionReason: "Dossier incomplet ou non conforme"
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success("Le compte médecin a été rejeté");
+      
+      if (openDialog) {
+        setOpenDialog(false);
+      }
+    } catch (error) {
+      console.error("Rejection error:", error);
+      toast.error("Erreur lors du rejet");
     }
   };
 
@@ -200,7 +189,7 @@ const AdminDashboard = () => {
                   <h3 className="text-lg font-semibold">Comptes à valider</h3>
                   <UserCheck className="h-5 w-5 text-primary" />
                 </div>
-                <p className="text-3xl font-bold">{pendingDoctors.length}</p>
+                <p className="text-3xl font-bold">{applications.length}</p>
                 <p className="text-gray-600">médecins en attente</p>
               </div>
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -227,16 +216,21 @@ const AdminDashboard = () => {
                 Médecins en attente de validation
               </h2>
               <div className="space-y-4">
-                {pendingDoctors.map((doctor) => (
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Chargement...</p>
+                ) : applications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucune demande en attente</p>
+                ) : (
+                  applications.map((doctor) => (
                   <div
                     key={doctor.id}
                     className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
                   >
                     <div>
-                      <h3 className="font-semibold">{doctor.name}</h3>
-                      <p className="text-gray-600">{doctor.specialty}</p>
+                      <h3 className="font-semibold">{doctor.first_name} {doctor.last_name}</h3>
+                      <p className="text-gray-600">{doctor.specialty_name}</p>
                       <p className="text-sm text-gray-500">
-                        Inscrit le {doctor.registrationDate}
+                        Inscrit le {new Date(doctor.created_at).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -265,7 +259,8 @@ const AdminDashboard = () => {
                       </Button>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 

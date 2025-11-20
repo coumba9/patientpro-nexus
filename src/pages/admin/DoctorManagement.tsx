@@ -45,72 +45,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-
-// Données factices pour les médecins
-const mockDoctors = [
-  {
-    id: 1,
-    name: "Dr. Marie Dubois",
-    specialty: "Cardiologie",
-    email: "marie.dubois@example.com",
-    phone: "01 23 45 67 89",
-    status: "active",
-    verificationDate: "15/03/2023",
-    patients: 124,
-  },
-  {
-    id: 2,
-    name: "Dr. Thomas Martin",
-    specialty: "Dermatologie",
-    email: "thomas.martin@example.com",
-    phone: "01 23 45 67 90",
-    status: "pending",
-    verificationDate: null,
-    patients: 0,
-  },
-  {
-    id: 3,
-    name: "Dr. Sophie Bernard",
-    specialty: "Pédiatrie",
-    email: "sophie.bernard@example.com",
-    phone: "01 23 45 67 91",
-    status: "suspended",
-    verificationDate: "05/07/2022",
-    patients: 87,
-  },
-  {
-    id: 4,
-    name: "Dr. Pierre Lambert",
-    specialty: "Psychiatrie",
-    email: "pierre.lambert@example.com",
-    phone: "01 23 45 67 92",
-    status: "active",
-    verificationDate: "23/09/2023",
-    patients: 156,
-  },
-  {
-    id: 5,
-    name: "Dr. Julie Moreau",
-    specialty: "Ophtalmologie",
-    email: "julie.moreau@example.com",
-    phone: "01 23 45 67 93",
-    status: "active",
-    verificationDate: "10/01/2023",
-    patients: 208,
-  },
-  {
-    id: 6,
-    name: "Dr. Nicolas Fournier",
-    specialty: "Neurologie",
-    email: "nicolas.fournier@example.com",
-    phone: "01 23 45 67 94",
-    status: "pending",
-    verificationDate: null,
-    patients: 0,
-  },
-];
+import { useAdminDoctors } from "@/hooks/useAdminDoctors";
 
 const DoctorManagement = () => {
+  const { doctors, loading } = useAdminDoctors();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
@@ -118,11 +56,14 @@ const DoctorManagement = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   
   // Fonction pour filtrer les médecins
-  const filteredDoctors = mockDoctors.filter((doctor) => {
-    const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         doctor.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || doctor.status === statusFilter;
-    const matchesSpecialty = specialtyFilter === "all" || doctor.specialty === specialtyFilter;
+  const filteredDoctors = doctors.filter((doctor) => {
+    const fullName = `${doctor.first_name} ${doctor.last_name}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || 
+                         doctor.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || 
+                         (statusFilter === "active" && doctor.is_verified) ||
+                         (statusFilter === "pending" && !doctor.is_verified);
+    const matchesSpecialty = specialtyFilter === "all" || doctor.specialty_name === specialtyFilter;
     
     return matchesSearch && matchesStatus && matchesSpecialty;
   });
@@ -199,54 +140,59 @@ const DoctorManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDoctors.map((doctor) => (
-                  <TableRow key={doctor.id}>
-                    <TableCell className="font-medium">{doctor.name}</TableCell>
-                    <TableCell>{doctor.specialty}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={
-                          doctor.status === "active" ? "success" : 
-                          doctor.status === "pending" ? "warning" : 
-                          "destructive"
-                        }
-                      >
-                        {doctor.status === "active" && "Actif"}
-                        {doctor.status === "pending" && "En attente"}
-                        {doctor.status === "suspended" && "Suspendu"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{doctor.patients}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => showDoctorDetails(doctor)}>
-                            Voir les détails
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {doctor.status !== "active" && (
-                            <DropdownMenuItem onClick={() => changeStatus(doctor.id, "active")}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                              Activer
-                            </DropdownMenuItem>
-                          )}
-                          {doctor.status !== "suspended" && (
-                            <DropdownMenuItem onClick={() => changeStatus(doctor.id, "suspended")}>
-                              <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                              Suspendre
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>Chargement...</TableCell>
                   </TableRow>
-                ))}
+                ) : filteredDoctors.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>Aucun médecin trouvé</TableCell>
+                  </TableRow>
+                ) : (
+                  filteredDoctors.map((doctor) => (
+                    <TableRow key={doctor.id}>
+                      <TableCell className="font-medium">
+                        {doctor.first_name} {doctor.last_name}
+                      </TableCell>
+                      <TableCell>{doctor.specialty_name || "Non spécifié"}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={doctor.is_verified ? "default" : "secondary"}
+                        >
+                          {doctor.is_verified ? "Actif" : "En attente"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => showDoctorDetails(doctor)}>
+                              Voir les détails
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {!doctor.is_verified ? (
+                              <DropdownMenuItem onClick={() => changeStatus(doctor.id, "active")}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                Activer
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => changeStatus(doctor.id, "suspended")}>
+                                <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                                Suspendre
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
             
@@ -274,11 +220,11 @@ const DoctorManagement = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Nom complet</p>
-                  <p className="font-medium">{selectedDoctor.name}</p>
+                  <p className="font-medium">{selectedDoctor.first_name} {selectedDoctor.last_name}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Spécialité</p>
-                  <p className="font-medium">{selectedDoctor.specialty}</p>
+                  <p className="font-medium">{selectedDoctor.specialty_name}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Email</p>
