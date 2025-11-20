@@ -43,6 +43,10 @@ export const ClassDiagram = () => {
                 +consulterDossierMedical()
                 +payerConsultation()
                 +recevoirRappels()
+                +annulerRendezVous()
+                +reprogrammerRendezVous()
+                +noterMedecin()
+                +accederOrdonnances()
               }
               
               class Medecin {
@@ -51,6 +55,9 @@ export const ClassDiagram = () => {
                 +String numeroLicence
                 +Number anneesExperience
                 +Boolean estVerifie
+                +String adresse
+                +Number latitude
+                +Number longitude
                 +RendezVous[] agenda
                 +DisponibiliteSlot[] disponibilites
                 +gererRendezVous()
@@ -58,6 +65,9 @@ export const ClassDiagram = () => {
                 +telconsultation()
                 +gererDocuments()
                 +definirTarifs()
+                +signerDocuments()
+                +accederDossierPatient()
+                +consulterAnalyticsConsultations()
               }
               
               class Administrateur {
@@ -67,6 +77,12 @@ export const ClassDiagram = () => {
                 +gererPaiements()
                 +gererNotifications()
                 +gererSpecialites()
+                +approuverMedecins()
+                +gererFileAttente()
+                +consulterStatistiques()
+                +gererRappels()
+                +gererRapportsModeration()
+                +configurerPolitiquesAnnulation()
               }
               
               class RendezVous {
