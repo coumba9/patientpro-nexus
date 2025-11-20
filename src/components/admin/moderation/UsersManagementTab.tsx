@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Eye, Filter, Edit, UserPlus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
@@ -7,84 +7,51 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserDetailsDialog } from "./UserDetailsDialog";
 import { CreateUserDialog } from "./CreateUserDialog";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  dateAdded: string;
-  permissions: string[];
-}
-
-const users = [
-  {
-    id: 1,
-    name: "Aissatou Diallo",
-    email: "aissatou.diallo@example.com",
-    role: "Admin",
-    dateAdded: "2024-01-05",
-    status: "Actif",
-    permissions: ["all"]
-  },
-  {
-    id: 2,
-    name: "Mamadou Sow",
-    email: "mamadou.sow@example.com",
-    role: "Modérateur",
-    dateAdded: "2024-01-15",
-    status: "Actif",
-    permissions: ["moderate_content", "view_reports", "approve_doctors"]
-  },
-  {
-    id: 3,
-    name: "Fatou Ndiaye",
-    email: "fatou.ndiaye@example.com",
-    role: "Support",
-    dateAdded: "2024-02-01",
-    status: "Actif",
-    permissions: ["view_users", "view_reports"]
-  },
-];
+import { useAdminUsers, AdminUser } from "@/hooks/useAdminUsers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const UsersManagementTab = () => {
+  const { users, loading } = useAdminUsers();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState(users);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (!query) {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query.toLowerCase()) ||
-          user.email.toLowerCase().includes(query.toLowerCase()) ||
-          user.role.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredUsers(filtered);
-    }
-  };
+  const filteredUsers = useMemo(() => {
+    let filtered = users;
 
-  const handleRoleFilter = (role: string) => {
-    setRoleFilter(role);
-    if (!role || role === "all") {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter((user) => user.role === role);
-      setFilteredUsers(filtered);
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter((user) => {
+        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+        const email = user.email?.toLowerCase() || '';
+        const query = searchQuery.toLowerCase();
+        return fullName.includes(query) || email.includes(query);
+      });
     }
-  };
 
-  const handleViewUser = (user: User) => {
+    // Apply role filter
+    if (roleFilter && roleFilter !== "all") {
+      filtered = filtered.filter((user) => user.role === roleFilter);
+    }
+
+    return filtered;
+  }, [users, searchQuery, roleFilter]);
+
+  const handleViewUser = (user: AdminUser) => {
     setSelectedUser(user);
     setUserDialogOpen(true);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -103,14 +70,14 @@ export const UsersManagementTab = () => {
               type="text"
               placeholder="Rechercher..."
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-64 pl-9"
             />
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Eye className="h-4 w-4 text-gray-400" />
             </div>
           </div>
-          <Select value={roleFilter} onValueChange={handleRoleFilter}>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-40">
               <div className="flex items-center">
                 <Filter className="w-4 h-4 mr-2" />
@@ -121,7 +88,6 @@ export const UsersManagementTab = () => {
               <SelectItem value="all">Tous les rôles</SelectItem>
               <SelectItem value="patient">Patients</SelectItem>
               <SelectItem value="doctor">Médecins</SelectItem>
-              <SelectItem value="secretary">Secrétaires</SelectItem>
               <SelectItem value="admin">Administrateurs</SelectItem>
             </SelectContent>
           </Select>
@@ -140,21 +106,25 @@ export const UsersManagementTab = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredUsers.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell className="font-medium">{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <Badge variant={user.role === "Admin" ? "destructive" : user.role === "Modérateur" ? "default" : "secondary"}>
-                  {user.role}
-                </Badge>
-              </TableCell>
-              <TableCell>{user.dateAdded}</TableCell>
-              <TableCell>
-                <Badge variant={user.status === "Actif" ? "outline" : "secondary"}>
-                  {user.status}
-                </Badge>
-              </TableCell>
+          {filteredUsers.map((user) => {
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Non renseigné';
+            const formattedDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : 'N/A';
+            
+            return (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{fullName}</TableCell>
+                <TableCell>{user.email || 'Non renseigné'}</TableCell>
+                <TableCell>
+                  <Badge variant={user.role === "admin" ? "destructive" : user.role === "doctor" ? "default" : "secondary"}>
+                    {user.role === "admin" ? "Admin" : user.role === "doctor" ? "Médecin" : "Patient"}
+                  </Badge>
+                </TableCell>
+                <TableCell>{formattedDate}</TableCell>
+                <TableCell>
+                  <Badge variant={user.status === "active" ? "outline" : "secondary"}>
+                    {user.status === "active" ? "Actif" : user.status === "pending" ? "En attente" : "Bloqué"}
+                  </Badge>
+                </TableCell>
               <TableCell>
                 <div className="flex space-x-2">
                   <Button
@@ -177,14 +147,23 @@ export const UsersManagementTab = () => {
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+          );
+        })}
         </TableBody>
       </Table>
 
       <UserDetailsDialog
         open={userDialogOpen}
         onOpenChange={setUserDialogOpen}
-        user={selectedUser}
+        user={selectedUser ? {
+          id: parseInt(selectedUser.id),
+          name: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || 'Non renseigné',
+          email: selectedUser.email || '',
+          role: selectedUser.role === 'admin' ? 'Admin' : selectedUser.role === 'doctor' ? 'Médecin' : 'Patient',
+          dateAdded: selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleDateString('fr-FR') : 'N/A',
+          status: selectedUser.status === 'active' ? 'Actif' : selectedUser.status === 'pending' ? 'En attente' : 'Bloqué',
+          permissions: selectedUser.role === 'admin' ? ['all'] : []
+        } : null}
       />
 
       <CreateUserDialog

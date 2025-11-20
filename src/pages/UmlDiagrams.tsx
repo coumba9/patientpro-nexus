@@ -6,6 +6,7 @@ import { ClassDiagram } from "@/components/uml/ClassDiagram";
 import { UseCaseDiagram } from "@/components/uml/UseCaseDiagram";
 import { SequenceDiagram } from "@/components/uml/SequenceDiagram";
 import { AdminSequenceDiagram } from "@/components/uml/AdminSequenceDiagram";
+import { PaymentSequenceDiagram } from "@/components/uml/PaymentSequenceDiagram";
 import { DiagramInitializer } from "@/components/uml/DiagramInitializer";
 
 const UmlDiagrams = () => {
@@ -28,9 +29,10 @@ const UmlDiagrams = () => {
           <div className="space-y-12">
             <ClassDiagram />
             <UseCaseDiagram />
-            <SequenceDiagram />
-            <AdminSequenceDiagram />
-          </div>
+          <SequenceDiagram />
+          <PaymentSequenceDiagram />
+          <AdminSequenceDiagram />
+        </div>
         </div>
       </div>
     </div>

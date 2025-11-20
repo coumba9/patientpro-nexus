@@ -20,81 +20,12 @@ import { MoreVertical, UserX, UserCheck, Mail, Shield, Eye, PenSquare, Trash2 } 
 import { toast } from "sonner";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  status: "active" | "blocked" | "pending";
-  registeredDate: string;
-  lastLogin: string;
-  type: "patient" | "doctor" | "admin";
-  avatar?: string;
-}
-
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Jean Dupont",
-    email: "jean.dupont@example.com",
-    status: "active",
-    registeredDate: "2024-01-15",
-    lastLogin: "2024-04-10",
-    type: "patient",
-    avatar: "/placeholder.svg"
-  },
-  {
-    id: "2",
-    name: "Marie Martin",
-    email: "marie.martin@example.com",
-    status: "blocked",
-    registeredDate: "2024-02-20",
-    lastLogin: "2024-03-28",
-    type: "patient"
-  },
-  {
-    id: "3",
-    name: "Dr. Pierre Leroy",
-    email: "pierre.leroy@example.com",
-    status: "active",
-    registeredDate: "2023-11-05",
-    lastLogin: "2024-04-15",
-    type: "doctor",
-    avatar: "/placeholder.svg"
-  },
-  {
-    id: "4",
-    name: "Sophie Dubois",
-    email: "sophie.dubois@example.com",
-    status: "active",
-    registeredDate: "2024-03-10",
-    lastLogin: "2024-04-12",
-    type: "patient"
-  },
-  {
-    id: "5",
-    name: "Lucas Bernard",
-    email: "admin@example.com",
-    status: "active",
-    registeredDate: "2023-12-08",
-    lastLogin: "2024-04-15",
-    type: "admin",
-    avatar: "/placeholder.svg"
-  },
-  {
-    id: "6",
-    name: "Camille Richard",
-    email: "camille.richard@example.com",
-    status: "pending",
-    registeredDate: "2024-04-01",
-    lastLogin: "2024-04-01",
-    type: "doctor"
-  },
-];
+import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const UsersTable = () => {
+  const { users, loading } = useAdminUsers();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [users] = useState<User[]>(mockUsers);
   
   const handleSelectUser = (userId: string, isChecked: boolean) => {
     if (isChecked) {
@@ -162,12 +93,10 @@ export const UsersTable = () => {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
+  const getInitials = (firstName: string | null, lastName: string | null) => {
+    const first = firstName?.[0] || '';
+    const last = lastName?.[0] || '';
+    return (first + last).toUpperCase() || '??';
   };
 
   return (
@@ -201,24 +130,23 @@ export const UsersTable = () => {
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(user.first_name, user.last_name)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="font-medium">{user.name}</span>
-                    <span className="text-xs text-muted-foreground">{user.email}</span>
+                    <span className="font-medium">{`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Non renseigné'}</span>
+                    <span className="text-xs text-muted-foreground">{user.email || 'Non renseigné'}</span>
                   </div>
                 </div>
               </TableCell>
               <TableCell>
                 <Badge 
                   variant={
-                    user.type === "patient" ? "default" :
-                    user.type === "doctor" ? "secondary" : "destructive"
+                    user.role === "patient" ? "default" :
+                    user.role === "doctor" ? "secondary" : "destructive"
                   }
                 >
-                  {user.type === "patient" ? "Patient" :
-                   user.type === "doctor" ? "Médecin" : "Admin"}
+                  {user.role === "patient" ? "Patient" :
+                   user.role === "doctor" ? "Médecin" : "Admin"}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -237,8 +165,8 @@ export const UsersTable = () => {
                    user.status === "blocked" ? "Bloqué" : "En attente"}
                 </Badge>
               </TableCell>
-              <TableCell>{user.registeredDate}</TableCell>
-              <TableCell>{user.lastLogin}</TableCell>
+              <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : 'N/A'}</TableCell>
+              <TableCell>{user.last_login ? new Date(user.last_login).toLocaleDateString('fr-FR') : 'Jamais'}</TableCell>
               <TableCell>
                 <div className="flex space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => handleViewUser(user.id)}>
@@ -267,11 +195,11 @@ export const UsersTable = () => {
                           </>
                         )}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleContactUser(user.email)}>
+                      <DropdownMenuItem onClick={() => user.email && handleContactUser(user.email)}>
                         <Mail className="mr-2 h-4 w-4" />
                         <span>Contacter</span>
                       </DropdownMenuItem>
-                      {user.type !== "admin" && (
+                      {user.role !== "admin" && (
                         <DropdownMenuItem onClick={() => handlePromoteAdmin(user.id)}>
                           <Shield className="mr-2 h-4 w-4" />
                           <span>Promouvoir Admin</span>
