@@ -34,30 +34,23 @@ export const useAdminPatients = () => {
     try {
       setLoading(true);
       
-      // Fetch patients with profile data
+      // Fetch patients
       const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
-        .select(`
-          id,
-          birth_date,
-          gender,
-          blood_type,
-          phone_number,
-          created_at,
-          profiles!inner(
-            first_name,
-            last_name,
-            email,
-            phone_number
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (patientsError) throw patientsError;
 
-      // Fetch appointment counts for each patient
+      // Fetch profiles and appointment counts for each patient
       const patientsWithStats = await Promise.all(
         (patientsData || []).map(async (patient: any) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email, phone_number')
+            .eq('id', patient.id)
+            .single();
+
           const { count } = await supabase
             .from('appointments')
             .select('*', { count: 'exact', head: true })
@@ -80,10 +73,10 @@ export const useAdminPatients = () => {
 
           return {
             id: patient.id,
-            first_name: patient.profiles?.first_name || null,
-            last_name: patient.profiles?.last_name || null,
-            email: patient.profiles?.email || null,
-            phone_number: patient.phone_number || patient.profiles?.phone_number || null,
+            first_name: profile?.first_name || null,
+            last_name: profile?.last_name || null,
+            email: profile?.email || null,
+            phone_number: patient.phone_number || profile?.phone_number || null,
             birth_date: patient.birth_date,
             gender: patient.gender,
             blood_type: patient.blood_type,

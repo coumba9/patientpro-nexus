@@ -19,58 +19,57 @@ export const useAdminDoctors = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from("doctors")
+        .select("*");
+
+      if (doctorsError) throw doctorsError;
+
+      const formattedDoctors = await Promise.all(
+        (doctorsData || []).map(async (doctor: any) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, email, phone_number")
+            .eq("id", doctor.id)
+            .single();
+
+          const { data: specialty } = await supabase
+            .from("specialties")
+            .select("id, name")
+            .eq("id", doctor.specialty_id)
+            .single();
+
+          return {
+            id: doctor.id,
+            first_name: profile?.first_name || null,
+            last_name: profile?.last_name || null,
+            email: profile?.email || null,
+            specialty_name: specialty?.name || null,
+            specialty_id: doctor.specialty_id,
+            is_verified: doctor.is_verified,
+            years_of_experience: doctor.years_of_experience,
+            license_number: doctor.license_number,
+            phone_number: profile?.phone_number || null,
+            created_at: doctor.created_at,
+          };
+        })
+      );
+
+      setDoctors(formattedDoctors);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        setLoading(true);
-
-        const { data, error } = await supabase
-          .from("doctors")
-          .select(`
-            id,
-            is_verified,
-            years_of_experience,
-            license_number,
-            created_at,
-            specialty_id,
-            profiles!inner (
-              first_name,
-              last_name,
-              email,
-              phone_number
-            ),
-            specialties (
-              id,
-              name
-            )
-          `);
-
-        if (error) throw error;
-
-        const formattedDoctors = (data || []).map((doctor: any) => ({
-          id: doctor.id,
-          first_name: doctor.profiles?.first_name || null,
-          last_name: doctor.profiles?.last_name || null,
-          email: doctor.profiles?.email || null,
-          specialty_name: doctor.specialties?.name || null,
-          specialty_id: doctor.specialty_id,
-          is_verified: doctor.is_verified,
-          years_of_experience: doctor.years_of_experience,
-          license_number: doctor.license_number,
-          phone_number: doctor.profiles?.phone_number || null,
-          created_at: doctor.created_at,
-        }));
-
-        setDoctors(formattedDoctors);
-      } catch (error) {
-        console.error("Error fetching doctors:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDoctors();
   }, []);
 
-  return { doctors, loading, refetch: () => {} };
+  return { doctors, loading, refetch: fetchDoctors };
 };
