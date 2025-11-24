@@ -24,12 +24,12 @@ export const AdminSidebar = () => {
   };
 
   return (
-    <div className="bg-card p-4 space-y-2 min-h-screen sticky top-0">
+    <div className="bg-card p-4 space-y-2 min-h-screen w-64 sticky top-0 overflow-y-auto">
       <div className="flex items-center mb-6 px-2">
         <h2 className="font-bold text-lg">Administration</h2>
       </div>
 
-      <div className="space-y-1">
+      <nav className="space-y-1">
         <Link to="/admin">
           <Button
             variant="ghost"
@@ -167,7 +167,7 @@ export const AdminSidebar = () => {
             Paramètres
           </Button>
         </Link>
-      </div>
+      </nav>
     </div>
   );
 };
