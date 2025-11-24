@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
   UserCheck,
   UserX,
@@ -48,12 +49,13 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useAdminDoctors } from "@/hooks/useAdminDoctors";
 
 const DoctorManagement = () => {
-  const { doctors, loading } = useAdminDoctors();
+  const { doctors, loading, refetch } = useAdminDoctors();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [patientCounts, setPatientCounts] = useState<Record<string, number>>({});
   
   // Fonction pour filtrer les médecins
   const filteredDoctors = doctors.filter((doctor) => {
@@ -68,10 +70,42 @@ const DoctorManagement = () => {
     return matchesSearch && matchesStatus && matchesSpecialty;
   });
   
+  // Charger le nombre de patients par médecin
+  useEffect(() => {
+    const fetchPatientCounts = async () => {
+      const counts: Record<string, number> = {};
+      for (const doctor of doctors) {
+        const { count, error } = await supabase
+          .from('appointments')
+          .select('patient_id', { count: 'exact', head: true })
+          .eq('doctor_id', doctor.id);
+        if (!error) {
+          counts[doctor.id] = count || 0;
+        }
+      }
+      setPatientCounts(counts);
+    };
+    if (doctors.length > 0) {
+      fetchPatientCounts();
+    }
+  }, [doctors]);
+
   // Fonction pour changer le statut d'un médecin
-  const changeStatus = (doctorId, newStatus) => {
-    // Dans une application réelle, cela ferait une requête API
-    toast.success(`Statut du médecin modifié avec succès`);
+  const changeStatus = async (doctorId: string, newStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('doctors')
+        .update({ is_verified: newStatus })
+        .eq('id', doctorId);
+      
+      if (error) throw error;
+      
+      toast.success(`Statut du médecin modifié avec succès`);
+      refetch();
+    } catch (error) {
+      console.error('Error updating doctor status:', error);
+      toast.error('Erreur lors de la modification du statut');
+    }
   };
   
   // Fonction pour afficher les détails d'un médecin
@@ -162,7 +196,7 @@ const DoctorManagement = () => {
                           {doctor.is_verified ? "Actif" : "En attente"}
                         </Badge>
                       </TableCell>
-                      <TableCell>-</TableCell>
+                      <TableCell>{patientCounts[doctor.id] || 0}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -177,12 +211,12 @@ const DoctorManagement = () => {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {!doctor.is_verified ? (
-                              <DropdownMenuItem onClick={() => changeStatus(doctor.id, "active")}>
+                              <DropdownMenuItem onClick={() => changeStatus(doctor.id, true)}>
                                 <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                 Activer
                               </DropdownMenuItem>
                             ) : (
-                              <DropdownMenuItem onClick={() => changeStatus(doctor.id, "suspended")}>
+                              <DropdownMenuItem onClick={() => changeStatus(doctor.id, false)}>
                                 <XCircle className="mr-2 h-4 w-4 text-red-500" />
                                 Suspendre
                               </DropdownMenuItem>
@@ -259,10 +293,10 @@ const DoctorManagement = () => {
               </div>
               
               <DialogFooter className="flex justify-between items-center gap-2 mt-6">
-                {selectedDoctor.status !== "active" && (
+                {!selectedDoctor.is_verified && (
                   <Button 
                     onClick={() => {
-                      changeStatus(selectedDoctor.id, "active");
+                      changeStatus(selectedDoctor.id, true);
                       setIsDetailsOpen(false);
                     }}
                     className="bg-green-600 hover:bg-green-700"
@@ -271,11 +305,11 @@ const DoctorManagement = () => {
                     Activer ce médecin
                   </Button>
                 )}
-                {selectedDoctor.status !== "suspended" && (
+                {selectedDoctor.is_verified && (
                   <Button 
                     variant="destructive"
                     onClick={() => {
-                      changeStatus(selectedDoctor.id, "suspended");
+                      changeStatus(selectedDoctor.id, false);
                       setIsDetailsOpen(false);
                     }}
                   >
