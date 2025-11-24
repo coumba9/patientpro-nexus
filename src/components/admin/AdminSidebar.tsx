@@ -24,7 +24,7 @@ export const AdminSidebar = () => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm space-y-2 h-screen">
+    <div className="bg-card p-4 space-y-2 min-h-screen sticky top-0">
       <div className="flex items-center mb-6 px-2">
         <h2 className="font-bold text-lg">Administration</h2>
       </div>
