@@ -14,6 +14,7 @@ export interface AdminPatient {
   appointment_count: number;
   last_appointment: string | null;
   status: 'active' | 'inactive';
+  is_active: boolean;
 }
 
 export const useAdminPatients = () => {
@@ -71,6 +72,10 @@ export const useAdminPatients = () => {
           const isActive = lastAppointmentDate && 
             new Date(lastAppointmentDate) > threeMonthsAgo;
 
+          // Use manual is_active if set, otherwise use calculated status
+          const manualIsActive = patient.is_active ?? true;
+          const calculatedStatus = isActive ? 'active' as const : 'inactive' as const;
+          
           return {
             id: patient.id,
             first_name: profile?.first_name || null,
@@ -83,7 +88,8 @@ export const useAdminPatients = () => {
             created_at: patient.created_at,
             appointment_count: count || 0,
             last_appointment: lastAppointmentDate,
-            status: isActive ? 'active' as const : 'inactive' as const
+            status: manualIsActive ? calculatedStatus : 'inactive' as const,
+            is_active: manualIsActive
           };
         })
       );
@@ -114,5 +120,23 @@ export const useAdminPatients = () => {
     }
   };
 
-  return { patients, loading, stats, refetch: fetchPatients };
+  const updatePatientStatus = async (patientId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .update({ is_active: isActive })
+        .eq('id', patientId);
+
+      if (error) throw error;
+
+      // Refetch patients to update the list
+      await fetchPatients();
+      return true;
+    } catch (error) {
+      console.error('Error updating patient status:', error);
+      return false;
+    }
+  };
+
+  return { patients, loading, stats, refetch: fetchPatients, updatePatientStatus };
 };
