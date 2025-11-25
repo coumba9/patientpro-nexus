@@ -127,9 +127,21 @@ export const useAdminPatients = () => {
         .update({ is_active: isActive })
         .eq('id', patientId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
-      // Refetch patients to update the list
+      // Update local state immediately for better UX
+      setPatients(prevPatients => 
+        prevPatients.map(p => 
+          p.id === patientId 
+            ? { ...p, is_active: isActive, status: isActive ? 'active' as const : 'inactive' as const }
+            : p
+        )
+      );
+
+      // Refetch patients to ensure sync
       await fetchPatients();
       return true;
     } catch (error) {

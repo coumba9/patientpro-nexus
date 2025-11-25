@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Search, Home, ArrowLeft, Send } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,8 +17,12 @@ const Messages = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [replySubject, setReplySubject] = useState("");
+  const [replyContent, setReplyContent] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -38,9 +43,40 @@ const Messages = () => {
     loadMessages();
   }, [user]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+  const handleReply = (message: Message) => {
+    setSelectedMessage(message);
+    setReplySubject(`Re: ${message.subject}`);
+    setReplyContent("");
+    setReplyDialogOpen(true);
+  };
+
+  const handleSendReply = async () => {
+    if (!selectedMessage || !user?.id || !replyContent.trim()) return;
+
+    setSending(true);
+    try {
+      await messageService.sendMessage({
+        sender_id: user.id,
+        receiver_id: selectedMessage.sender_id,
+        subject: replySubject,
+        content: replyContent.trim(),
+        appointment_id: selectedMessage.appointment_id || undefined
+      });
+
+      toast.success("Message envoyé avec succès");
+      setReplyDialogOpen(false);
+      setReplySubject("");
+      setReplyContent("");
+      setSelectedMessage(null);
+      
+      // Recharger les messages
+      const data = await messageService.getMessagesByUser(user.id);
+      setMessages(data);
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      toast.error("Erreur lors de l'envoi du message");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -118,16 +154,9 @@ const Messages = () => {
                   return (
                     <Card 
                       key={message.id}
-                      className={`cursor-pointer transition-colors ${
+                      className={`transition-colors ${
                         !message.is_read && isReceived ? 'border-primary bg-primary/5' : ''
                       }`}
-                      onClick={async () => {
-                        if (isReceived && !message.is_read) {
-                          await messageService.markAsRead(message.id);
-                          const data = await messageService.getMessagesByUser(user!.id);
-                          setMessages(data);
-                        }
-                      }}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
@@ -141,7 +170,23 @@ const Messages = () => {
                         <p className="text-sm font-medium text-muted-foreground">{message.subject}</p>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm">{message.content}</p>
+                        <p className="text-sm mb-4">{message.content}</p>
+                        {isReceived && (
+                          <Button 
+                            size="sm" 
+                            onClick={async () => {
+                              if (!message.is_read) {
+                                await messageService.markAsRead(message.id);
+                                const data = await messageService.getMessagesByUser(user!.id);
+                                setMessages(data);
+                              }
+                              handleReply(message);
+                            }}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Répondre
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -149,14 +194,43 @@ const Messages = () => {
               </div>
             )}
           </ScrollArea>
-          
-          <div className="mt-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Pour envoyer un message, cliquez sur un message existant pour répondre.
-            </p>
-          </div>
         </CardContent>
       </Card>
+
+      <Dialog open={replyDialogOpen} onOpenChange={setReplyDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Répondre au message</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sujet</label>
+              <Input
+                value={replySubject}
+                onChange={(e) => setReplySubject(e.target.value)}
+                placeholder="Sujet du message"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Message</label>
+              <Textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="Votre réponse..."
+                rows={6}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplyDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleSendReply} disabled={sending || !replyContent.trim()}>
+              {sending ? "Envoi..." : "Envoyer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
