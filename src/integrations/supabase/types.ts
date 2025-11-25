@@ -503,6 +503,7 @@ export type Database = {
           created_at: string
           gender: string | null
           id: string
+          is_active: boolean | null
           medical_record_id: string | null
           phone_number: string | null
           updated_at: string
@@ -514,6 +515,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id: string
+          is_active?: boolean | null
           medical_record_id?: string | null
           phone_number?: string | null
           updated_at?: string
@@ -525,6 +527,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          is_active?: boolean | null
           medical_record_id?: string | null
           phone_number?: string | null
           updated_at?: string

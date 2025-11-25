@@ -32,10 +32,11 @@ interface Patient {
 
 
 export const PatientsTable = () => {
-  const { patients, loading } = useAdminPatients();
+  const { patients, loading, updatePatientStatus } = useAdminPatients();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<AdminPatient | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const filteredPatients = patients.filter(patient => {
     const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.toLowerCase();
@@ -44,8 +45,17 @@ export const PatientsTable = () => {
     return fullName.includes(query) || email.includes(query);
   });
 
-  const handleStatusChange = (patientId: string, newStatus: "active" | "inactive") => {
-    toast.success(`Statut du patient mis à jour`);
+  const handleStatusChange = async (patientId: string, newStatus: "active" | "inactive") => {
+    setUpdatingStatus(patientId);
+    const isActive = newStatus === "active";
+    const success = await updatePatientStatus(patientId, isActive);
+    setUpdatingStatus(null);
+    
+    if (success) {
+      toast.success(`Statut du patient mis à jour avec succès`);
+    } else {
+      toast.error(`Erreur lors de la mise à jour du statut`);
+    }
   };
 
   const handleViewMedicalRecord = (patientId: string) => {
@@ -138,9 +148,12 @@ export const PatientsTable = () => {
                       <FileText className="mr-2 h-4 w-4" />
                       Dossier médical
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleStatusChange(patient.id, patient.status === "active" ? "inactive" : "active")}>
+                    <DropdownMenuItem 
+                      onClick={() => handleStatusChange(patient.id, patient.status === "active" ? "inactive" : "active")}
+                      disabled={updatingStatus === patient.id}
+                    >
                       <UserCog className="mr-2 h-4 w-4" />
-                      {patient.status === "active" ? "Désactiver" : "Activer"}
+                      {updatingStatus === patient.id ? "Mise à jour..." : patient.status === "active" ? "Désactiver" : "Activer"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
