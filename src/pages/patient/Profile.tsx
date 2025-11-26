@@ -30,6 +30,16 @@ interface PatientInfo {
   gender: string;
   blood_type: string;
   allergies: string[];
+  medical_history: {
+    chronic_diseases: string[];
+    medical_background: string[];
+    current_treatments: string[];
+  };
+  beneficiaries: Array<{
+    name: string;
+    relationship: string;
+    birth_date: string;
+  }>;
 }
 
 const Profile = () => {
@@ -44,7 +54,13 @@ const Profile = () => {
     birth_date: "",
     gender: "",
     blood_type: "",
-    allergies: []
+    allergies: [],
+    medical_history: {
+      chronic_diseases: [],
+      medical_background: [],
+      current_treatments: []
+    },
+    beneficiaries: []
   });
   const [resetEmail, setResetEmail] = useState("");
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
@@ -75,14 +91,25 @@ const Profile = () => {
         // Récupérer les données du patient
         const { data: patientData, error: patientError } = await supabase
           .from('patients')
-          .select('birth_date, gender, blood_type, allergies')
+          .select('birth_date, gender, blood_type, allergies, medical_history, beneficiaries, phone_number')
           .eq('id', user.id)
           .single();
 
         if (patientError) {
           console.error('Erreur lors du chargement des données patient:', patientError);
         } else if (patientData) {
-          setPatientInfo(patientData);
+          const medicalHistory = (patientData.medical_history as any) || {
+            chronic_diseases: [],
+            medical_background: [],
+            current_treatments: []
+          };
+          const beneficiaries = (patientData.beneficiaries as any) || [];
+          
+          setPatientInfo({
+            ...patientData,
+            medical_history: medicalHistory,
+            beneficiaries: beneficiaries
+          });
         }
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
@@ -117,7 +144,9 @@ const Profile = () => {
           birth_date: patientInfo.birth_date || null,
           gender: patientInfo.gender || null,
           blood_type: patientInfo.blood_type || null,
-          allergies: patientInfo.allergies || []
+          allergies: patientInfo.allergies || [],
+          medical_history: patientInfo.medical_history,
+          beneficiaries: patientInfo.beneficiaries
         });
 
       if (patientError) throw patientError;
@@ -262,6 +291,55 @@ const Profile = () => {
               })}
               placeholder="Pénicilline, Arachides, etc."
             />
+          </div>
+          <Separator />
+          <div className="space-y-4">
+            <h4 className="font-medium">Historique médical</h4>
+            <div className="space-y-2">
+              <Label htmlFor="chronic_diseases">Maladies chroniques (séparées par des virgules)</Label>
+              <Input 
+                id="chronic_diseases" 
+                value={patientInfo.medical_history.chronic_diseases?.join(", ") || ""}
+                onChange={(e) => setPatientInfo({
+                  ...patientInfo,
+                  medical_history: {
+                    ...patientInfo.medical_history,
+                    chronic_diseases: e.target.value.split(",").map(d => d.trim()).filter(d => d)
+                  }
+                })}
+                placeholder="Diabète, Hypertension, etc."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="medical_background">Antécédents médicaux (séparés par des virgules)</Label>
+              <Input 
+                id="medical_background" 
+                value={patientInfo.medical_history.medical_background?.join(", ") || ""}
+                onChange={(e) => setPatientInfo({
+                  ...patientInfo,
+                  medical_history: {
+                    ...patientInfo.medical_history,
+                    medical_background: e.target.value.split(",").map(m => m.trim()).filter(m => m)
+                  }
+                })}
+                placeholder="Chirurgies passées, hospitalisations, etc."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="current_treatments">Traitements en cours (séparés par des virgules)</Label>
+              <Input 
+                id="current_treatments" 
+                value={patientInfo.medical_history.current_treatments?.join(", ") || ""}
+                onChange={(e) => setPatientInfo({
+                  ...patientInfo,
+                  medical_history: {
+                    ...patientInfo.medical_history,
+                    current_treatments: e.target.value.split(",").map(t => t.trim()).filter(t => t)
+                  }
+                })}
+                placeholder="Médicaments actuels, etc."
+              />
+            </div>
           </div>
           <Button onClick={handleSaveProfile}>Sauvegarder les modifications</Button>
         </CardContent>

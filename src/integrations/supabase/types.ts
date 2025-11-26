@@ -377,6 +377,84 @@ export type Database = {
           },
         ]
       }
+      lab_results: {
+        Row: {
+          created_at: string
+          doctor_id: string | null
+          file_url: string | null
+          id: string
+          notes: string | null
+          patient_id: string
+          results: string | null
+          test_date: string
+          test_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          patient_id: string
+          results?: string | null
+          test_date: string
+          test_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          results?: string | null
+          test_date?: string
+          test_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      medical_images: {
+        Row: {
+          created_at: string
+          description: string | null
+          doctor_id: string | null
+          id: string
+          image_date: string
+          image_type: string
+          image_url: string
+          notes: string | null
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doctor_id?: string | null
+          id?: string
+          image_date: string
+          image_type: string
+          image_url: string
+          notes?: string | null
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doctor_id?: string | null
+          id?: string
+          image_date?: string
+          image_type?: string
+          image_url?: string
+          notes?: string | null
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medical_records: {
         Row: {
           created_at: string
@@ -566,36 +644,42 @@ export type Database = {
       patients: {
         Row: {
           allergies: string[] | null
+          beneficiaries: Json | null
           birth_date: string | null
           blood_type: string | null
           created_at: string
           gender: string | null
           id: string
           is_active: boolean | null
+          medical_history: Json | null
           medical_record_id: string | null
           phone_number: string | null
           updated_at: string
         }
         Insert: {
           allergies?: string[] | null
+          beneficiaries?: Json | null
           birth_date?: string | null
           blood_type?: string | null
           created_at?: string
           gender?: string | null
           id: string
           is_active?: boolean | null
+          medical_history?: Json | null
           medical_record_id?: string | null
           phone_number?: string | null
           updated_at?: string
         }
         Update: {
           allergies?: string[] | null
+          beneficiaries?: Json | null
           birth_date?: string | null
           blood_type?: string | null
           created_at?: string
           gender?: string | null
           id?: string
           is_active?: boolean | null
+          medical_history?: Json | null
           medical_record_id?: string | null
           phone_number?: string | null
           updated_at?: string
@@ -604,6 +688,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          avatar_url: string | null
           created_at: string
           email: string | null
           first_name: string | null
@@ -613,6 +699,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          avatar_url?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
@@ -622,6 +710,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          avatar_url?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
@@ -836,6 +926,48 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -857,6 +989,42 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      vaccinations: {
+        Row: {
+          administered_by: string | null
+          created_at: string
+          id: string
+          next_dose_date: string | null
+          notes: string | null
+          patient_id: string
+          updated_at: string
+          vaccination_date: string
+          vaccine_name: string
+        }
+        Insert: {
+          administered_by?: string | null
+          created_at?: string
+          id?: string
+          next_dose_date?: string | null
+          notes?: string | null
+          patient_id: string
+          updated_at?: string
+          vaccination_date: string
+          vaccine_name: string
+        }
+        Update: {
+          administered_by?: string | null
+          created_at?: string
+          id?: string
+          next_dose_date?: string | null
+          notes?: string | null
+          patient_id?: string
+          updated_at?: string
+          vaccination_date?: string
+          vaccine_name?: string
         }
         Relationships: []
       }
