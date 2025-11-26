@@ -14,6 +14,9 @@ import {
   Heart,
   Pill,
   LogOut,
+  LayoutDashboard,
+  CreditCard,
+  HelpCircle,
 } from "lucide-react";
 
 export const PatientSidebar = () => {
@@ -36,6 +39,12 @@ export const PatientSidebar = () => {
       <h2 className="font-semibold text-lg mb-4">Menu Patient</h2>
       <Link to="/patient">
         <Button variant="ghost" className="w-full justify-start" size="lg">
+          <LayoutDashboard className="mr-2 h-5 w-5" />
+          Tableau de bord
+        </Button>
+      </Link>
+      <Link to="/patient/appointments">
+        <Button variant="ghost" className="w-full justify-start" size="lg">
           <Calendar className="mr-2 h-5 w-5" />
           Mes rendez-vous
         </Button>
@@ -44,12 +53,6 @@ export const PatientSidebar = () => {
         <Button variant="ghost" className="w-full justify-start" size="lg">
           <ClipboardList className="mr-2 h-5 w-5" />
           Mes tickets
-        </Button>
-      </Link>
-      <Link to="/patient/profile">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <User className="mr-2 h-5 w-5" />
-          Mon profil
         </Button>
       </Link>
       <Link to="/patient/medical-history">
@@ -64,6 +67,12 @@ export const PatientSidebar = () => {
           Ordonnances
         </Button>
       </Link>
+      <Link to="/patient/payments">
+        <Button variant="ghost" className="w-full justify-start" size="lg">
+          <CreditCard className="mr-2 h-5 w-5" />
+          Paiements
+        </Button>
+      </Link>
       <Link to="/patient/messages">
         <Button variant="ghost" className="w-full justify-start" size="lg">
           <MessageCircle className="mr-2 h-5 w-5" />
@@ -74,6 +83,18 @@ export const PatientSidebar = () => {
         <Button variant="ghost" className="w-full justify-start" size="lg">
           <FileText className="mr-2 h-5 w-5" />
           Documents
+        </Button>
+      </Link>
+      <Link to="/patient/support">
+        <Button variant="ghost" className="w-full justify-start" size="lg">
+          <HelpCircle className="mr-2 h-5 w-5" />
+          Support
+        </Button>
+      </Link>
+      <Link to="/patient/profile">
+        <Button variant="ghost" className="w-full justify-start" size="lg">
+          <User className="mr-2 h-5 w-5" />
+          Mon profil
         </Button>
       </Link>
       <Link to="/patient/settings">

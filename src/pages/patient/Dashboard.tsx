@@ -6,6 +6,9 @@ import { PatientSidebar } from "@/components/patient/PatientSidebar";
 import { NavigationHeader } from "@/components/patient/NavigationHeader";
 import { RealAppointmentsPage } from "@/components/patient/RealAppointmentsPage";
 import { RealtimeNotifications } from "@/components/patient/RealtimeNotifications";
+import { EnhancedDashboard } from "@/components/patient/EnhancedDashboard";
+import { PaymentHistory } from "@/components/patient/PaymentHistory";
+import { SupportTickets } from "@/components/patient/SupportTickets";
 import Messages from "./Messages";
 import Documents from "./Documents";
 import SettingsPage from "./Settings";
@@ -118,7 +121,8 @@ const PatientDashboard = () => {
           {/* Main Content */}
           <div className="md:col-span-3">
             <Routes>
-              <Route path="/" element={<RealAppointmentsPage />} />
+              <Route path="/" element={<EnhancedDashboard />} />
+              <Route path="/appointments" element={<RealAppointmentsPage />} />
               <Route path="/tickets" element={<AppointmentTickets />} />
               <Route path="/appointment/:id" element={<PatientAppointmentDetails />} />
               <Route path="/profile" element={<Profile />} />
@@ -126,6 +130,8 @@ const PatientDashboard = () => {
               <Route path="/prescriptions" element={<Prescriptions />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/documents" element={<Documents />} />
+              <Route path="/payments" element={<PaymentHistory />} />
+              <Route path="/support" element={<SupportTickets />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </div>
