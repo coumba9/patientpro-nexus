@@ -16,6 +16,7 @@ export * from './services/document.service';
 // Export notification service
 export { notificationService } from './services/notification.service';
 export * from './services/sms.service';
+export { invoiceService } from './services/invoice.service';
 
 // Export interfaces
 export * from './interfaces';
