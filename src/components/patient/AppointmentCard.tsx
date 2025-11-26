@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,9 +16,12 @@ import {
 import { MessageDialog } from "./MessageDialog";
 import { RescheduleDialog } from "./RescheduleDialog";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
+import { CompletedAppointmentActions } from "./CompletedAppointmentActions";
+import { MissedAppointmentCard } from "./MissedAppointmentCard";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { messageService, appointmentService } from "@/api";
+import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "./types";
 
 interface AppointmentCardProps {
@@ -37,7 +40,67 @@ export const AppointmentCard = ({
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
+  const [hasMedicalRecord, setHasMedicalRecord] = useState(false);
+  const [hasPrescription, setHasPrescription] = useState(false);
+  const [canReschedule, setCanReschedule] = useState(true);
+  const [penaltyPercentage, setPenaltyPercentage] = useState(0);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (appointment.status === 'completed' && user?.id) {
+      checkCompletedAppointmentData();
+    }
+    if (appointment.status === 'no_show') {
+      checkReschedulePolicy();
+    }
+  }, [appointment.id, appointment.status, user?.id]);
+
+  const checkCompletedAppointmentData = async () => {
+    try {
+      // Vérifier si le patient a déjà noté
+      const { data: rating } = await supabase
+        .from('ratings')
+        .select('id')
+        .eq('appointment_id', appointment.id)
+        .eq('patient_id', user?.id)
+        .maybeSingle();
+      
+      setHasRated(!!rating);
+
+      // Vérifier s'il y a un compte-rendu médical
+      const { data: medicalRecord } = await supabase
+        .from('medical_records')
+        .select('id, prescription')
+        .eq('patient_id', user?.id)
+        .eq('doctor_id', appointment.doctorId)
+        .maybeSingle();
+      
+      setHasMedicalRecord(!!medicalRecord);
+      setHasPrescription(!!(medicalRecord as any)?.prescription);
+    } catch (error) {
+      console.error("Error checking appointment data:", error);
+    }
+  };
+
+  const checkReschedulePolicy = async () => {
+    try {
+      const { data: policy } = await supabase
+        .from('reschedule_policies')
+        .select('*')
+        .single();
+      
+      if (policy) {
+        const appointmentDateTime = new Date(`${appointment.date} ${appointment.time}`);
+        const hoursSinceAppointment = (Date.now() - appointmentDateTime.getTime()) / (1000 * 60 * 60);
+        
+        setCanReschedule(hoursSinceAppointment <= policy.hours_before_appointment);
+        setPenaltyPercentage(policy.penalty_percentage || 0);
+      }
+    } catch (error) {
+      console.error("Error checking reschedule policy:", error);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -99,6 +162,19 @@ export const AppointmentCard = ({
     }
   };
 
+  // Si le rendez-vous est manqué, afficher la carte spéciale
+  if (appointment.status === 'no_show') {
+    return (
+      <MissedAppointmentCard
+        appointment={appointment}
+        canReschedule={canReschedule}
+        penaltyPercentage={penaltyPercentage}
+        onReschedule={handleRescheduleSubmit}
+        onSendMessage={handleSendMessage}
+      />
+    );
+  }
+
   return (
     <>
       <Card className="mb-4">
@@ -149,45 +225,63 @@ export const AppointmentCard = ({
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsMessageDialogOpen(true)}
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Contacter
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsRescheduleDialogOpen(true)}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Reporter
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-red-600 hover:text-red-600"
-                onClick={() => setIsCancelDialogOpen(true)}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Annuler
-              </Button>
-
-              {appointment.status === "awaiting_patient_confirmation" && (
+            {/* Actions selon le statut */}
+            {appointment.status === 'completed' ? (
+              <CompletedAppointmentActions
+                appointmentId={appointment.id}
+                doctorId={appointment.doctorId || ''}
+                doctorName={appointment.doctor}
+                hasRated={hasRated}
+                hasMedicalRecord={hasMedicalRecord}
+                hasPrescription={hasPrescription}
+                paymentStatus={(appointment as any).payment_status || 'paid'}
+                onMessageDoctor={() => setIsMessageDialogOpen(true)}
+              />
+            ) : (
+              <div className="flex flex-wrap gap-2">
                 <Button
+                  variant="outline"
                   size="sm"
-                  onClick={() => onConfirm(appointment.id)}
+                  onClick={() => setIsMessageDialogOpen(true)}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Confirmer
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contacter
                 </Button>
-              )}
-            </div>
+                
+                {appointment.status !== 'cancelled' && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsRescheduleDialogOpen(true)}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Reporter
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-600"
+                      onClick={() => setIsCancelDialogOpen(true)}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Annuler
+                    </Button>
+                  </>
+                )}
+
+                {appointment.status === "awaiting_patient_confirmation" && (
+                  <Button
+                    size="sm"
+                    onClick={() => onConfirm(appointment.id)}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Confirmer
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

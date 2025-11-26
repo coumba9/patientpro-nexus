@@ -46,6 +46,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          can_reschedule_without_penalty: boolean | null
           cancellation_reason: string | null
           cancellation_type: string | null
           cancelled_at: string | null
@@ -56,10 +57,15 @@ export type Database = {
           id: string
           location: string | null
           mode: string
+          no_show_at: string | null
           notes: string | null
           patient_id: string
+          payment_amount: number | null
+          payment_id: string | null
+          payment_status: string | null
           previous_date: string | null
           previous_time: string | null
+          reschedule_count: number | null
           reschedule_reason: string | null
           reschedule_requested_at: string | null
           reschedule_requested_by: string | null
@@ -69,6 +75,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          can_reschedule_without_penalty?: boolean | null
           cancellation_reason?: string | null
           cancellation_type?: string | null
           cancelled_at?: string | null
@@ -79,10 +86,15 @@ export type Database = {
           id?: string
           location?: string | null
           mode?: string
+          no_show_at?: string | null
           notes?: string | null
           patient_id: string
+          payment_amount?: number | null
+          payment_id?: string | null
+          payment_status?: string | null
           previous_date?: string | null
           previous_time?: string | null
+          reschedule_count?: number | null
           reschedule_reason?: string | null
           reschedule_requested_at?: string | null
           reschedule_requested_by?: string | null
@@ -92,6 +104,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          can_reschedule_without_penalty?: boolean | null
           cancellation_reason?: string | null
           cancellation_type?: string | null
           cancelled_at?: string | null
@@ -102,10 +115,15 @@ export type Database = {
           id?: string
           location?: string | null
           mode?: string
+          no_show_at?: string | null
           notes?: string | null
           patient_id?: string
+          payment_amount?: number | null
+          payment_id?: string | null
+          payment_status?: string | null
           previous_date?: string | null
           previous_time?: string | null
+          reschedule_count?: number | null
           reschedule_reason?: string | null
           reschedule_requested_at?: string | null
           reschedule_requested_by?: string | null
@@ -308,6 +326,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          appointment_id: string
+          created_at: string
+          doctor_id: string
+          id: string
+          invoice_number: string | null
+          patient_id: string
+          payment_date: string | null
+          payment_method: string | null
+          payment_status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          appointment_id: string
+          created_at?: string
+          doctor_id: string
+          id?: string
+          invoice_number?: string | null
+          patient_id: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          invoice_number?: string | null
+          patient_id?: string
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medical_records: {
         Row: {
@@ -671,6 +739,33 @@ export type Database = {
           reminder_type?: string
           scheduled_for?: string
           status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reschedule_policies: {
+        Row: {
+          created_at: string
+          hours_before_appointment: number
+          id: string
+          max_reschedules: number | null
+          penalty_percentage: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hours_before_appointment?: number
+          id?: string
+          max_reschedules?: number | null
+          penalty_percentage?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hours_before_appointment?: number
+          id?: string
+          max_reschedules?: number | null
+          penalty_percentage?: number | null
           updated_at?: string
         }
         Relationships: []
