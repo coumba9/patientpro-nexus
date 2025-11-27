@@ -144,7 +144,7 @@ const Index = () => {
             <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
               {user && userRole === "doctor" ? "Optimisez votre pratique médicale et suivez vos patients" : "Rejoignez les milliers de patients qui font confiance à JàmmSanté pour leur santé."}
             </p>
-            <Button size="lg" variant="secondary" className="text-primary hover:text-primary/90 dark:bg-gray-200 shadow-lg hover:shadow-xl transition-all" onClick={handleGetStarted}>
+            <Button size="lg" variant="secondary" onClick={handleGetStarted} className="text-primary hover:text-primary/90 shadow-lg hover:shadow-xl transition-all bg-primary-foreground">
               {user ? "Accéder à mon espace" : "Commencer maintenant"}
             </Button>
           </div>
