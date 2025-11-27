@@ -128,7 +128,7 @@ export const Hero = () => {
         }} transition={{
           delay: 0.6
         }} className="flex flex-wrap gap-4 justify-center lg:justify-start">
-            <Button size="lg" onClick={handleBookAppointment} className="text-lg px-8 py-6 shadow-medium hover:shadow-strong transition-all bg-[var(--gradient-primary)] hover:scale-105">
+            <Button size="lg" onClick={handleBookAppointment} className="text-lg px-8 py-6 shadow-medium hover:shadow-strong transition-all bg-[var(--gradient-primary)] hover:scale-105 text-primary bg-accent">
               <Calendar className="mr-2 h-5 w-5" />
               Trouver un médecin
             </Button>
