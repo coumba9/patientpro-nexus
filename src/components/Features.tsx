@@ -1,4 +1,3 @@
-
 import { Calendar, Search, Stethoscope, Video } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -42,46 +41,66 @@ export const Features = () => {
   };
 
   return (
-    <section className="py-24 bg-gray-50 dark:bg-gray-900">
-      <div className="container">
+    <motion.section
+      variants={containerVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-100px" }}
+      className="py-24 px-4 relative overflow-hidden"
+    >
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-[var(--gradient-hero)] opacity-30" />
+      
+      <div className="relative max-w-7xl mx-auto">
+        <div className="text-center mb-20">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
+          >
+            Pourquoi choisir{" "}
+            <span className="text-transparent bg-clip-text bg-[var(--gradient-primary)]">
+              JàmmSanté
+            </span>
+            ?
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+          >
+            Une plateforme moderne et sécurisée pour tous vos besoins de santé
+          </motion.p>
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
-            Une plateforme complète pour votre santé
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Découvrez toutes les fonctionnalités qui font de JàmmSanté la meilleure solution pour gérer votre santé
-          </p>
-        </motion.div>
-        
-        <motion.div 
           variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
         >
           {features.map((feature, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700"
-              whileHover={{ y: -5, transition: { duration: 0.3 } }}
+              whileHover={{ y: -10, scale: 1.02 }}
+              className="group bg-card border-2 border-border rounded-3xl p-8 hover:shadow-strong hover:border-primary/30 transition-all duration-300"
             >
-              <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center mb-4">
-                <feature.icon className="w-6 h-6 text-primary" />
+              <div className="mb-6 p-5 bg-[var(--gradient-hero)] rounded-2xl w-fit group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-soft">
+                <feature.icon className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600 dark:text-gray-400">{feature.description}</p>
+              <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors">
+                {feature.title}
+              </h3>
+              <p className="text-muted-foreground leading-relaxed text-lg">
+                {feature.description}
+              </p>
             </motion.div>
           ))}
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 };

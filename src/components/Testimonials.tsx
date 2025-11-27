@@ -1,4 +1,3 @@
-
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -31,52 +30,67 @@ const testimonials = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-24 bg-white dark:bg-gray-900 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 right-0 h-1/2 bg-gray-50 dark:bg-gray-800"></div>
-      
-      <div className="container relative z-10">
+    <section className="py-24 px-4 relative overflow-hidden">
+      {/* Enhanced background */}
+      <div className="absolute inset-0 bg-[var(--gradient-hero)]" />
+      <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
+
+      <div className="max-w-7xl mx-auto relative">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ce qu'ils pensent de nous
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+            Ce que disent nos{" "}
+            <span className="text-transparent bg-clip-text bg-[var(--gradient-primary)]">
+              patients
+            </span>
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Découvrez les témoignages de nos utilisateurs satisfaits, patients comme médecins
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Des milliers de patients satisfaits font confiance à JàmmSanté
           </p>
         </motion.div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg"
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{ y: -10, scale: 1.02 }}
+              className="bg-card border-2 border-border rounded-3xl p-8 hover:shadow-strong hover:border-primary/30 transition-all duration-300"
             >
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
+              <div className="flex gap-1 mb-6">
+                {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                    className={`h-6 w-6 transition-colors ${
+                      i < testimonial.rating
+                        ? "fill-secondary text-secondary"
+                        : "fill-muted text-muted"
+                    }`}
                   />
                 ))}
               </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-6 italic">{testimonial.content}</p>
-              <div className="flex items-center">
-                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-                  <img src={testimonial.image} alt={testimonial.name} className="w-full h-full object-cover" />
+              <p className="text-foreground mb-8 leading-relaxed text-lg italic">
+                "{testimonial.content}"
+              </p>
+              <div className="flex items-center gap-4 pt-6 border-t border-border">
+                <div className="w-14 h-14 bg-[var(--gradient-primary)] rounded-full flex items-center justify-center shadow-soft">
+                  <span className="text-white font-bold text-xl">
+                    {testimonial.name.charAt(0)}
+                  </span>
                 </div>
                 <div>
-                  <div className="font-semibold">{testimonial.name}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{testimonial.role}</div>
+                  <p className="font-bold text-lg">{testimonial.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {testimonial.role}
+                  </p>
                 </div>
               </div>
             </motion.div>

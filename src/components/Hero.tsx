@@ -1,145 +1,229 @@
-
-import { Button } from "@/components/ui/button";
-import { LogIn, Search, UserPlus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "./ui/button";
+import { Calendar, Heart, MessageSquare, Shield, Clock, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import { HeroCarousel } from "./HeroCarousel";
 
 export const Hero = () => {
   const navigate = useNavigate();
   const { user, userRole, loading } = useAuth();
 
   const handleBookAppointment = () => {
-    // Si connecté en tant que médecin, afficher un message d'erreur
     if (user && userRole === "doctor") {
       navigate("/doctor");
       return;
     }
-    // Sinon, naviguer vers la page "Trouver un médecin"
     navigate("/find-doctor");
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-sky-100 to-white py-20 md:py-32 px-4 md:px-6">
-      <div className="container mx-auto relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <motion.div 
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-20 px-4">
+      {/* Enhanced background with medical theme */}
+      <div className="absolute inset-0 bg-[var(--gradient-subtle)]" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [90, 0, 90],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="absolute -bottom-1/2 -left-1/4 w-[800px] h-[800px] bg-gradient-to-tr from-secondary/10 to-primary/10 rounded-full blur-3xl"
+        />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+        {/* Left Content */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="space-y-10 text-center lg:text-left"
+        >
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 bg-medical-light px-4 py-2 rounded-full"
+            >
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Plateforme sécurisée et certifiée</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight"
+            >
+              Votre santé,{" "}
+              <span className="text-transparent bg-clip-text bg-[var(--gradient-primary)]">
+                notre priorité
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+            >
+              Prenez rendez-vous avec les meilleurs médecins en quelques clics. 
+              Simple, rapide et sécurisé.
+            </motion.p>
+          </div>
+
+          {/* Feature Pills */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-left"
+            transition={{ delay: 0.5 }}
+            className="flex flex-wrap gap-4 justify-center lg:justify-start"
           >
-            <motion.h1 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6"
-            >
-              {user && userRole === "doctor" 
-                ? "Bienvenue dans votre espace médecin" 
-                : "Votre santé, notre priorité"}
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-lg md:text-xl text-gray-600 mb-8"
-            >
-              {user && userRole === "doctor"
-                ? "Gérez vos rendez-vous, vos patients et vos consultations en toute simplicité"
-                : "Prenez rendez-vous avec les meilleurs professionnels de santé, 24h/24 et 7j/7 sur JàmmSanté"}
-            </motion.p>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              {!(user && userRole === "doctor") && (
-                <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all" onClick={handleBookAppointment}>
-                  <Search className="mr-2 h-5 w-5" />
-                  Trouver un médecin
-                </Button>
-              )}
-              
-              {!user && (
-                <>
-                  <Link to="/register" className="w-full sm:w-auto">
-                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 hover:bg-gray-50">
-                      <UserPlus className="mr-2 h-5 w-5" />
-                      Je suis patient
-                    </Button>
-                  </Link>
-                  <Link to="/login" className="w-full sm:w-auto">
-                    <Button size="lg" variant="secondary" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
-                      <LogIn className="mr-2 h-5 w-5" />
-                      Connexion
-                    </Button>
-                  </Link>
-                </>
-              )}
-              
-              {user && userRole === "patient" && (
-                <Link to="/patient" className="w-full sm:w-auto">
-                  <Button size="lg" variant="secondary" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
-                    Mon espace patient
-                  </Button>
-                </Link>
-              )}
-
-              {user && userRole === "doctor" && (
-                <Link to="/doctor" className="w-full sm:w-auto">
-                  <Button size="lg" variant="secondary" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all">
-                    Mon espace médecin
-                  </Button>
-                </Link>
-              )}
-            </motion.div>
-            {!(user && userRole === "doctor") && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-                className="mt-6"
-              >
-                <Link to="/register?type=doctor" className="text-primary hover:text-primary/90 font-medium underline-offset-4 hover:underline">
-                  Vous êtes médecin ? Rejoignez-nous
-                </Link>
-              </motion.div>
-            )}
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="hidden md:block"
-          >
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-blue-400 rounded-2xl blur opacity-30"></div>
-              <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-                <img 
-                  src="/placeholder.svg" 
-                  alt="JàmmSanté" 
-                  className="w-full h-auto object-cover aspect-square"
-                />
-              </div>
-              <div className="absolute -bottom-4 -right-4 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg">
-                <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-2 rounded-lg">
-                  <svg xmlns="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuLtAZsYb5-rEEQseeri8AP3nvAdOwtFNcXg&s" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" x2="4" y1="22" y2="15"></line></svg>
-                  97% de satisfaction
-                </div>
-              </div>
+            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-full shadow-soft">
+              <Clock className="h-4 w-4 text-secondary" />
+              <span className="text-sm font-medium">Disponible 24/7</span>
+            </div>
+            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-full shadow-soft">
+              <Users className="h-4 w-4 text-secondary" />
+              <span className="text-sm font-medium">500+ Médecins</span>
+            </div>
+            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-full shadow-soft">
+              <Heart className="h-4 w-4 text-secondary" />
+              <span className="text-sm font-medium">50k+ Patients</span>
             </div>
           </motion.div>
-        </div>
+
+          {/* CTA Buttons */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex flex-wrap gap-4 justify-center lg:justify-start"
+          >
+            <Button
+              size="lg"
+              onClick={handleBookAppointment}
+              className="text-lg px-8 py-6 shadow-medium hover:shadow-strong transition-all bg-[var(--gradient-primary)] hover:scale-105"
+            >
+              <Calendar className="mr-2 h-5 w-5" />
+              Trouver un médecin
+            </Button>
+
+            {!user && (
+              <>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => navigate("/register?role=patient")}
+                  className="text-lg px-8 py-6 border-2 hover:bg-medical-light"
+                >
+                  <Heart className="mr-2 h-5 w-5" />
+                  S'inscrire (Patient)
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => navigate("/login")}
+                  className="text-lg px-8 py-6 hover:bg-medical-light"
+                >
+                  Connexion
+                </Button>
+              </>
+            )}
+
+            {user && userRole === "patient" && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate("/patient/dashboard")}
+                className="text-lg px-8 py-6 border-2"
+              >
+                <MessageSquare className="mr-2 h-5 w-5" />
+                Mon espace patient
+              </Button>
+            )}
+
+            {user && userRole === "doctor" && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => navigate("/doctor/dashboard")}
+                className="text-lg px-8 py-6 border-2"
+              >
+                <MessageSquare className="mr-2 h-5 w-5" />
+                Mon espace médecin
+              </Button>
+            )}
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="text-sm text-muted-foreground"
+          >
+            Vous êtes médecin ?{" "}
+            <a
+              href="/join-us"
+              className="text-primary hover:underline font-semibold"
+            >
+              Rejoignez notre plateforme →
+            </a>
+          </motion.p>
+        </motion.div>
+
+        {/* Right - Carousel */}
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
+          className="relative"
+        >
+          <HeroCarousel />
+
+          {/* Decorative floating elements */}
+          <motion.div
+            animate={{
+              y: [0, -15, 0],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute -top-8 -right-8 w-32 h-32 bg-secondary/20 rounded-full blur-2xl"
+          />
+          <motion.div
+            animate={{
+              y: [0, 15, 0],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute -bottom-8 -left-8 w-40 h-40 bg-primary/20 rounded-full blur-2xl"
+          />
+        </motion.div>
       </div>
-      
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
-      </div>
-    </div>
+    </section>
   );
-}
+};
