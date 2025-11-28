@@ -26,3 +26,9 @@ verify_jwt = true
 
 [functions.reject-doctor-application]
 verify_jwt = true
+
+[functions.patient-chatbot]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
