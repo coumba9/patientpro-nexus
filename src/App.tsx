@@ -50,6 +50,7 @@ import NotificationManagement from "./pages/admin/NotificationManagement";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
 import DoctorAppointmentDetails from "./pages/doctor/AppointmentDetails";
 import PatientAppointmentDetails from "./pages/patient/AppointmentDetails";
+import { ChatbotWidget } from "@/components/patient/ChatbotWidget";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <AuthGuard>
+                <ChatbotWidget />
                 <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/find-doctor" element={<FindDoctor />} />
