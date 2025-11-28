@@ -154,6 +154,8 @@ const PaymentConfirmation = () => {
         try {
           console.log("Creating appointment in Supabase...");
 
+          // Le rendez-vous est automatiquement confirmé car le créneau 
+          // a été sélectionné parmi les disponibilités du médecin
           const appointment = await appointmentService.createAppointment({
             doctor_id: data.doctorId,
             patient_id: user.id,
@@ -161,6 +163,7 @@ const PaymentConfirmation = () => {
             time: data.time,
             type: data.type,
             mode: data.consultationType,
+            status: 'confirmed', // Auto-confirmé car dans les créneaux de disponibilité
             location: data.consultationType === 'presentiel' ? 'Cabinet médical' : 'Téléconsultation',
             notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
           });
