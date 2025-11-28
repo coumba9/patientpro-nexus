@@ -48,48 +48,39 @@ class PatientService extends BaseService<Patient> {
   }
 
   async getPatientsByDoctor(doctorId: string): Promise<Patient[]> {
-    // Récupérer d'abord les rendez-vous du médecin
-    const { data: appointmentsData, error: appointmentsError } = await supabase
+    // Récupérer les patients via les rendez-vous avec leurs profils
+    const { data, error } = await supabase
       .from('appointments' as any)
-      .select('patient_id')
+      .select(`
+        patient_id,
+        patients!appointments_patient_id_fkey (
+          *,
+          profiles!patients_id_fkey (first_name, last_name, email)
+        )
+      `)
       .eq('doctor_id', doctorId)
+      .eq('status', 'completed')
       .order('date', { ascending: false });
     
-    if (appointmentsError) {
-      console.error('Error fetching appointments by doctor:', appointmentsError);
-      throw appointmentsError;
+    if (error) {
+      console.error('Error fetching patients details:', error);
+      throw error;
     }
     
-    // Type check to ensure the data is available and cast properly
-    if (!appointmentsData) {
+    if (!data) {
       return [];
     }
     
-    // First convert to unknown, then cast to our expected type to avoid TS errors
-    const typedAppointmentsData = appointmentsData as unknown as AppointmentWithPatientId[];
+    // Extraire les patients uniques
+    const uniquePatients = new Map<string, any>();
+    data.forEach((item: any) => {
+      const patient = item.patients;
+      if (patient && !uniquePatients.has(patient.id)) {
+        uniquePatients.set(patient.id, patient);
+      }
+    });
     
-    // Extract unique patient IDs
-    const uniquePatientIds = [...new Set(typedAppointmentsData.map(app => app.patient_id))];
-    
-    if (uniquePatientIds.length === 0) {
-      return [];
-    }
-    
-    // Retrieve patient details
-    const { data: patientsData, error: patientsError } = await supabase
-      .from(this.tableName as any)
-      .select(`
-        *,
-        profile:id (first_name, last_name, email)
-      `)
-      .in('id', uniquePatientIds);
-    
-    if (patientsError) {
-      console.error('Error fetching patients details:', patientsError);
-      throw patientsError;
-    }
-    
-    return patientsData as unknown as Patient[];
+    return Array.from(uniquePatients.values()) as unknown as Patient[];
   }
 }
 

@@ -32,9 +32,9 @@ class DocumentService extends BaseService<Document> {
       .from(this.tableName as any)
       .select(`
         *,
-        patient:patient_id (
+        patients!documents_patient_id_fkey (
           id,
-          profile:id (first_name, last_name)
+          profiles!patients_id_fkey (first_name, last_name)
         )
       `)
       .eq('doctor_id', doctorId)

@@ -54,6 +54,7 @@ class AppointmentService extends BaseService<Appointment> {
     mode: string;
     location?: string;
     notes?: string;
+    status?: string; // Optionnel pour forcer un statut
   }): Promise<Appointment> {
     // Vérifier la disponibilité avant de créer
     const slotCheck = await this.checkSlotAvailability({
@@ -66,12 +67,12 @@ class AppointmentService extends BaseService<Appointment> {
       throw new Error(slotCheck.error || 'Ce créneau n\'est pas disponible');
     }
 
-    // Create the appointment
+    // Create the appointment avec le statut fourni ou 'pending' par défaut
     const { data, error } = await supabase
       .from('appointments')
       .insert({
         ...appointmentData,
-        status: 'pending'
+        status: appointmentData.status || 'pending'
       })
       .select()
       .single();

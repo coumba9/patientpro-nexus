@@ -49,10 +49,11 @@ export const PaymentHistory = () => {
         .from('invoices')
         .select(`
           *,
-          appointment:appointment_id (
+          appointments!invoices_appointment_id_fkey (
             date,
-            doctor:doctor_id (
-              profile:id (first_name, last_name)
+            doctors!appointments_doctor_id_fkey (
+              id,
+              profiles!doctors_id_fkey (first_name, last_name)
             )
           )
         `)
@@ -214,12 +215,12 @@ export const PaymentHistory = () => {
                     </div>
                     <div>
                       <p className="font-semibold">
-                        Dr. {payment.appointment?.doctor?.profile?.first_name}{' '}
-                        {payment.appointment?.doctor?.profile?.last_name}
+                        Dr. {(payment as any).appointments?.doctors?.profiles?.first_name}{' '}
+                        {(payment as any).appointments?.doctors?.profiles?.last_name}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Consultation du{' '}
-                        {format(new Date(payment.appointment?.date), 'dd MMMM yyyy', {
+                        {format(new Date((payment as any).appointments?.date), 'dd MMMM yyyy', {
                           locale: fr,
                         })}
                       </p>

@@ -12,12 +12,14 @@ import {
   User,
   Stethoscope,
   X,
+  FileText,
 } from "lucide-react";
 import { MessageDialog } from "./MessageDialog";
 import { RescheduleDialog } from "./RescheduleDialog";
 import { CancelAppointmentDialog } from "./CancelAppointmentDialog";
 import { CompletedAppointmentActions } from "./CompletedAppointmentActions";
 import { MissedAppointmentCard } from "./MissedAppointmentCard";
+import { AppointmentDocuments } from "./AppointmentDocuments";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { messageService, appointmentService } from "@/api";
@@ -45,6 +47,7 @@ export const AppointmentCard = ({
   const [hasPrescription, setHasPrescription] = useState(false);
   const [canReschedule, setCanReschedule] = useState(true);
   const [penaltyPercentage, setPenaltyPercentage] = useState(0);
+  const [showDocuments, setShowDocuments] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -227,16 +230,27 @@ export const AppointmentCard = ({
 
             {/* Actions selon le statut */}
             {appointment.status === 'completed' ? (
-              <CompletedAppointmentActions
-                appointmentId={appointment.id}
-                doctorId={appointment.doctorId || ''}
-                doctorName={appointment.doctor}
-                hasRated={hasRated}
-                hasMedicalRecord={hasMedicalRecord}
-                hasPrescription={hasPrescription}
-                paymentStatus={(appointment as any).payment_status || 'paid'}
-                onMessageDoctor={() => setIsMessageDialogOpen(true)}
-              />
+              <div className="space-y-4 w-full md:w-auto">
+                <CompletedAppointmentActions
+                  appointmentId={appointment.id}
+                  doctorId={appointment.doctorId || ''}
+                  doctorName={appointment.doctor}
+                  hasRated={hasRated}
+                  hasMedicalRecord={hasMedicalRecord}
+                  hasPrescription={hasPrescription}
+                  paymentStatus={(appointment as any).payment_status || 'paid'}
+                  onMessageDoctor={() => setIsMessageDialogOpen(true)}
+                />
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDocuments(!showDocuments)}
+                  className="w-full"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  {showDocuments ? "Masquer" : "Voir"} les documents
+                </Button>
+              </div>
             ) : (
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -283,6 +297,17 @@ export const AppointmentCard = ({
               </div>
             )}
           </div>
+          
+          {/* Documents pour rendez-vous terminé */}
+          {appointment.status === 'completed' && showDocuments && (
+            <div className="mt-6 pt-6 border-t">
+              <AppointmentDocuments
+                appointmentId={appointment.id}
+                patientId={user?.id || ''}
+                doctorId={appointment.doctorId || ''}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
