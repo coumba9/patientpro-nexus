@@ -136,7 +136,7 @@ export const ChatbotWidget = () => {
             <Button
               size="lg"
               onClick={() => setIsOpen(true)}
-              className="h-16 w-16 rounded-full shadow-strong bg-[var(--gradient-primary)] hover:scale-110 transition-transform"
+              className="h-16 w-16 rounded-full shadow-2xl bg-gradient-to-r from-primary to-blue-600 hover:scale-110 hover:shadow-primary/50 transition-all duration-300 text-white"
             >
               <MessageCircle className="h-7 w-7" />
             </Button>
@@ -153,9 +153,9 @@ export const ChatbotWidget = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed bottom-6 right-6 z-50 w-[400px] max-w-[calc(100vw-3rem)]"
           >
-            <Card className="flex flex-col h-[600px] shadow-strong border-2">
+            <Card className="flex flex-col h-[600px] shadow-2xl border-2 border-primary/20 overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b bg-[var(--gradient-primary)] text-white rounded-t-xl">
+              <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-blue-600 text-white">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
                     <MessageCircle className="h-6 w-6" />
