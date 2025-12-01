@@ -1,15 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle, Eye } from "lucide-react";
+import { Search, User, FileText, Calendar, Activity, Pill, MessageCircle, AlertCircle, Eye, Download, Plus } from "lucide-react";
 import { AddMedicalRecordForm } from "./AddMedicalRecordForm";
 import { PrescriptionViewer } from "./PrescriptionViewer";
 import { useAuth } from "@/hooks/useAuth";
 import { useRealPatients } from "@/hooks/useRealPatients";
+import { useMedicalRecords } from "@/hooks/useMedicalRecords";
+import { generatePrescriptionPDF, generateMedicalReportPDF } from "@/lib/pdfGenerator";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface Patient {
   id: string;
@@ -18,22 +21,10 @@ interface Patient {
   gender: string;
   contact: string;
   lastVisit: string;
-}
-
-interface MedicalRecord {
-  id: string;
-  date: string;
-  diagnosis: string;
-  prescription: string;
-  notes: string;
-  doctor: string;
-}
-
-interface PatientNote {
-  id: string;
-  date: string;
-  title: string;
-  content: string;
+  blood_type?: string;
+  allergies?: string[];
+  email?: string;
+  phone_number?: string;
 }
 
 interface PatientRecordProps {
@@ -47,9 +38,14 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedTab, setSelectedTab] = useState("info");
   const [showAddRecordForm, setShowAddRecordForm] = useState(false);
-  const [refreshHistory, setRefreshHistory] = useState(0);
   const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
   const [showPrescriptionViewer, setShowPrescriptionViewer] = useState(false);
+
+  // Fetch medical records for selected patient
+  const { records: medicalRecords, notes: patientNotes, loading: recordsLoading, refetch } = useMedicalRecords(
+    selectedPatient?.id || null,
+    user?.id || null
+  );
 
   // Use real patients from database
   const patients: Patient[] = realPatients.map(p => ({
@@ -58,51 +54,23 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
     age: p.age,
     gender: p.gender,
     contact: p.contact,
-    lastVisit: p.lastVisit
+    lastVisit: p.lastVisit,
+    blood_type: p.blood_type,
+    allergies: p.allergies,
+    email: p.email,
+    phone_number: p.phone_number
   }));
-
-  const medicalRecords: Record<string, MedicalRecord[]> = {
-    "1": [
-      { id: "m1", date: "15/03/2024", diagnosis: "Hypertension artérielle", prescription: "Amlodipine 5mg", notes: "Contrôle tension dans 2 semaines", doctor: "Dr. Martin" },
-      { id: "m2", date: "02/02/2024", diagnosis: "Rhinopharyngite", prescription: "Paracétamol 1000mg", notes: "Repos conseillé", doctor: "Dr. Bernard" }
-    ],
-    "2": [
-      { id: "m3", date: "02/04/2024", diagnosis: "Diabète de type 2", prescription: "Metformine 500mg", notes: "Régime alimentaire à suivre", doctor: "Dr. Martin" }
-    ],
-    "3": [
-      { id: "m4", date: "24/03/2024", diagnosis: "Migraine", prescription: "Sumatriptan 50mg", notes: "Éviter les facteurs déclenchants", doctor: "Dr. Dubois" }
-    ],
-    "4": [
-      { id: "m5", date: "10/04/2024", diagnosis: "Entorse cheville", prescription: "Ibuprofène 400mg", notes: "Repos et glace", doctor: "Dr. Martin" }
-    ]
-  };
-
-  const patientNotes: Record<string, PatientNote[]> = {
-    "1": [
-      { id: "n1", date: "16/03/2024", title: "Suivi tension", content: "Patient se plaint de vertiges occasionnels" },
-      { id: "n2", date: "02/02/2024", title: "Questions patient", content: "S'inquiète des effets secondaires des médicaments" }
-    ],
-    "2": [
-      { id: "n3", date: "03/04/2024", title: "Suivi glycémie", content: "Glycémie à jeun encore élevée malgré le traitement" }
-    ],
-    "3": [
-      { id: "n4", date: "25/03/2024", title: "Facteurs déclenchants", content: "Patient identifie le stress comme principal facteur déclenchant" }
-    ],
-    "4": [
-      { id: "n5", date: "11/04/2024", title: "Exercices rééducation", content: "Patient souhaite reprendre le sport rapidement" }
-    ]
-  };
 
   // Si un nom de patient est fourni, sélectionner ce patient au chargement
   useEffect(() => {
-    if (initialPatientName) {
-      const patient = patients.find(p => p.name.includes(initialPatientName));
+    if (initialPatientName && patients.length > 0) {
+      const patient = patients.find(p => p.name.toLowerCase().includes(initialPatientName.toLowerCase()));
       if (patient) {
         setSelectedPatient(patient);
         setSelectedTab("info");
       }
     }
-  }, [initialPatientName]);
+  }, [initialPatientName, patients]);
 
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -114,31 +82,93 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
     setShowAddRecordForm(false);
   };
 
-  const getPatientRecords = (patientId: string) => {
-    return medicalRecords[patientId] || [];
-  };
-
-  const getPatientNotes = (patientId: string) => {
-    return patientNotes[patientId] || [];
-  };
-
   const handleRecordAdded = () => {
-    setRefreshHistory(prev => prev + 1);
-    // En pratique, ici on rechargerait les données depuis l'API
+    refetch();
+    toast.success("Dossier médical ajouté avec succès");
   };
 
-  const handleViewPrescription = (prescriptionData: any) => {
+  const handleViewPrescription = (record: any) => {
+    const prescriptionData = {
+      id: record.id,
+      date: new Date(record.date).toLocaleDateString('fr-FR'),
+      doctor: record.doctor ? `${record.doctor.first_name || ''} ${record.doctor.last_name || ''}`.trim() : 'Médecin',
+      medications: record.prescription ? parsePrescription(record.prescription) : [],
+      duration: "Selon prescription",
+      signed: true,
+      patientName: selectedPatient?.name || 'Patient',
+      patientAge: selectedPatient?.age ? `${selectedPatient.age} ans` : 'N/A',
+      diagnosis: record.diagnosis,
+      doctorSpecialty: "Médecin",
+      doctorAddress: "Cabinet médical"
+    };
     setSelectedPrescription(prescriptionData);
     setShowPrescriptionViewer(true);
   };
 
-  const handleDownloadPrescription = (prescriptionId: string) => {
-    console.log('Téléchargement prescription:', prescriptionId);
-    // Logique de téléchargement PDF sera implémentée ici
+  const parsePrescription = (prescription: string) => {
+    // Parse prescription text into medication objects
+    const lines = prescription.split('\n').filter(line => line.trim());
+    if (lines.length === 0) {
+      return [{ name: prescription, dosage: "Selon ordonnance", frequency: "Selon prescription" }];
+    }
+    return lines.map(line => ({
+      name: line.split('-')[0]?.trim() || line,
+      dosage: line.split('-')[1]?.trim() || "Selon ordonnance",
+      frequency: line.split('-')[2]?.trim() || "Selon prescription"
+    }));
+  };
+
+  const handleDownloadPrescription = (record: any) => {
+    const doctorName = record.doctor 
+      ? `${record.doctor.first_name || ''} ${record.doctor.last_name || ''}`.trim() 
+      : 'Médecin';
+    
+    generatePrescriptionPDF({
+      date: new Date(record.date).toLocaleDateString('fr-FR'),
+      patientName: selectedPatient?.name || 'Patient',
+      patientAge: selectedPatient?.age ? `${selectedPatient.age} ans` : undefined,
+      doctorName,
+      doctorSpecialty: "Médecin",
+      diagnosis: record.diagnosis,
+      medications: parsePrescription(record.prescription || ''),
+      notes: record.notes,
+      signed: true
+    });
+    toast.success("Ordonnance téléchargée");
+  };
+
+  const handleDownloadReport = (record: any) => {
+    const doctorName = record.doctor 
+      ? `${record.doctor.first_name || ''} ${record.doctor.last_name || ''}`.trim() 
+      : 'Médecin';
+    
+    generateMedicalReportPDF({
+      date: new Date(record.date).toLocaleDateString('fr-FR'),
+      patientName: selectedPatient?.name || 'Patient',
+      patientAge: selectedPatient?.age ? `${selectedPatient.age} ans` : undefined,
+      doctorName,
+      doctorSpecialty: "Médecin",
+      diagnosis: record.diagnosis,
+      prescription: record.prescription,
+      notes: record.notes
+    });
+    toast.success("Compte-rendu téléchargé");
   };
 
   if (loading) {
     return <div className="text-center py-8">Chargement des patients...</div>;
+  }
+
+  if (!loading && patients.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">Aucun patient</h3>
+        <p className="text-muted-foreground">
+          Vous n'avez pas encore de patients avec des consultations terminées.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -146,7 +176,7 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
       {!selectedPatient && (
         <div className="flex items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Rechercher un patient..."
@@ -174,10 +204,13 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-1 text-sm">
-                  <p><span className="font-medium">Âge:</span> {patient.age} ans</p>
+                  <p><span className="font-medium">Âge:</span> {patient.age > 0 ? `${patient.age} ans` : 'Non renseigné'}</p>
                   <p><span className="font-medium">Sexe:</span> {patient.gender}</p>
                   <p><span className="font-medium">Contact:</span> {patient.contact}</p>
                   <p><span className="font-medium">Dernière visite:</span> {patient.lastVisit}</p>
+                  {patient.blood_type && (
+                    <p><span className="font-medium">Groupe sanguin:</span> {patient.blood_type}</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -217,7 +250,9 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                     </div>
                     <div>
                       <Label>Âge</Label>
-                      <div className="text-lg font-medium">{selectedPatient.age} ans</div>
+                      <div className="text-lg font-medium">
+                        {selectedPatient.age > 0 ? `${selectedPatient.age} ans` : 'Non renseigné'}
+                      </div>
                     </div>
                     <div>
                       <Label>Sexe</Label>
@@ -231,6 +266,22 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                       <Label>Dernière visite</Label>
                       <div className="text-lg font-medium">{selectedPatient.lastVisit}</div>
                     </div>
+                    {selectedPatient.blood_type && (
+                      <div>
+                        <Label>Groupe sanguin</Label>
+                        <div className="text-lg font-medium">{selectedPatient.blood_type}</div>
+                      </div>
+                    )}
+                    {selectedPatient.allergies && selectedPatient.allergies.length > 0 && (
+                      <div className="md:col-span-2">
+                        <Label>Allergies</Label>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {selectedPatient.allergies.map((allergy, idx) => (
+                            <Badge key={idx} variant="destructive">{allergy}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -240,7 +291,7 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
               <div className="space-y-4">
                 <AddMedicalRecordForm
                   patientId={selectedPatient.id}
-                  doctorId="current-doctor-id" // TODO: Get from auth context
+                  doctorId={user?.id || ''}
                   onRecordAdded={handleRecordAdded}
                   isVisible={showAddRecordForm}
                   onToggleVisibility={() => setShowAddRecordForm(!showAddRecordForm)}
@@ -254,28 +305,14 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {getPatientRecords(selectedPatient.id).length > 0 ? (
+                    {recordsLoading ? (
+                      <div className="text-center py-4">Chargement des dossiers...</div>
+                    ) : medicalRecords.length > 0 ? (
                       <div className="space-y-4">
-                        {getPatientRecords(selectedPatient.id).map(record => {
-                          const prescriptionData = {
-                            id: record.id,
-                            date: record.date,
-                            doctor: record.doctor,
-                            medications: [
-                              { 
-                                name: record.prescription.split(' ')[0], 
-                                dosage: record.prescription.split(' ')[1] || "Selon ordonnance",
-                                frequency: "Selon prescription médicale"
-                              }
-                            ],
-                            duration: "Selon prescription",
-                            signed: true,
-                            patientName: selectedPatient.name,
-                            patientAge: `${selectedPatient.age} ans`,
-                            diagnosis: record.diagnosis,
-                            doctorSpecialty: "Médecin généraliste",
-                            doctorAddress: "Cabinet médical"
-                          };
+                        {medicalRecords.map(record => {
+                          const doctorName = record.doctor 
+                            ? `Dr. ${record.doctor.first_name || ''} ${record.doctor.last_name || ''}`.trim()
+                            : 'Médecin';
 
                           return (
                             <Card key={record.id} className="bg-background border">
@@ -283,17 +320,37 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                                 <CardTitle className="text-md flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    {record.date} - {record.doctor}
+                                    {new Date(record.date).toLocaleDateString('fr-FR')} - {doctorName}
                                   </div>
                                   <div className="flex gap-2">
-                                     <Button 
-                                       variant="outline" 
-                                       size="sm"
-                                       onClick={() => handleViewPrescription(prescriptionData)}
-                                     >
-                                       <Eye className="h-4 w-4 mr-1" />
-                                       Voir ordonnance
-                                     </Button>
+                                    {record.prescription && (
+                                      <>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => handleViewPrescription(record)}
+                                        >
+                                          <Eye className="h-4 w-4 mr-1" />
+                                          Voir
+                                        </Button>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => handleDownloadPrescription(record)}
+                                        >
+                                          <Download className="h-4 w-4 mr-1" />
+                                          Ordonnance
+                                        </Button>
+                                      </>
+                                    )}
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => handleDownloadReport(record)}
+                                    >
+                                      <Download className="h-4 w-4 mr-1" />
+                                      Rapport
+                                    </Button>
                                   </div>
                                 </CardTitle>
                               </CardHeader>
@@ -305,27 +362,38 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                                   </span> 
                                   <p className="text-red-800 dark:text-red-200 mt-1">{record.diagnosis}</p>
                                 </div>
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border-l-4 border-blue-500">
-                                  <span className="font-medium flex items-center gap-1 text-blue-900 dark:text-blue-100">
-                                    <Pill className="h-4 w-4" />
-                                    Prescription:
-                                  </span> 
-                                  <p className="text-blue-800 dark:text-blue-200 mt-1 font-semibold">{record.prescription}</p>
-                                </div>
-                                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md border-l-4 border-green-500">
-                                  <span className="font-medium flex items-center gap-1 text-green-900 dark:text-green-100">
-                                    <MessageCircle className="h-4 w-4" />
-                                    Notes:
-                                  </span> 
-                                  <p className="text-green-800 dark:text-green-200 mt-1">{record.notes}</p>
-                                </div>
+                                {record.prescription && (
+                                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border-l-4 border-blue-500">
+                                    <span className="font-medium flex items-center gap-1 text-blue-900 dark:text-blue-100">
+                                      <Pill className="h-4 w-4" />
+                                      Prescription:
+                                    </span> 
+                                    <p className="text-blue-800 dark:text-blue-200 mt-1 whitespace-pre-line">{record.prescription}</p>
+                                  </div>
+                                )}
+                                {record.notes && (
+                                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md border-l-4 border-green-500">
+                                    <span className="font-medium flex items-center gap-1 text-green-900 dark:text-green-100">
+                                      <MessageCircle className="h-4 w-4" />
+                                      Notes:
+                                    </span> 
+                                    <p className="text-green-800 dark:text-green-200 mt-1">{record.notes}</p>
+                                  </div>
+                                )}
                               </CardContent>
                             </Card>
                           );
                         })}
                       </div>
                     ) : (
-                      <p className="text-center text-muted-foreground py-4">Aucun historique médical disponible</p>
+                      <div className="text-center py-8">
+                        <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground mb-4">Aucun historique médical disponible</p>
+                        <Button onClick={() => setShowAddRecordForm(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Ajouter un premier diagnostic
+                        </Button>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -341,9 +409,9 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {getPatientNotes(selectedPatient.id).length > 0 ? (
+                  {patientNotes.length > 0 ? (
                     <div className="space-y-4">
-                      {getPatientNotes(selectedPatient.id).map(note => (
+                      {patientNotes.map(note => (
                         <Card key={note.id} className="bg-background border">
                           <CardHeader className="pb-2">
                             <CardTitle className="text-md flex items-center justify-between">
@@ -351,7 +419,9 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
                                 <AlertCircle className="h-4 w-4 text-yellow-500" />
                                 {note.title}
                               </div>
-                              <span className="text-sm text-muted-foreground">{note.date}</span>
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(note.date).toLocaleDateString('fr-FR')}
+                              </span>
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
@@ -378,7 +448,21 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
             setShowPrescriptionViewer(false);
             setSelectedPrescription(null);
           }}
-          onDownload={() => handleDownloadPrescription(selectedPrescription.id)}
+          onDownload={() => {
+            if (selectedPatient && selectedPrescription) {
+              generatePrescriptionPDF({
+                date: selectedPrescription.date,
+                patientName: selectedPrescription.patientName,
+                patientAge: selectedPrescription.patientAge,
+                doctorName: selectedPrescription.doctor,
+                doctorSpecialty: selectedPrescription.doctorSpecialty,
+                diagnosis: selectedPrescription.diagnosis,
+                medications: selectedPrescription.medications,
+                signed: selectedPrescription.signed
+              });
+              toast.success("Ordonnance téléchargée");
+            }
+          }}
         />
       )}
     </div>
