@@ -45,23 +45,54 @@ export const PaymentHistory = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First get invoices with appointments
+      const { data: invoicesData, error: invoicesError } = await supabase
         .from('invoices')
         .select(`
           *,
           appointments!invoices_appointment_id_fkey (
             date,
-            doctors!appointments_doctor_id_fkey (
-              id,
-              profiles!doctors_id_fkey (first_name, last_name)
-            )
+            doctor_id
           )
         `)
         .eq('patient_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setPayments((data || []) as any);
+      if (invoicesError) throw invoicesError;
+
+      // Get unique doctor IDs
+      const doctorIds = [...new Set(
+        (invoicesData || [])
+          .map((inv: any) => inv.appointments?.doctor_id)
+          .filter(Boolean)
+      )];
+
+      // Fetch doctor profiles separately
+      let doctorProfiles: Record<string, any> = {};
+      if (doctorIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', doctorIds);
+        
+        if (profilesData) {
+          doctorProfiles = profilesData.reduce((acc: any, p: any) => {
+            acc[p.id] = p;
+            return acc;
+          }, {});
+        }
+      }
+
+      // Merge doctor profiles into payments
+      const paymentsWithProfiles = (invoicesData || []).map((inv: any) => ({
+        ...inv,
+        doctorProfile: inv.appointments?.doctor_id 
+          ? doctorProfiles[inv.appointments.doctor_id] 
+          : null
+      }));
+
+      setPayments(paymentsWithProfiles as any);
     } catch (error) {
       console.error('Erreur chargement paiements:', error);
       toast.error('Erreur lors du chargement des paiements');
@@ -215,14 +246,14 @@ export const PaymentHistory = () => {
                     </div>
                     <div>
                       <p className="font-semibold">
-                        Dr. {(payment as any).appointments?.doctors?.profiles?.first_name}{' '}
-                        {(payment as any).appointments?.doctors?.profiles?.last_name}
+                        Dr. {payment.doctorProfile?.first_name || 'Inconnu'}{' '}
+                        {payment.doctorProfile?.last_name || ''}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Consultation du{' '}
-                        {format(new Date((payment as any).appointments?.date), 'dd MMMM yyyy', {
-                          locale: fr,
-                        })}
+                        {payment.appointments?.date 
+                          ? format(new Date(payment.appointments.date), 'dd MMMM yyyy', { locale: fr })
+                          : 'Date inconnue'}
                       </p>
                       {payment.payment_method && (
                         <p className="text-xs text-muted-foreground mt-1">
