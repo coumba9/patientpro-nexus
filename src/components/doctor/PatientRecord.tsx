@@ -40,6 +40,7 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
   const [showAddRecordForm, setShowAddRecordForm] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
   const [showPrescriptionViewer, setShowPrescriptionViewer] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch medical records for selected patient
   const { records: medicalRecords, notes: patientNotes, loading: recordsLoading, refetch } = useMedicalRecords(
@@ -47,7 +48,7 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
     user?.id || null
   );
 
-  // Use real patients from database
+  // Use real patients from database - memoized to avoid infinite loops
   const patients: Patient[] = realPatients.map(p => ({
     id: p.id,
     name: p.name,
@@ -61,16 +62,28 @@ export const PatientRecord = ({ initialPatientName }: PatientRecordProps) => {
     phone_number: p.phone_number
   }));
 
-  // Si un nom de patient est fourni, sélectionner ce patient au chargement
+  // Si un nom de patient est fourni, sélectionner ce patient au chargement (seulement une fois)
   useEffect(() => {
-    if (initialPatientName && patients.length > 0) {
-      const patient = patients.find(p => p.name.toLowerCase().includes(initialPatientName.toLowerCase()));
+    if (initialPatientName && realPatients.length > 0 && !hasInitialized) {
+      const patient = realPatients.find(p => p.name.toLowerCase().includes(initialPatientName.toLowerCase()));
       if (patient) {
-        setSelectedPatient(patient);
+        setSelectedPatient({
+          id: patient.id,
+          name: patient.name,
+          age: patient.age,
+          gender: patient.gender,
+          contact: patient.contact,
+          lastVisit: patient.lastVisit,
+          blood_type: patient.blood_type,
+          allergies: patient.allergies,
+          email: patient.email,
+          phone_number: patient.phone_number
+        });
         setSelectedTab("info");
+        setHasInitialized(true);
       }
     }
-  }, [initialPatientName, patients]);
+  }, [initialPatientName, realPatients, hasInitialized]);
 
   const filteredPatients = patients.filter(patient => 
     patient.name.toLowerCase().includes(searchQuery.toLowerCase())

@@ -122,10 +122,41 @@ const Documents = () => {
     setShareDialogOpen(false);
   };
 
-  const handleAddDocument = async () => {
+  const handleAddDocument = async (formData: { name: string; type: string; patient: string; patientId: string; content: string }) => {
     if (!user?.id) return;
-    toast.info("Fonctionnalité en cours de développement");
-    setAddDocDialogOpen(false);
+    
+    try {
+      await documentService.createDocument({
+        doctor_id: user.id,
+        patient_id: formData.patientId || user.id,
+        title: formData.name,
+        type: formData.type,
+        file_url: formData.content,
+        is_signed: false
+      });
+      
+      // Refresh the documents list
+      const data = await documentService.getDocumentsByDoctor(user.id);
+      const transformedDocs: DocItem[] = data.map((doc: any) => ({
+        id: doc.id,
+        name: doc.title,
+        type: doc.type,
+        date: new Date(doc.created_at).toLocaleDateString('fr-FR'),
+        size: doc.file_size ? `${Math.round(doc.file_size / 1024)} Ko` : "256 Ko",
+        patient: doc.patient?.profile 
+          ? `${doc.patient.profile.first_name || ''} ${doc.patient.profile.last_name || ''}`.trim() || 'Patient inconnu'
+          : formData.patient || 'Patient inconnu',
+        signed: doc.is_signed,
+        content: doc.file_url || undefined
+      }));
+      setDocuments(transformedDocs);
+      
+      toast.success("Document créé avec succès");
+      setAddDocDialogOpen(false);
+    } catch (error) {
+      console.error('Error creating document:', error);
+      toast.error("Erreur lors de la création du document");
+    }
   };
 
   return (
