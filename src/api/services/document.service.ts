@@ -28,15 +28,10 @@ class DocumentService extends BaseService<Document> {
   }
 
   async getDocumentsByDoctor(doctorId: string): Promise<Document[]> {
-    const { data, error } = await supabase
+    // First get documents
+    const { data: documents, error } = await supabase
       .from(this.tableName as any)
-      .select(`
-        *,
-        patients!documents_patient_id_fkey (
-          id,
-          profiles!patients_id_fkey (first_name, last_name)
-        )
-      `)
+      .select('*')
       .eq('doctor_id', doctorId)
       .order('created_at', { ascending: false });
     
@@ -45,7 +40,34 @@ class DocumentService extends BaseService<Document> {
       throw error;
     }
     
-    return (data as any[]) || [];
+    if (!documents || documents.length === 0) {
+      return [];
+    }
+
+    // Get unique patient IDs
+    const patientIds = [...new Set(documents.map((doc: any) => doc.patient_id))];
+    
+    // Fetch patient profiles
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name')
+      .in('id', patientIds);
+    
+    if (profilesError) {
+      console.error('Error fetching patient profiles:', profilesError);
+    }
+    
+    // Create profile map
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+    
+    // Merge data
+    return documents.map((doc: any) => ({
+      ...doc,
+      patient: {
+        id: doc.patient_id,
+        profile: profileMap.get(doc.patient_id) || { first_name: 'Patient', last_name: 'inconnu' }
+      }
+    }));
   }
 
   async getDocumentsByPatient(patientId: string): Promise<Document[]> {

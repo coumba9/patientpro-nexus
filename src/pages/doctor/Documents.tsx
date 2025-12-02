@@ -35,14 +35,14 @@ const Documents = () => {
         setLoading(true);
         const data = await documentService.getDocumentsByDoctor(user.id);
         
-        const transformedDocs: DocItem[] = data.map((doc) => ({
-          id: parseInt(doc.id),
+        const transformedDocs: DocItem[] = data.map((doc: any) => ({
+          id: doc.id,
           name: doc.title,
           type: doc.type,
           date: new Date(doc.created_at).toLocaleDateString('fr-FR'),
           size: doc.file_size ? `${Math.round(doc.file_size / 1024)} Ko` : "256 Ko",
           patient: doc.patient?.profile 
-            ? `${doc.patient.profile.first_name} ${doc.patient.profile.last_name}`
+            ? `${doc.patient.profile.first_name || ''} ${doc.patient.profile.last_name || ''}`.trim() || 'Patient inconnu'
             : 'Patient inconnu',
           signed: doc.is_signed,
           content: doc.file_url || undefined
