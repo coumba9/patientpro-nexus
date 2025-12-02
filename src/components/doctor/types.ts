@@ -1,6 +1,6 @@
 
 export interface DocItem {
-  id: number;
+  id: string;
   name: string;
   type: string;
   date: string;

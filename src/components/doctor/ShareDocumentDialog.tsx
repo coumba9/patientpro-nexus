@@ -4,17 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-
-interface DocItem {
-  id: number;
-  name: string;
-  type: string;
-  date: string;
-  size: string;
-  patient: string;
-  signed: boolean;
-  content?: string;
-}
+import { DocItem } from "./types";
 
 interface ShareDocumentDialogProps {
   isOpen: boolean;
