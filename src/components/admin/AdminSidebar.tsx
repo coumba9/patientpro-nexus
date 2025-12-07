@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,161 +11,100 @@ import {
   LayoutDashboard,
   FileText,
   Bell,
-  CreditCard
+  CreditCard,
+  ChevronRight,
 } from "lucide-react";
 
 export const AdminSidebar = () => {
   const location = useLocation();
-  
+
   const isActive = (path: string) => {
-    return location.pathname === path || 
-           (path !== "/admin" && location.pathname.startsWith(path));
+    if (path === "/admin") {
+      return location.pathname === "/admin";
+    }
+    return location.pathname.startsWith(path);
   };
 
+  const menuSections = [
+    {
+      title: "Principal",
+      items: [
+        { to: "/admin", icon: LayoutDashboard, label: "Tableau de bord", exact: true },
+      ],
+    },
+    {
+      title: "Utilisateurs",
+      items: [
+        { to: "/admin/users", icon: Users, label: "Utilisateurs" },
+        { to: "/admin/patients", icon: User, label: "Patients" },
+        { to: "/admin/doctors", icon: UserCheck, label: "Médecins" },
+        { to: "/admin/doctor-applications", icon: UserCheck, label: "Demandes médecins" },
+      ],
+    },
+    {
+      title: "Contenu",
+      items: [
+        { to: "/admin/specialties", icon: Stethoscope, label: "Spécialités" },
+        { to: "/admin/moderation", icon: Shield, label: "Modération" },
+        { to: "/admin/content", icon: FileText, label: "Pages & FAQ" },
+      ],
+    },
+    {
+      title: "Système",
+      items: [
+        { to: "/admin/analytics", icon: BarChart, label: "Statistiques" },
+        { to: "/admin/notifications", icon: Bell, label: "Notifications" },
+        { to: "/admin/payments", icon: CreditCard, label: "Paiements" },
+        { to: "/admin/settings", icon: Settings, label: "Paramètres" },
+      ],
+    },
+  ];
+
   return (
-    <div className="bg-card p-4 space-y-2 min-h-screen w-64 sticky top-0 overflow-y-auto">
-      <div className="flex items-center mb-6 px-2">
-        <h2 className="font-bold text-lg">Administration</h2>
+    <div className="bg-card min-h-screen w-64 sticky top-0 overflow-y-auto border-r border-border/50 p-5">
+      <div className="flex items-center gap-3 px-3 pb-5 mb-4 border-b border-border/50">
+        <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-soft">
+          <Shield className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h2 className="font-display font-bold text-foreground">Administration</h2>
+          <p className="text-xs text-muted-foreground">Panneau de contrôle</p>
+        </div>
       </div>
 
-      <nav className="space-y-1">
-        <Link to="/admin">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin") && !isActive("/admin/users") && !isActive("/admin/patients") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <LayoutDashboard className="mr-2 h-5 w-5" />
-            Tableau de bord
-          </Button>
-        </Link>
+      <nav className="space-y-6">
+        {menuSections.map((section) => (
+          <div key={section.title}>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
+              {section.title}
+            </h3>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const active = item.exact
+                  ? location.pathname === item.to
+                  : isActive(item.to);
 
-        <h3 className="font-medium text-sm text-gray-500 px-4 pt-4 pb-2">Utilisateurs</h3>
-        
-        <Link to="/admin/users">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/users") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <Users className="mr-2 h-5 w-5" />
-            Utilisateurs
-          </Button>
-        </Link>
-        
-        <Link to="/admin/patients">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/patients") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <User className="mr-2 h-5 w-5" />
-            Patients
-          </Button>
-        </Link>
-        
-        <Link to="/admin/doctors">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/doctors") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <UserCheck className="mr-2 h-5 w-5" />
-            Médecins
-          </Button>
-        </Link>
-
-        <Link to="/admin/doctor-applications">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/doctor-applications") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <UserCheck className="mr-2 h-5 w-5" />
-            Demandes médecins
-          </Button>
-        </Link>
-
-        <h3 className="font-medium text-sm text-gray-500 px-4 pt-4 pb-2">Contenu</h3>
-        
-        <Link to="/admin/specialties">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/specialties") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <Stethoscope className="mr-2 h-5 w-5" />
-            Spécialités
-          </Button>
-        </Link>
-        
-        <Link to="/admin/moderation">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/moderation") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <Shield className="mr-2 h-5 w-5" />
-            Modération
-          </Button>
-        </Link>
-        
-        <Link to="/admin/content">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/content") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <FileText className="mr-2 h-5 w-5" />
-            Pages & FAQ
-          </Button>
-        </Link>
-
-        <h3 className="font-medium text-sm text-gray-500 px-4 pt-4 pb-2">Système</h3>
-        
-        <Link to="/admin/analytics">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/analytics") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <BarChart className="mr-2 h-5 w-5" />
-            Statistiques
-          </Button>
-        </Link>
-        
-        <Link to="/admin/notifications">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/notifications") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <Bell className="mr-2 h-5 w-5" />
-            Notifications
-          </Button>
-        </Link>
-        
-        <Link to="/admin/payments">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/payments") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <CreditCard className="mr-2 h-5 w-5" />
-            Paiements
-          </Button>
-        </Link>
-        
-        <Link to="/admin/settings">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isActive("/admin/settings") ? "bg-gray-100" : ""}`}
-            size="lg"
-          >
-            <Settings className="mr-2 h-5 w-5" />
-            Paramètres
-          </Button>
-        </Link>
+                return (
+                  <Link key={item.to} to={item.to}>
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start rounded-xl transition-all duration-200 group ${
+                        active
+                          ? "bg-accent text-primary font-medium shadow-soft"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                      size="default"
+                    >
+                      <item.icon className={`mr-3 h-4 w-4 ${active ? "text-primary" : ""}`} />
+                      <span className="flex-1 text-left">{item.label}</span>
+                      {active && <ChevronRight className="h-4 w-4 text-primary/50" />}
+                    </Button>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
     </div>
   );

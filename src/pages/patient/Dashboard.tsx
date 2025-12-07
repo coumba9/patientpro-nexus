@@ -19,7 +19,7 @@ import AppointmentTickets from "./AppointmentTickets";
 import PatientAppointmentDetails from "./AppointmentDetails";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, Heart, X, Search, Home, Info, Phone } from "lucide-react";
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
@@ -39,87 +39,120 @@ const PatientDashboard = () => {
     }
   };
 
+  const navLinks = [
+    { to: "/", label: "Accueil", icon: Home },
+    { to: "/find-doctor", label: "Trouver un médecin", icon: Search },
+    { to: "/about", label: "À propos", icon: Info },
+    { to: "/contact", label: "Contact", icon: Phone },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Barre de navigation supérieure */}
-      <div className="bg-white dark:bg-gray-900 py-4 border-b dark:border-gray-800 sticky top-0 z-50 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 transition-all duration-200">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header professionnel */}
+      <header className="glass-strong py-4 sticky top-0 z-50 border-b border-border/50">
         <div className="container flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <button 
+          <div className="flex items-center gap-3">
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-md hover:bg-gray-100"
+              className="md:hidden p-2 rounded-xl hover:bg-accent transition-colors"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-foreground" />
             </button>
-            <Link to="/" className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-              JàmmSanté
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center shadow-soft">
+                <Heart className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-display font-bold gradient-text hidden sm:inline">JàmmSanté</span>
             </Link>
           </div>
-          
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
-              Accueil
-            </Link>
-            <Link to="/find-doctor" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
-              Trouver un médecin
-            </Link>
-            <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
-              À propos
-            </Link>
-            <Link to="/contact" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
-              Contact
-            </Link>
-          </div>
-          
+
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-muted-foreground hover:text-primary transition-colors font-medium link-underline"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
           <div className="flex items-center gap-3">
             <RealtimeNotifications userId={user?.id || null} userRole="patient" />
             <ThemeToggle />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleLogout} 
-              className="flex items-center gap-1 text-red-500 border-red-200 hover:bg-red-50"
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="hidden sm:flex items-center gap-2 rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Déconnexion</span>
+              <span className="hidden lg:inline">Déconnexion</span>
             </Button>
           </div>
         </div>
-      </div>
-      
+      </header>
+
       {/* Menu mobile */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="bg-white dark:bg-gray-900 h-full w-4/5 max-w-xs p-4 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-col gap-4">
-              <Link to="/" className="py-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 rounded-md" onClick={() => setIsMobileMenuOpen(false)}>
-                Accueil
-              </Link>
-              <Link to="/find-doctor" className="py-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 rounded-md" onClick={() => setIsMobileMenuOpen(false)}>
-                Trouver un médecin
-              </Link>
-              <Link to="/about" className="py-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 rounded-md" onClick={() => setIsMobileMenuOpen(false)}>
-                À propos
-              </Link>
-              <Link to="/contact" className="py-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-3 rounded-md" onClick={() => setIsMobileMenuOpen(false)}>
-                Contact
-              </Link>
+        <div className="md:hidden fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
+          <div
+            className="bg-card h-full w-4/5 max-w-xs p-6 shadow-strong animate-slide-in-right"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center">
+                  <Heart className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <span className="font-display font-bold gradient-text">JàmmSanté</span>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-accent rounded-xl">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="space-y-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-accent transition-colors text-foreground"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <link.icon className="h-5 w-5 text-primary" />
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="w-full justify-start rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
+              >
+                <LogOut className="mr-3 h-5 w-5" />
+                Déconnexion
+              </Button>
             </div>
           </div>
         </div>
       )}
-      
-      <div className="container py-8 flex-grow">
+
+      {/* Contenu principal */}
+      <main className="container py-8 flex-grow">
         <NavigationHeader isHomePage={isHomePage} onBack={() => navigate(-1)} />
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <div>
+          <aside className="hidden md:block">
             <PatientSidebar />
-          </div>
+          </aside>
 
           {/* Main Content */}
-          <div className="md:col-span-3">
+          <div className="lg:col-span-3">
             <Routes>
               <Route path="/" element={<EnhancedDashboard />} />
               <Route path="/appointments" element={<RealAppointmentsPage />} />
@@ -136,7 +169,7 @@ const PatientDashboard = () => {
             </Routes>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

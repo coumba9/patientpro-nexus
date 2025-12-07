@@ -1,7 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -21,7 +19,13 @@ import {
 
 export const PatientSidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
+
+  const isActive = (path: string) => {
+    return location.pathname === path || 
+           (path !== "/patient" && location.pathname.startsWith(path));
+  };
 
   const handleLogout = async () => {
     try {
@@ -34,85 +38,68 @@ export const PatientSidebar = () => {
     }
   };
 
+  const menuItems = [
+    { to: "/patient", icon: LayoutDashboard, label: "Tableau de bord", exact: true },
+    { to: "/patient/appointments", icon: Calendar, label: "Mes rendez-vous" },
+    { to: "/patient/tickets", icon: ClipboardList, label: "Mes tickets" },
+    { to: "/patient/medical-history", icon: Heart, label: "Dossier médical" },
+    { to: "/patient/prescriptions", icon: Pill, label: "Ordonnances" },
+    { to: "/patient/payments", icon: CreditCard, label: "Paiements" },
+    { to: "/patient/messages", icon: MessageCircle, label: "Messages" },
+    { to: "/patient/documents", icon: FileText, label: "Documents" },
+    { to: "/patient/support", icon: HelpCircle, label: "Support" },
+    { to: "/patient/profile", icon: User, label: "Mon profil" },
+    { to: "/patient/settings", icon: Settings, label: "Paramètres" },
+  ];
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
-      <h2 className="font-semibold text-lg mb-4">Menu Patient</h2>
-      <Link to="/patient">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <LayoutDashboard className="mr-2 h-5 w-5" />
-          Tableau de bord
+    <div className="bg-card rounded-2xl shadow-card border border-border/50 p-5 space-y-1.5 sticky top-24">
+      <div className="flex items-center gap-3 px-3 pb-4 mb-2 border-b border-border/50">
+        <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-soft">
+          <Heart className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h2 className="font-display font-bold text-foreground">Menu Patient</h2>
+          <p className="text-xs text-muted-foreground">Gérez votre santé</p>
+        </div>
+      </div>
+
+      <nav className="space-y-1">
+        {menuItems.map((item) => {
+          const active = item.exact 
+            ? location.pathname === item.to 
+            : isActive(item.to);
+          
+          return (
+            <Link key={item.to} to={item.to}>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start rounded-xl transition-all duration-200 ${
+                  active 
+                    ? "bg-accent text-primary font-medium shadow-soft" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                }`}
+                size="lg"
+              >
+                <item.icon className={`mr-3 h-5 w-5 ${active ? "text-primary" : ""}`} />
+                {item.label}
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="pt-4 mt-4 border-t border-border/50">
+        <Button
+          variant="ghost"
+          className="w-full justify-start rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
+          size="lg"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          Déconnexion
         </Button>
-      </Link>
-      <Link to="/patient/appointments">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <Calendar className="mr-2 h-5 w-5" />
-          Mes rendez-vous
-        </Button>
-      </Link>
-      <Link to="/patient/tickets">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <ClipboardList className="mr-2 h-5 w-5" />
-          Mes tickets
-        </Button>
-      </Link>
-      <Link to="/patient/medical-history">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <Heart className="mr-2 h-5 w-5" />
-          Dossier médical
-        </Button>
-      </Link>
-      <Link to="/patient/prescriptions">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <Pill className="mr-2 h-5 w-5" />
-          Ordonnances
-        </Button>
-      </Link>
-      <Link to="/patient/payments">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <CreditCard className="mr-2 h-5 w-5" />
-          Paiements
-        </Button>
-      </Link>
-      <Link to="/patient/messages">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <MessageCircle className="mr-2 h-5 w-5" />
-          Messages
-        </Button>
-      </Link>
-      <Link to="/patient/documents">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <FileText className="mr-2 h-5 w-5" />
-          Documents
-        </Button>
-      </Link>
-      <Link to="/patient/support">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <HelpCircle className="mr-2 h-5 w-5" />
-          Support
-        </Button>
-      </Link>
-      <Link to="/patient/profile">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <User className="mr-2 h-5 w-5" />
-          Mon profil
-        </Button>
-      </Link>
-      <Link to="/patient/settings">
-        <Button variant="ghost" className="w-full justify-start" size="lg">
-          <Settings className="mr-2 h-5 w-5" />
-          Paramètres
-        </Button>
-      </Link>
-      {/* Bouton de déconnexion */}
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50" 
-        size="lg"
-        onClick={handleLogout}
-      >
-        <LogOut className="mr-2 h-5 w-5" />
-        Déconnexion
-      </Button>
+      </div>
     </div>
   );
 };
