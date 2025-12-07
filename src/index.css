@@ -1,92 +1,129 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Professional Medical Color Palette */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 222 47% 11%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
-    --primary: 195 85% 45%;
-    --primary-light: 195 85% 65%;
-    --primary-dark: 195 85% 35%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Primary - Deep Medical Teal */
+    --primary: 173 58% 39%;
+    --primary-light: 173 58% 52%;
+    --primary-dark: 173 58% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 170 70% 50%;
-    --secondary-light: 170 70% 70%;
+    
+    /* Secondary - Warm Coral for accents */
+    --secondary: 12 76% 61%;
+    --secondary-light: 12 76% 75%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 20% 95%;
-    --muted-foreground: 215 16% 46%;
-    --accent: 195 100% 95%;
-    --accent-foreground: 195 85% 35%;
-    --destructive: 0 70% 50%;
+    
+    /* Accent - Soft lavender healthcare */
+    --accent: 173 45% 94%;
+    --accent-foreground: 173 58% 28%;
+    
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 88%;
-    --input: 214 20% 92%;
-    --ring: 195 85% 45%;
+    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 173 58% 39%;
+    
     --radius: 0.75rem;
     
-    /* Medical theme colors */
-    --medical-blue: 195 85% 45%;
-    --medical-green: 170 70% 50%;
-    --medical-light: 195 100% 97%;
-    --medical-dark: 215 25% 15%;
+    /* Medical theme extended colors */
+    --medical-teal: 173 58% 39%;
+    --medical-teal-light: 173 45% 94%;
+    --medical-coral: 12 76% 61%;
+    --medical-navy: 222 47% 11%;
+    --medical-mint: 158 64% 52%;
+    --medical-cream: 39 33% 97%;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 45%), hsl(170 70% 50%));
-    --gradient-subtle: linear-gradient(180deg, hsl(210 20% 98%), hsl(195 100% 97%));
-    --gradient-hero: linear-gradient(135deg, hsl(195 85% 45% / 0.1), hsl(170 70% 50% / 0.1));
+    /* Professional Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(173 58% 39%), hsl(158 64% 52%));
+    --gradient-hero: linear-gradient(135deg, hsl(173 58% 39% / 0.08), hsl(158 64% 52% / 0.08));
+    --gradient-subtle: linear-gradient(180deg, hsl(210 40% 98%), hsl(173 45% 97%));
+    --gradient-warm: linear-gradient(135deg, hsl(12 76% 61%), hsl(24 95% 65%));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.9), hsl(0 0% 100% / 0.7));
+    --gradient-dark: linear-gradient(135deg, hsl(222 47% 11%), hsl(215 28% 17%));
     
-    /* Shadows */
-    --shadow-soft: 0 2px 10px hsl(195 85% 45% / 0.08);
-    --shadow-medium: 0 4px 20px hsl(195 85% 45% / 0.12);
-    --shadow-strong: 0 8px 30px hsl(195 85% 45% / 0.16);
+    /* Premium Shadows */
+    --shadow-soft: 0 2px 15px -3px hsl(173 58% 39% / 0.08), 0 4px 6px -4px hsl(173 58% 39% / 0.05);
+    --shadow-medium: 0 10px 40px -10px hsl(173 58% 39% / 0.15), 0 4px 6px -4px hsl(173 58% 39% / 0.05);
+    --shadow-strong: 0 25px 50px -12px hsl(173 58% 39% / 0.25);
+    --shadow-glow: 0 0 40px hsl(173 58% 39% / 0.2);
+    --shadow-card: 0 4px 20px -4px hsl(222 47% 11% / 0.08);
+    
+    /* Animation Variables */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
  
   .dark {
-    --background: 215 30% 10%;
-    --foreground: 210 20% 95%;
-    --card: 215 25% 15%;
-    --card-foreground: 210 20% 95%;
-    --popover: 215 25% 15%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 195 85% 55%;
-    --primary-light: 195 85% 75%;
-    --primary-dark: 195 85% 45%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 173 58% 50%;
+    --primary-light: 173 58% 65%;
+    --primary-dark: 173 58% 39%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 170 70% 60%;
-    --secondary-light: 170 70% 80%;
+    
+    --secondary: 12 76% 65%;
+    --secondary-light: 12 76% 78%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 215 20% 20%;
-    --muted-foreground: 215 16% 60%;
-    --accent: 195 85% 20%;
-    --accent-foreground: 195 85% 85%;
-    --destructive: 0 70% 60%;
+    
+    --accent: 173 30% 15%;
+    --accent-foreground: 173 58% 70%;
+    
+    --muted: 222 40% 15%;
+    --muted-foreground: 215 20% 65%;
+    
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 215 20% 25%;
-    --input: 215 20% 22%;
-    --ring: 195 85% 55%;
+    
+    --border: 222 30% 20%;
+    --input: 222 30% 18%;
+    --ring: 173 58% 50%;
     
     /* Medical theme colors - dark mode */
-    --medical-blue: 195 85% 55%;
-    --medical-green: 170 70% 60%;
-    --medical-light: 215 25% 18%;
-    --medical-dark: 210 20% 95%;
+    --medical-teal: 173 58% 50%;
+    --medical-teal-light: 173 30% 18%;
+    --medical-coral: 12 76% 65%;
+    --medical-navy: 210 40% 98%;
+    --medical-mint: 158 64% 60%;
+    --medical-cream: 222 40% 12%;
     
     /* Gradients - dark mode */
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 55%), hsl(170 70% 60%));
-    --gradient-subtle: linear-gradient(180deg, hsl(215 30% 10%), hsl(215 25% 15%));
-    --gradient-hero: linear-gradient(135deg, hsl(195 85% 55% / 0.15), hsl(170 70% 60% / 0.15));
+    --gradient-primary: linear-gradient(135deg, hsl(173 58% 50%), hsl(158 64% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(173 58% 50% / 0.12), hsl(158 64% 60% / 0.12));
+    --gradient-subtle: linear-gradient(180deg, hsl(222 47% 8%), hsl(222 47% 11%));
+    --gradient-warm: linear-gradient(135deg, hsl(12 76% 65%), hsl(24 95% 70%));
+    --gradient-glass: linear-gradient(135deg, hsl(222 47% 15% / 0.9), hsl(222 47% 11% / 0.7));
+    --gradient-dark: linear-gradient(135deg, hsl(222 47% 6%), hsl(222 47% 10%));
     
     /* Shadows - dark mode */
-    --shadow-soft: 0 2px 10px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 4px 20px hsl(0 0% 0% / 0.4);
-    --shadow-strong: 0 8px 30px hsl(0 0% 0% / 0.5);
+    --shadow-soft: 0 2px 15px -3px hsl(0 0% 0% / 0.4);
+    --shadow-medium: 0 10px 40px -10px hsl(0 0% 0% / 0.5);
+    --shadow-strong: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 40px hsl(173 58% 50% / 0.15);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.4);
   }
 
   * {
@@ -94,6 +131,132 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', sans-serif;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+  
+  .glass-strong {
+    @apply bg-card/90 backdrop-blur-2xl border border-border/30;
+  }
+  
+  /* Professional medical card */
+  .medical-card {
+    @apply bg-card rounded-2xl p-6 shadow-[var(--shadow-card)] border border-border/50 transition-all duration-300;
+  }
+  
+  .medical-card:hover {
+    @apply shadow-[var(--shadow-medium)] -translate-y-1;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-[hsl(158_64%_52%)];
+  }
+  
+  /* Premium button styles */
+  .btn-premium {
+    @apply relative overflow-hidden bg-gradient-to-r from-primary to-[hsl(158_64%_52%)] text-primary-foreground font-semibold px-6 py-3 rounded-xl shadow-[var(--shadow-medium)] transition-all duration-300;
+  }
+  
+  .btn-premium:hover {
+    @apply shadow-[var(--shadow-strong)] scale-[1.02];
+  }
+  
+  .btn-premium::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-primary-light to-[hsl(158_64%_60%)] opacity-0 transition-opacity duration-300;
+  }
+  
+  .btn-premium:hover::before {
+    @apply opacity-100;
+  }
+  
+  /* Section styling */
+  .section-padding {
+    @apply py-20 md:py-28 lg:py-32 px-4 md:px-6;
+  }
+  
+  /* Healthcare icon container */
+  .icon-container {
+    @apply p-4 rounded-2xl bg-accent shadow-[var(--shadow-soft)] transition-all duration-300;
+  }
+  
+  .icon-container:hover {
+    @apply shadow-[var(--shadow-medium)] scale-105;
+  }
+  
+  /* Pulse animation for medical indicators */
+  .pulse-medical {
+    @apply relative;
+  }
+  
+  .pulse-medical::after {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-primary/30 animate-ping;
+  }
+  
+  /* Professional link underline */
+  .link-underline {
+    @apply relative;
+  }
+  
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 origin-right transition-transform duration-300;
+  }
+  
+  .link-underline:hover::after {
+    @apply scale-x-100 origin-left;
+  }
+  
+  /* Stats card styling */
+  .stat-card {
+    @apply relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-card to-accent/30 border border-border/50;
+  }
+  
+  .stat-card::before {
+    content: '';
+    @apply absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2;
+  }
+}
+
+@layer utilities {
+  /* Smooth scroll */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  
+  /* Text balance for better typography */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Animation delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
 }
