@@ -82,13 +82,7 @@ serve(async (req) => {
     const transactionId = `APT-${Date.now()}-${Math.floor(Math.random() * 10000)}`
     const origin = req.headers.get('origin') || 'https://2d1e06e9-1ac5-4986-bf1c-2e073ed53cf0.lovableproject.com'
 
-    console.log('Initiating Paydunya payment:', {
-      transactionId,
-      amount,
-      currency,
-      paymentMethod,
-      userId: user.id
-    })
+    console.log('Initiating payment:', { transactionId, paymentMethod })
 
     try {
       // Development/sandbox short-circuit
@@ -130,8 +124,6 @@ serve(async (req) => {
         }
       }
 
-      console.log('Creating Paydunya invoice...')
-      
       const invoiceResponse = await fetch(`${PAYDUNYA_API_URL}/checkout-invoice/create`, {
         method: 'POST',
         headers: {
@@ -144,10 +136,10 @@ serve(async (req) => {
       })
 
       const invoiceData = await invoiceResponse.json()
-      console.log('Paydunya invoice response:', invoiceData)
 
       if (!invoiceResponse.ok || !invoiceData.response_code || invoiceData.response_code !== '00') {
-        throw new Error(invoiceData.response_text || 'Failed to create invoice')
+        console.error('Invoice creation failed')
+        throw new Error('Failed to create invoice')
       }
 
       // Step 2: Get payment URL for specific method
@@ -168,11 +160,7 @@ serve(async (req) => {
         paymentUrl = `${paymentUrl}?channel=${channel}`
       }
 
-      console.log('Payment initiated successfully:', {
-        transactionId,
-        invoiceToken: invoiceData.token,
-        paymentUrl
-      })
+      console.log('Payment initiated successfully:', { transactionId })
 
       return new Response(
         JSON.stringify({

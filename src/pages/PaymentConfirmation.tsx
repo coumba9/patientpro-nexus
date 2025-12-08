@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,36 @@ import { toast } from "sonner";
 import { appointmentService } from "@/api";
 import { checkPaymentStatus } from "@/services/paytech";
 import { useAuth } from "@/hooks/useAuth";
+import { z } from "zod";
+
+// Validation schemas for security
+const tokenSchema = z.string().regex(/^[a-zA-Z0-9_-]+$/).max(200).optional();
+const paymentMethodSchema = z.enum(["wave", "orange-money", "mobile-money", "card", "free-money"]).optional();
+
+const safeLocalStorageGet = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeLocalStorageRemove = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore errors
+  }
+};
+
+const safeJsonParse = <T,>(json: string | null, fallback: T): T => {
+  if (!json) return fallback;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return fallback;
+  }
+};
 
 const PaymentConfirmation = () => {
   const [searchParams] = useSearchParams();
@@ -18,60 +47,42 @@ const PaymentConfirmation = () => {
   const [isCreating, setIsCreating] = useState(false);
   const processedRef = useRef(false);
 
-  const token = searchParams.get("token");
-  const method = searchParams.get("method") || searchParams.get("methods") || searchParams.get("payment_method") || searchParams.get("channel") || (() => { try { return localStorage.getItem("paytech_last_method"); } catch { return null; } })();
-
-  useEffect(() => {
-    console.log("PaymentConfirmation component loaded");
-  }, []);
+  // Validate and extract token from URL params
+  const rawToken = searchParams.get("token");
+  const tokenValidation = tokenSchema.safeParse(rawToken);
+  const token = tokenValidation.success ? tokenValidation.data : null;
+  
+  // Validate payment method
+  const rawMethod = searchParams.get("method") || searchParams.get("methods") || searchParams.get("payment_method") || searchParams.get("channel") || safeLocalStorageGet("paytech_last_method");
+  const methodValidation = paymentMethodSchema.safeParse(rawMethod);
+  const method = methodValidation.success ? methodValidation.data : null;
 
   useEffect(() => {
     const verifyPayment = async () => {
       toast.dismiss();
-      console.log("Starting payment verification...");
-      console.log("URL search params:", window.location.search);
-      console.log("All params:", Object.fromEntries(searchParams.entries()));
 
       // Wait for auth to load
       if (authLoading) {
-        console.log("Auth still loading, waiting...");
         return;
       }
 
       // Prevent multiple runs of this effect
       if (processedRef.current) {
-        console.log("Payment verification already processed, skipping");
         return;
       }
       processedRef.current = true;
 
-      // Token lookup (supporte plusieurs noms) + fallback sandbox/test
+      // Token lookup with validation
       let paymentToken = token ||
-        searchParams.get("payment_token") ||
-        searchParams.get("transaction_id") ||
-        searchParams.get("ref") ||
-        searchParams.get("reference") ||
-        searchParams.get("payment_id") ||
-        (() => { try { return localStorage.getItem("paytech_last_token"); } catch { return null; } })();
-      const isSandbox = (() => { try { return localStorage.getItem("paytech_last_env") === "test"; } catch { return false; } })();
-      const proceedWithoutToken = !paymentToken && !!localStorage.getItem("pendingAppointment");
-
-      if (!paymentToken && !(isSandbox || proceedWithoutToken)) {
-        console.error("No payment token found and not in sandbox; available params:", Object.fromEntries(searchParams.entries()));
-        setStatus("error");
-        toast.error("Token de paiement manquant. Paramètres reçus: " + Array.from(searchParams.keys()).join(", "));
-        return;
-      }
-
-      if (isSandbox || proceedWithoutToken) {
-        console.log("Test-like mode detected - proceeding without token verification");
-      } else {
-        console.log("Payment token found:", paymentToken);
-      }
-
-      if (paymentToken) {
-        console.log("Payment token found:", paymentToken);
-      }
+        tokenSchema.safeParse(searchParams.get("payment_token")).data ||
+        tokenSchema.safeParse(searchParams.get("transaction_id")).data ||
+        tokenSchema.safeParse(searchParams.get("ref")).data ||
+        tokenSchema.safeParse(searchParams.get("reference")).data ||
+        tokenSchema.safeParse(searchParams.get("payment_id")).data ||
+        tokenSchema.safeParse(safeLocalStorageGet("paytech_last_token")).data;
+        
+      const isSandbox = safeLocalStorageGet("paytech_last_env") === "test";
+      const proceedWithoutToken = !paymentToken && !!safeLocalStorageGet("pendingAppointment");
 
       if (!user) {
         console.error("User not authenticated");
@@ -114,16 +125,20 @@ const PaymentConfirmation = () => {
       }
 
       try {
-        // Récupérer les données de rendez-vous en attente
-        const pendingAppointment = localStorage.getItem("pendingAppointment");
-        if (!pendingAppointment) {
-          console.error("No pending appointment data found");
+        // Récupérer les données de rendez-vous en attente with safe parsing
+        const pendingAppointmentRaw = safeLocalStorageGet("pendingAppointment");
+        if (!pendingAppointmentRaw) {
           setStatus("error");
           toast.error("Aucune donnée de rendez-vous en attente");
           return;
         }
 
-        const data = JSON.parse(pendingAppointment);
+        const data = safeJsonParse(pendingAppointmentRaw, null);
+        if (!data || typeof data !== 'object') {
+          setStatus("error");
+          toast.error("Données de rendez-vous invalides");
+          return;
+        }
         setAppointmentData(data);
 
         // Vérifier le paiement en production avant de créer le rendez-vous
@@ -192,11 +207,11 @@ const PaymentConfirmation = () => {
           }
 
           // Nettoyer le localStorage
-          localStorage.removeItem("pendingAppointment");
-          try { localStorage.removeItem("paytech_last_token"); } catch {}
-          try { localStorage.removeItem("paytech_last_method"); } catch {}
-          try { localStorage.removeItem("paytech_last_env"); } catch {}
-          try { localStorage.removeItem("paytech_last_amount"); } catch {}
+          safeLocalStorageRemove("pendingAppointment");
+          safeLocalStorageRemove("paytech_last_token");
+          safeLocalStorageRemove("paytech_last_method");
+          safeLocalStorageRemove("paytech_last_env");
+          safeLocalStorageRemove("paytech_last_amount");
 
           setStatus("success");
           toast.success("Rendez-vous créé avec succès !");

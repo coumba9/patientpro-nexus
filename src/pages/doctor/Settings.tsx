@@ -114,8 +114,14 @@ const Settings = () => {
     toast.success("Paramètres enregistrés avec succès");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+  const handleLogout = async () => {
+    const { logout } = await import("@/hooks/useAuth").then(m => ({ logout: m.useAuth }));
+    // Use the auth hook's logout which properly calls supabase.auth.signOut()
+    const { data: { subscription } } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.onAuthStateChange(() => {}));
+    subscription.unsubscribe();
+    
+    const { supabase } = await import("@/integrations/supabase/client");
+    await supabase.auth.signOut();
     toast.success("Déconnexion réussie");
     navigate("/login");
   };
