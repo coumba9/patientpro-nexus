@@ -1062,6 +1062,18 @@ export type Database = {
           specialty_name: string
         }[]
       }
+      get_safe_profile: {
+        Args: { target_user_id: string }
+        Returns: {
+          address: string
+          avatar_url: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone_number: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
