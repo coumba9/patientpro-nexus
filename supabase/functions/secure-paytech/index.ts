@@ -81,7 +81,7 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Initiating PayTech payment: item=${item_name}, price=${item_price} ${currency}`);
+    console.log('Initiating PayTech payment for ref:', ref_command);
 
     // Production: Call actual PayTech API
     const paytechResponse = await fetch("https://paytech.sn/api/payment/request-payment", {
@@ -107,9 +107,8 @@ serve(async (req) => {
     });
 
     if (!paytechResponse.ok) {
-      const errorText = await paytechResponse.text();
-      console.error(`PayTech API error: ${paytechResponse.status}`, errorText);
-      throw new Error(`PayTech API error: ${paytechResponse.status} - ${errorText}`);
+      console.error('PayTech API error:', paytechResponse.status);
+      throw new Error('Payment processing failed');
     }
 
     const paytechData = await paytechResponse.json();
