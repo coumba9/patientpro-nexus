@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: string | null
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       admin_metrics: {
         Row: {
           category: string
@@ -1083,6 +1116,14 @@ export type Database = {
       }
       is_admin: { Args: { user_id: string }; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
+      log_admin_access: {
+        Args: {
+          p_action_type?: string
+          p_record_id: string
+          p_table_name: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "doctor" | "patient"
