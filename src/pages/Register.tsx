@@ -1,9 +1,11 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { RegisterForm } from "@/components/register/RegisterForm";
 import { useAuth } from "@/hooks/useAuth";
+import { Home, UserPlus, Stethoscope, Shield, Clock, Users, CheckCircle, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -56,11 +58,9 @@ const Register = () => {
         return;
       }
 
-      // For doctors, create an application instead of registering directly
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         
-        // Upload documents first
         let diplomaUrl = null;
         let licenseUrl = null;
         let otherUrls: string[] = [];
@@ -130,7 +130,6 @@ const Register = () => {
       return;
     }
 
-    // For patients, proceed with normal registration
     try {
       await register({
         email: formData.email,
@@ -199,25 +198,220 @@ const Register = () => {
     }
   };
 
+  const patientFeatures = [
+    { icon: Clock, text: "Prise de rendez-vous en ligne 24h/24" },
+    { icon: Users, text: "Accès à des médecins qualifiés" },
+    { icon: Shield, text: "Données médicales sécurisées" },
+    { icon: Heart, text: "Suivi personnalisé de votre santé" },
+  ];
+
+  const doctorFeatures = [
+    { icon: Users, text: "Gérez facilement vos patients" },
+    { icon: Clock, text: "Optimisez votre emploi du temps" },
+    { icon: Shield, text: "Plateforme sécurisée et certifiée" },
+    { icon: CheckCircle, text: "Validation après vérification" },
+  ];
+
+  const features = isDoctor ? doctorFeatures : patientFeatures;
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-sm">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            {isDoctor ? "Inscription Médecin" : "Créer un compte"}
-          </h2>
+    <div className="min-h-screen flex">
+      {/* Left Side - Decorative */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/80">
+        {/* Decorative Elements */}
+        <div className="absolute inset-0">
+          {/* Animated Circles */}
+          <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-32 right-10 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+          
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+              backgroundSize: '40px 40px'
+            }} />
+          </div>
+
+          {/* Medical Icons */}
+          <div className="absolute top-16 right-20 opacity-20">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="white">
+              <rect x="35" y="10" width="10" height="60" rx="2" />
+              <rect x="10" y="35" width="60" height="10" rx="2" />
+            </svg>
+          </div>
+          <div className="absolute bottom-20 left-16 opacity-15">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="white">
+              <rect x="25" y="5" width="10" height="50" rx="2" />
+              <rect x="5" y="25" width="50" height="10" rx="2" />
+            </svg>
+          </div>
+          <div className="absolute top-1/3 right-1/4 opacity-10">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="white">
+              <rect x="42" y="10" width="16" height="80" rx="3" />
+              <rect x="10" y="42" width="80" height="16" rx="3" />
+            </svg>
+          </div>
+
+          {/* Floating Shapes */}
+          <div className="absolute top-1/4 left-10 w-4 h-4 bg-white/30 rounded-full" />
+          <div className="absolute top-2/3 right-1/4 w-6 h-6 bg-white/20 rounded-full" />
+          <div className="absolute bottom-1/3 left-1/4 w-3 h-3 bg-white/40 rounded-full" />
         </div>
 
-        <RegisterForm
-          formData={formData}
-          isDoctor={isDoctor}
-          handleChange={handleChange}
-          handleSubmit={handleSubmit}
-          handleSelectChange={handleSelectChange}
-          documents={documents}
-          handleFileChange={handleFileChange}
-          removeFile={removeFile}
-        />
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              {isDoctor ? (
+                <Stethoscope className="w-12 h-12" />
+              ) : (
+                <UserPlus className="w-12 h-12" />
+              )}
+              <span className="text-3xl font-bold">JàmmSanté</span>
+            </div>
+            <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-4">
+              {isDoctor ? "Rejoignez notre réseau médical" : "Créez votre compte patient"}
+            </h1>
+            <p className="text-lg xl:text-xl text-white/80 leading-relaxed">
+              {isDoctor 
+                ? "Développez votre patientèle et gérez vos consultations en toute simplicité avec JàmmSanté."
+                : "Accédez à des soins de qualité et gérez votre santé en toute simplicité avec JàmmSanté."
+              }
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-4">
+            {features.map((feature, index) => (
+              <div key={index} className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <feature.icon className="w-5 h-5" />
+                </div>
+                <span className="text-lg">{feature.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div className="mt-10 grid grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold">500+</div>
+              <div className="text-white/70 text-sm">Médecins</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">10k+</div>
+              <div className="text-white/70 text-sm">Patients</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">98%</div>
+              <div className="text-white/70 text-sm">Satisfaction</div>
+            </div>
+          </div>
+
+          {/* Switch registration type */}
+          <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+            <p className="text-white/80 mb-3">
+              {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
+            </p>
+            <Button
+              variant="outline"
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              asChild
+            >
+              <Link to={isDoctor ? "/register" : "/register?type=doctor"}>
+                {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col bg-background">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 lg:p-6">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/">
+              <Home className="w-5 h-5" />
+            </Link>
+          </Button>
+          
+          {/* Mobile Logo */}
+          <div className="flex items-center gap-2 lg:hidden">
+            {isDoctor ? (
+              <Stethoscope className="w-6 h-6 text-primary" />
+            ) : (
+              <Heart className="w-6 h-6 text-primary" />
+            )}
+            <span className="font-bold text-primary">JàmmSanté</span>
+          </div>
+
+          <div className="w-10" /> {/* Spacer for balance */}
+        </div>
+
+        {/* Form Container */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto">
+          <div className="w-full max-w-md">
+            {/* Mobile registration type switcher */}
+            <div className="lg:hidden mb-6 p-4 bg-muted/50 rounded-xl">
+              <p className="text-muted-foreground text-sm mb-2">
+                {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
+              </p>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={isDoctor ? "/register" : "/register?type=doctor"}>
+                  {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
+                </Link>
+              </Button>
+            </div>
+
+            {/* Title */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                {isDoctor ? (
+                  <Stethoscope className="w-8 h-8 text-primary" />
+                ) : (
+                  <UserPlus className="w-8 h-8 text-primary" />
+                )}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+                {isDoctor ? "Inscription Médecin" : "Créer un compte"}
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                {isDoctor 
+                  ? "Remplissez le formulaire pour rejoindre notre réseau"
+                  : "Rejoignez JàmmSanté pour accéder à nos services"
+                }
+              </p>
+            </div>
+
+            {/* Form Card */}
+            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8">
+              <RegisterForm
+                formData={formData}
+                isDoctor={isDoctor}
+                handleChange={handleChange}
+                handleSubmit={handleSubmit}
+                handleSelectChange={handleSelectChange}
+                documents={documents}
+                handleFileChange={handleFileChange}
+                removeFile={removeFile}
+              />
+            </div>
+
+            {/* Trust Badges */}
+            <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Shield className="w-4 h-4" />
+                <span>SSL Sécurisé</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <CheckCircle className="w-4 h-4" />
+                <span>Conforme RGPD</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
