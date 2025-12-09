@@ -126,9 +126,9 @@ export const RegisterForm = ({
         {isDoctor ? "Envoyer la demande d'inscription" : "S'inscrire"}
       </Button>
 
-      <p className="mt-2 text-center text-sm text-gray-600">
+      <p className="mt-2 text-center text-sm text-muted-foreground">
         Déjà un compte ?{" "}
-        <Link to="/login" className="text-primary hover:text-primary/90">
+        <Link to="/login" className="text-primary hover:text-primary/90 font-medium">
           Connectez-vous
         </Link>
       </p>
