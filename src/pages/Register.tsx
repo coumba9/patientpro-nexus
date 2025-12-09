@@ -6,6 +6,7 @@ import { RegisterForm } from "@/components/register/RegisterForm";
 import { useAuth } from "@/hooks/useAuth";
 import { Home, UserPlus, Stethoscope, Shield, Clock, Users, CheckCircle, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -221,9 +222,24 @@ const Register = () => {
         {/* Decorative Elements */}
         <div className="absolute inset-0">
           {/* Animated Circles */}
-          <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-32 right-10 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" 
+          />
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="absolute bottom-32 right-10 w-80 h-80 bg-white/5 rounded-full blur-3xl" 
+          />
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1, delay: 0.6 }}
+            className="absolute top-1/2 left-1/3 w-48 h-48 bg-white/10 rounded-full blur-2xl" 
+          />
           
           {/* Grid Pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -234,34 +250,69 @@ const Register = () => {
           </div>
 
           {/* Medical Icons */}
-          <div className="absolute top-16 right-20 opacity-20">
+          <motion.div 
+            initial={{ rotate: -45, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="absolute top-16 right-20"
+          >
             <svg width="80" height="80" viewBox="0 0 80 80" fill="white">
               <rect x="35" y="10" width="10" height="60" rx="2" />
               <rect x="10" y="35" width="60" height="10" rx="2" />
             </svg>
-          </div>
-          <div className="absolute bottom-20 left-16 opacity-15">
+          </motion.div>
+          <motion.div 
+            initial={{ rotate: 45, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 0.15 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="absolute bottom-20 left-16"
+          >
             <svg width="60" height="60" viewBox="0 0 60 60" fill="white">
               <rect x="25" y="5" width="10" height="50" rx="2" />
               <rect x="5" y="25" width="50" height="10" rx="2" />
             </svg>
-          </div>
-          <div className="absolute top-1/3 right-1/4 opacity-10">
+          </motion.div>
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.1 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+            className="absolute top-1/3 right-1/4"
+          >
             <svg width="100" height="100" viewBox="0 0 100 100" fill="white">
               <rect x="42" y="10" width="16" height="80" rx="3" />
               <rect x="10" y="42" width="80" height="16" rx="3" />
             </svg>
-          </div>
+          </motion.div>
 
           {/* Floating Shapes */}
-          <div className="absolute top-1/4 left-10 w-4 h-4 bg-white/30 rounded-full" />
-          <div className="absolute top-2/3 right-1/4 w-6 h-6 bg-white/20 rounded-full" />
-          <div className="absolute bottom-1/3 left-1/4 w-3 h-3 bg-white/40 rounded-full" />
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="absolute top-1/4 left-10 w-4 h-4 bg-white/30 rounded-full" 
+          />
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1 }}
+            className="absolute top-2/3 right-1/4 w-6 h-6 bg-white/20 rounded-full" 
+          />
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+            className="absolute bottom-1/3 left-1/4 w-3 h-3 bg-white/40 rounded-full" 
+          />
         </div>
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
-          <div className="mb-8">
+          <motion.div 
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-8"
+          >
             <div className="flex items-center gap-3 mb-6">
               {isDoctor ? (
                 <Stethoscope className="w-12 h-12" />
@@ -279,22 +330,33 @@ const Register = () => {
                 : "Accédez à des soins de qualité et gérez votre santé en toute simplicité avec JàmmSanté."
               }
             </p>
-          </div>
+          </motion.div>
 
           {/* Features */}
           <div className="space-y-4">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <motion.div 
+                key={index} 
+                initial={{ x: -30, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+              >
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
                   <feature.icon className="w-5 h-5" />
                 </div>
                 <span className="text-lg">{feature.text}</span>
-              </div>
+              </motion.div>
             ))}
           </div>
 
           {/* Stats */}
-          <div className="mt-10 grid grid-cols-3 gap-6">
+          <motion.div 
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.9 }}
+            className="mt-10 grid grid-cols-3 gap-6"
+          >
             <div className="text-center">
               <div className="text-3xl font-bold">500+</div>
               <div className="text-white/70 text-sm">Médecins</div>
@@ -307,10 +369,15 @@ const Register = () => {
               <div className="text-3xl font-bold">98%</div>
               <div className="text-white/70 text-sm">Satisfaction</div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Switch registration type */}
-          <div className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1 }}
+            className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20"
+          >
             <p className="text-white/80 mb-3">
               {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
             </p>
@@ -323,14 +390,19 @@ const Register = () => {
                 {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
               </Link>
             </Button>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex flex-col bg-background">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 lg:p-6">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center justify-between p-4 lg:p-6"
+        >
           <Button variant="ghost" size="icon" asChild>
             <Link to="/">
               <Home className="w-5 h-5" />
@@ -348,13 +420,23 @@ const Register = () => {
           </div>
 
           <div className="w-10" /> {/* Spacer for balance */}
-        </div>
+        </motion.div>
 
         {/* Form Container */}
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto">
-          <div className="w-full max-w-md">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="w-full max-w-md"
+          >
             {/* Mobile registration type switcher */}
-            <div className="lg:hidden mb-6 p-4 bg-muted/50 rounded-xl">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="lg:hidden mb-6 p-4 bg-muted/50 rounded-xl"
+            >
               <p className="text-muted-foreground text-sm mb-2">
                 {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
               </p>
@@ -363,10 +445,15 @@ const Register = () => {
                   {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
                 </Link>
               </Button>
-            </div>
+            </motion.div>
 
             {/* Title */}
-            <div className="text-center mb-8">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="text-center mb-8"
+            >
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
                 {isDoctor ? (
                   <Stethoscope className="w-8 h-8 text-primary" />
@@ -383,10 +470,15 @@ const Register = () => {
                   : "Rejoignez JàmmSanté pour accéder à nos services"
                 }
               </p>
-            </div>
+            </motion.div>
 
             {/* Form Card */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="bg-card rounded-2xl shadow-lg border border-border p-6 sm:p-8"
+            >
               <RegisterForm
                 formData={formData}
                 isDoctor={isDoctor}
@@ -397,10 +489,15 @@ const Register = () => {
                 handleFileChange={handleFileChange}
                 removeFile={removeFile}
               />
-            </div>
+            </motion.div>
 
             {/* Trust Badges */}
-            <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 }}
+              className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground"
+            >
               <div className="flex items-center gap-1">
                 <Shield className="w-4 h-4" />
                 <span>SSL Sécurisé</span>
@@ -409,8 +506,8 @@ const Register = () => {
                 <CheckCircle className="w-4 h-4" />
                 <span>Conforme RGPD</span>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>
