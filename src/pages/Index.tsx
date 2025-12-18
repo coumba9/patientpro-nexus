@@ -6,7 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Statistics } from "@/components/Statistics";
 import { Testimonials } from "@/components/Testimonials";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus, Shield, Clock, Sparkles } from "lucide-react";
+import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -191,48 +191,6 @@ const Index = () => {
       
       <main className="flex-grow">
         <Hero />
-        
-        {/* Trust Indicators */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          variants={fadeIn}
-          className="py-10 bg-card border-y border-border/50"
-        >
-          <div className="container">
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
-              <div className="flex items-center gap-3 stat-card px-6 py-4">
-                <div className="p-2 rounded-xl bg-primary/10">
-                  <Shield className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <span className="font-display font-bold text-foreground">100% sécurisé</span>
-                  <p className="text-xs text-muted-foreground">Données cryptées</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 stat-card px-6 py-4">
-                <div className="p-2 rounded-xl bg-primary/10">
-                  <Clock className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <span className="font-display font-bold text-foreground">Disponible 24h/24</span>
-                  <p className="text-xs text-muted-foreground">7 jours sur 7</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 stat-card px-6 py-4">
-                <div className="p-2 rounded-xl bg-primary/10">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <span className="font-display font-bold text-foreground">Certifié</span>
-                  <p className="text-xs text-muted-foreground">Médecins vérifiés</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.section>
 
         {!(user && userRole === "doctor") && <HowItWorks />}
         
