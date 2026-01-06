@@ -7,6 +7,7 @@ export interface Doctor {
   id: string;
   name: string;
   specialty: string;
+  specialty_id?: string;
   location: string;
   availability: string;
   rating: number;
@@ -20,6 +21,7 @@ export interface Doctor {
   specialty_name?: string;
   years_of_experience?: number;
   is_verified?: boolean;
+  average_rating?: number;
 }
 
 // Mock doctors data
@@ -116,17 +118,19 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const fetchDoctors = async () => {
       try {
         const realDoctors = await doctorService.getDoctorsWithDetails();
-        const transformedDoctors: Doctor[] = realDoctors.map(doctor => ({
+        const transformedDoctors: Doctor[] = realDoctors.map((doctor: any) => ({
           id: doctor.id,
-          name: `Dr. ${doctor.profile?.first_name} ${doctor.profile?.last_name}`,
+          name: `Dr. ${doctor.profile?.first_name || ''} ${doctor.profile?.last_name || ''}`.trim(),
           specialty: doctor.specialty?.name || 'Généraliste',
-          location: 'Dakar', // Default location - should be added to doctor profile
+          specialty_id: doctor.specialty_id,
+          location: 'Dakar',
           availability: 'Disponible',
-          rating: 4.5, // Default rating - should be calculated from reviews
+          rating: doctor.average_rating || 0, // Use real rating from database
           profile: doctor.profile,
           specialty_name: doctor.specialty?.name,
           years_of_experience: doctor.years_of_experience,
-          is_verified: doctor.is_verified
+          is_verified: doctor.is_verified,
+          average_rating: doctor.average_rating || 0
         }));
         
         setDoctors(transformedDoctors);
