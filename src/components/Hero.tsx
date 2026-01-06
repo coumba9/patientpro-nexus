@@ -4,6 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { 
   Search, 
   MapPin, 
   Heart, 
@@ -12,7 +19,6 @@ import {
   Stethoscope, 
   Baby, 
   Eye, 
-  Brain, 
   Bone,
   Activity,
   ArrowRight,
@@ -23,6 +29,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { specialtyService } from "@/api/services/specialty.service";
 
 // Popular specialties for quick access
 const popularSpecialties = [
@@ -34,30 +41,46 @@ const popularSpecialties = [
   { name: "Kinésithérapeute", icon: Bone, color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" },
 ];
 
+interface Specialty {
+  id: string;
+  name: string;
+  status: string;
+}
+
 export const Hero = () => {
   const navigate = useNavigate();
-  const { user, userRole } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [location, setLocation] = useState("");
   const [doctorCount, setDoctorCount] = useState(0);
   const [patientCount, setPatientCount] = useState(0);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [loadingSpecialties, setLoadingSpecialties] = useState(true);
 
   useEffect(() => {
-    const fetchCounts = async () => {
-      const [doctorsResult, patientsResult] = await Promise.all([
-        supabase.from('doctors').select('id', { count: 'exact', head: true }),
-        supabase.from('patients').select('id', { count: 'exact', head: true })
-      ]);
-      setDoctorCount(doctorsResult.count || 0);
-      setPatientCount(patientsResult.count || 0);
+    const fetchData = async () => {
+      try {
+        const [doctorsResult, patientsResult, specialtiesData] = await Promise.all([
+          supabase.from('doctors').select('id', { count: 'exact', head: true }),
+          supabase.from('patients').select('id', { count: 'exact', head: true }),
+          specialtyService.getActiveSpecialties()
+        ]);
+        setDoctorCount(doctorsResult.count || 0);
+        setPatientCount(patientsResult.count || 0);
+        setSpecialties(specialtiesData || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoadingSpecialties(false);
+      }
     };
-    fetchCounts();
+    fetchData();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
+    if (selectedSpecialty) params.set('specialty', selectedSpecialty);
     if (location) params.set('location', location);
     navigate(`/find-doctor?${params.toString()}`);
   };
@@ -124,16 +147,22 @@ export const Hero = () => {
             <form onSubmit={handleSearch} className="relative">
               <div className="bg-card rounded-2xl shadow-lg border border-border/50 p-2 md:p-3">
                 <div className="flex flex-col md:flex-row gap-2 md:gap-0">
-                  {/* Specialty/Name Search */}
+                  {/* Specialty Select Dropdown */}
                   <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="text"
-                      placeholder="Spécialité, praticien, établissement..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 pr-4 py-6 text-base md:text-lg border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/70"
-                    />
+                    <Stethoscope className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+                    <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                      <SelectTrigger className="pl-12 pr-4 h-14 text-base md:text-lg border-0 bg-transparent focus:ring-0 focus:ring-offset-0 [&>span]:text-left">
+                        <SelectValue placeholder="Choisir une spécialité..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        <SelectItem value="all">Toutes les spécialités</SelectItem>
+                        {specialties.map((specialty) => (
+                          <SelectItem key={specialty.id} value={specialty.name}>
+                            {specialty.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   {/* Divider */}
