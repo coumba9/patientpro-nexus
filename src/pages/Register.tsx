@@ -430,22 +430,6 @@ const Register = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="w-full max-w-md"
           >
-            {/* Mobile registration type switcher */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              className="lg:hidden mb-6 p-4 bg-muted/50 rounded-xl"
-            >
-              <p className="text-muted-foreground text-sm mb-2">
-                {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link to={isDoctor ? "/register" : "/register?type=doctor"}>
-                  {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
-                </Link>
-              </Button>
-            </motion.div>
 
             {/* Title */}
             <motion.div 
@@ -506,6 +490,23 @@ const Register = () => {
                 <CheckCircle className="w-4 h-4" />
                 <span>Conforme RGPD</span>
               </div>
+            </motion.div>
+
+            {/* Mobile registration type switcher - Moved to bottom */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
+              className="lg:hidden mt-6 p-4 bg-muted/50 rounded-xl text-center"
+            >
+              <p className="text-muted-foreground text-sm mb-3">
+                {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
+              </p>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={isDoctor ? "/register" : "/register?type=doctor"}>
+                  {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
+                </Link>
+              </Button>
             </motion.div>
           </motion.div>
         </div>

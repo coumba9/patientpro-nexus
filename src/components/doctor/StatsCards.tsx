@@ -5,8 +5,8 @@ import {
   AlertCircle,
   MessageCircle,
   ChartBar,
-  Percent,
-  FileText
+  FileText,
+  Star
 } from "lucide-react";
 import {
   Card,
@@ -25,6 +25,8 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
   const { appointments, loading } = useRealtimeAppointments(doctorId, 'doctor');
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [totalDocuments, setTotalDocuments] = useState(0);
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [totalRatings, setTotalRatings] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
 
   const today = new Date().toISOString().split('T')[0];
@@ -56,6 +58,19 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
           .from('documents')
           .select('*', { count: 'exact', head: true })
           .eq('doctor_id', doctorId);
+
+        // Get average rating from ratings table
+        const { data: ratingsData } = await supabase
+          .from('ratings')
+          .select('rating')
+          .eq('doctor_id', doctorId);
+
+        if (ratingsData && ratingsData.length > 0) {
+          const sum = ratingsData.reduce((acc, r) => acc + r.rating, 0);
+          const avg = Math.round((sum / ratingsData.length) * 10) / 10;
+          setAverageRating(avg);
+          setTotalRatings(ratingsData.length);
+        }
 
         setUnreadMessages(messagesCount || 0);
         setTotalDocuments(documentsCount || 0);
@@ -98,7 +113,7 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
             <Calendar className="h-8 w-8 text-primary mr-2" />
             <div>
               <p className="text-2xl font-bold">{todayAppointments.length}</p>
-              <p className="text-xs text-gray-500">{teleconsultationsToday.length} en téléconsultation</p>
+              <p className="text-xs text-muted-foreground">{teleconsultationsToday.length} en téléconsultation</p>
             </div>
           </div>
         </CardContent>
@@ -115,7 +130,7 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
             <AlertCircle className="h-8 w-8 text-yellow-500 mr-2" />
             <div>
               <p className="text-2xl font-bold">{pendingAppointments.length}</p>
-              <p className="text-xs text-gray-500">À confirmer</p>
+              <p className="text-xs text-muted-foreground">À confirmer</p>
             </div>
           </div>
         </CardContent>
@@ -124,15 +139,15 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">
-            Messages non lus
+            Note moyenne
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center">
-            <MessageCircle className="h-8 w-8 text-blue-500 mr-2" />
+            <Star className="h-8 w-8 text-yellow-500 mr-2 fill-yellow-500" />
             <div>
-              <p className="text-2xl font-bold">{unreadMessages}</p>
-              <p className="text-xs text-gray-500">À traiter</p>
+              <p className="text-2xl font-bold">{averageRating > 0 ? averageRating : '-'}/5</p>
+              <p className="text-xs text-muted-foreground">{totalRatings} évaluation{totalRatings !== 1 ? 's' : ''}</p>
             </div>
           </div>
         </CardContent>
@@ -149,7 +164,7 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
             <ChartBar className="h-8 w-8 text-green-600 mr-2" />
             <div>
               <p className="text-2xl font-bold">{monthlyAppointments.length}</p>
-              <p className="text-xs text-gray-500">Mois en cours</p>
+              <p className="text-xs text-muted-foreground">Mois en cours</p>
             </div>
           </div>
         </CardContent>
@@ -158,15 +173,15 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">
-            Total rendez-vous
+            Messages non lus
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center">
-            <Percent className="h-8 w-8 text-purple-500 mr-2" />
+            <MessageCircle className="h-8 w-8 text-blue-500 mr-2" />
             <div>
-              <p className="text-2xl font-bold">{appointments.length}</p>
-              <p className="text-xs text-gray-500">Tous les rendez-vous</p>
+              <p className="text-2xl font-bold">{unreadMessages}</p>
+              <p className="text-xs text-muted-foreground">À traiter</p>
             </div>
           </div>
         </CardContent>
@@ -183,7 +198,7 @@ export const StatsCards = ({ doctorId }: StatsCardsProps) => {
             <FileText className="h-8 w-8 text-green-500 mr-2" />
             <div>
               <p className="text-2xl font-bold">{totalDocuments}</p>
-              <p className="text-xs text-gray-500">Total créés</p>
+              <p className="text-xs text-muted-foreground">Total créés</p>
             </div>
           </div>
         </CardContent>
