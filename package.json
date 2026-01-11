@@ -51,7 +51,7 @@
     "framer-motion": "^12.5.0",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.2.4",
-    "jspdf": "^3.0.0",
+    "jspdf": "^4.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.462.0",
     "mapbox-gl": "^3.10.0",
