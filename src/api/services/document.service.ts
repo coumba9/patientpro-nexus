@@ -11,6 +11,7 @@ export interface Document {
   file_size?: number;
   is_signed: boolean;
   signed_at?: string;
+  signature_url?: string;
   created_at: string;
   updated_at: string;
   patient?: {
@@ -100,11 +101,67 @@ class DocumentService extends BaseService<Document> {
     return data as any;
   }
 
-  async signDocument(documentId: string): Promise<Document> {
-    return this.update(documentId, {
+  async uploadSignature(doctorId: string, signatureDataUrl: string): Promise<string> {
+    // Convert base64 data URL to blob
+    const base64Data = signatureDataUrl.split(',')[1];
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+
+    // Create unique filename
+    const fileName = `${doctorId}/${Date.now()}.png`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('signatures')
+      .upload(fileName, blob, {
+        contentType: 'image/png',
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Error uploading signature:', error);
+      throw error;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('signatures')
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  }
+
+  async signDocument(documentId: string, signatureUrl?: string): Promise<Document> {
+    const updateData: any = {
       is_signed: true,
       signed_at: new Date().toISOString()
-    });
+    };
+
+    if (signatureUrl) {
+      updateData.signature_url = signatureUrl;
+    }
+
+    return this.update(documentId, updateData);
+  }
+
+  async getSignatureUrl(documentId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from(this.tableName as any)
+      .select('signature_url')
+      .eq('id', documentId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching signature URL:', error);
+      return null;
+    }
+
+    return (data as any)?.signature_url || null;
   }
 }
 
