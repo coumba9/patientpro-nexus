@@ -75,21 +75,17 @@ const Documents = () => {
     setSignatureDialogOpen(true);
   };
 
-  const saveSignature = async (signatureData: string) => {
+  const saveSignature = async (_signatureData: string) => {
     if (!selectedDoc) return;
 
     try {
-      // Note: The document ID in selectedDoc is a number, we need the original doc
-      const originalDoc = documents.find(d => d.id === selectedDoc.id);
-      if (!originalDoc) return;
+      await documentService.signDocument(selectedDoc.id);
 
-      // For now, just update the local state since we don't have the real document ID from DB
-      setDocuments(docs =>
-        docs.map(doc =>
-          doc.id === selectedDoc.id ? { ...doc, signed: true } : doc
-        )
+      // Reflect change locally (and keep UI consistent without full reload)
+      setDocuments((docs) =>
+        docs.map((doc) => (doc.id === selectedDoc.id ? { ...doc, signed: true } : doc))
       );
-      
+
       toast.success("Document signé avec succès");
       setSignatureDialogOpen(false);
       setSelectedDoc(null);

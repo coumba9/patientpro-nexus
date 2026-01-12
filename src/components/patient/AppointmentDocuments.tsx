@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Eye, Pill, Activity, MessageCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Download, Eye, Pill, Activity, MessageCircle, FileSignature } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -15,6 +16,8 @@ interface Document {
   type: string;
   file_url?: string;
   created_at: string;
+  is_signed?: boolean;
+  signed_at?: string | null;
   doctor_name?: string;
 }
 
@@ -58,7 +61,7 @@ export const AppointmentDocuments = ({
       // Fetch documents
       const { data: docsData, error: docsError } = await supabase
         .from('documents')
-        .select('id, title, type, file_url, created_at, doctor_id')
+        .select('id, title, type, file_url, created_at, doctor_id, is_signed, signed_at')
         .eq('patient_id', patientId)
         .eq('doctor_id', doctorId);
 
@@ -304,9 +307,24 @@ export const AppointmentDocuments = ({
                 <div className="flex items-center gap-3">
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="font-medium">{doc.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{doc.title}</p>
+                      {doc.is_signed ? (
+                        <Badge variant="outline" className="gap-1">
+                          <FileSignature className="h-3 w-3" />
+                          Signé
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Non signé</Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(doc.created_at), 'dd/MM/yyyy', { locale: fr })}
+                      {doc.is_signed && doc.signed_at ? (
+                        <span>
+                          {" "}• signé le {format(new Date(doc.signed_at), 'dd/MM/yyyy', { locale: fr })}
+                        </span>
+                      ) : null}
                     </p>
                   </div>
                 </div>
