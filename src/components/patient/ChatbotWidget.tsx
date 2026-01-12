@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,9 +23,26 @@ export const ChatbotWidget = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Close chatbot when clicking outside
   useEffect(() => {
@@ -58,20 +77,58 @@ export const ChatbotWidget = () => {
     setIsLoading(true);
 
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        setMessages([
+          ...newMessages,
+          {
+            role: "assistant",
+            content: "Vous devez être connecté pour utiliser le chatbot. Veuillez vous connecter pour continuer."
+          }
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/patient-chatbot`,
+        `https://diieheagpzlqatqpzjua.supabase.co/functions/v1/patient-chatbot`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ messages: newMessages }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la communication avec le chatbot");
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          setMessages([
+            ...newMessages,
+            {
+              role: "assistant",
+              content: "Votre session a expiré. Veuillez vous reconnecter pour continuer."
+            }
+          ]);
+          setIsLoading(false);
+          return;
+        }
+        if (response.status === 429) {
+          setMessages([
+            ...newMessages,
+            {
+              role: "assistant",
+              content: errorData.error || "Trop de requêtes. Veuillez patienter quelques instants."
+            }
+          ]);
+          setIsLoading(false);
+          return;
+        }
+        throw new Error(errorData.error || "Erreur lors de la communication avec le chatbot");
       }
 
       const reader = response.body?.getReader();
@@ -227,28 +284,48 @@ export const ChatbotWidget = () => {
 
               {/* Input */}
               <div className="p-4 border-t bg-card">
-                <div className="flex gap-2">
-                  <Input
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Posez votre question..."
-                    disabled={isLoading}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={handleSend}
-                    disabled={!input.trim() || isLoading}
-                    size="icon"
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Appuyez sur Entrée pour envoyer
-                </p>
+                {isAuthenticated === false ? (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Connectez-vous pour utiliser le chatbot
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate("/login");
+                      }}
+                      className="gap-2"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      Se connecter
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex gap-2">
+                      <Input
+                        ref={inputRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Posez votre question..."
+                        disabled={isLoading}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={handleSend}
+                        disabled={!input.trim() || isLoading}
+                        size="icon"
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      Appuyez sur Entrée pour envoyer
+                    </p>
+                  </>
+                )}
               </div>
             </Card>
           </motion.div>
