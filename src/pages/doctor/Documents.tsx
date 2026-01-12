@@ -75,18 +75,22 @@ const Documents = () => {
     setSignatureDialogOpen(true);
   };
 
-  const saveSignature = async (_signatureData: string) => {
-    if (!selectedDoc) return;
+  const saveSignature = async (signatureData: string) => {
+    if (!selectedDoc || !user?.id) return;
 
     try {
-      await documentService.signDocument(selectedDoc.id);
+      // Upload signature to Supabase Storage
+      const signatureUrl = await documentService.uploadSignature(user.id, signatureData);
+
+      // Sign the document with signature URL
+      await documentService.signDocument(selectedDoc.id, signatureUrl);
 
       // Reflect change locally (and keep UI consistent without full reload)
       setDocuments((docs) =>
         docs.map((doc) => (doc.id === selectedDoc.id ? { ...doc, signed: true } : doc))
       );
 
-      toast.success("Document signé avec succès");
+      toast.success("Document signé avec succès ! Le patient a été notifié.");
       setSignatureDialogOpen(false);
       setSelectedDoc(null);
     } catch (error) {

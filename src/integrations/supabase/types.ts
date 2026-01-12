@@ -327,6 +327,7 @@ export type Database = {
           id: string
           is_signed: boolean
           patient_id: string
+          signature_url: string | null
           signed_at: string | null
           title: string
           type: string
@@ -340,6 +341,7 @@ export type Database = {
           id?: string
           is_signed?: boolean
           patient_id: string
+          signature_url?: string | null
           signed_at?: string | null
           title: string
           type: string
@@ -353,6 +355,7 @@ export type Database = {
           id?: string
           is_signed?: boolean
           patient_id?: string
+          signature_url?: string | null
           signed_at?: string | null
           title?: string
           type?: string

@@ -33,6 +33,7 @@ interface PrescriptionData {
   }>;
   notes?: string;
   signed?: boolean;
+  signatureUrl?: string;
 }
 
 export const generateInvoicePDF = (data: InvoiceData): void => {
@@ -145,7 +146,7 @@ export const generateInvoicePDF = (data: InvoiceData): void => {
   doc.save(`facture_${data.invoiceNumber}.pdf`);
 };
 
-export const generatePrescriptionPDF = (data: PrescriptionData): void => {
+export const generatePrescriptionPDF = async (data: PrescriptionData): Promise<void> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
@@ -242,19 +243,48 @@ export const generatePrescriptionPDF = (data: PrescriptionData): void => {
     yPos += 30;
   }
   
-  // Signature
+  // Signature section
   if (data.signed) {
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
-    doc.text(`Fait le ${data.date}`, pageWidth - 70, yPos + 20);
+    doc.text(`Fait le ${data.date}`, pageWidth - 70, yPos + 10);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Dr. ${data.doctorName}`, pageWidth - 70, yPos + 30);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Signature et cachet', pageWidth - 70, yPos + 37);
+    doc.text(`Dr. ${data.doctorName}`, pageWidth - 70, yPos + 20);
     
-    // Signature line
-    doc.setDrawColor(0, 0, 0);
-    doc.line(pageWidth - 90, yPos + 45, pageWidth - 20, yPos + 45);
+    // Add signature image if available
+    if (data.signatureUrl) {
+      try {
+        // Load signature image
+        const response = await fetch(data.signatureUrl);
+        const blob = await response.blob();
+        const base64 = await blobToBase64(blob);
+        
+        // Add signature image to PDF
+        doc.addImage(base64, 'PNG', pageWidth - 90, yPos + 25, 60, 25);
+        
+        // Add "Signé électroniquement" badge
+        doc.setFillColor(34, 197, 94);
+        doc.roundedRect(pageWidth - 90, yPos + 52, 70, 8, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.text('✓ Signé électroniquement', pageWidth - 55, yPos + 57, { align: 'center' });
+      } catch (error) {
+        console.error('Error loading signature image:', error);
+        // Fallback to text signature
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text('Signature et cachet', pageWidth - 70, yPos + 27);
+        doc.setDrawColor(0, 0, 0);
+        doc.line(pageWidth - 90, yPos + 35, pageWidth - 20, yPos + 35);
+      }
+    } else {
+      // Text signature fallback
+      doc.setFont('helvetica', 'normal');
+      doc.text('Signature et cachet', pageWidth - 70, yPos + 27);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(pageWidth - 90, yPos + 35, pageWidth - 20, yPos + 35);
+    }
   }
   
   // Footer
@@ -265,6 +295,16 @@ export const generatePrescriptionPDF = (data: PrescriptionData): void => {
   
   // Save the PDF
   doc.save(`ordonnance_${data.patientName.replace(/\s+/g, '_')}_${data.date.replace(/\//g, '-')}.pdf`);
+};
+
+// Helper function to convert blob to base64
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 };
 
 export const generateMedicalReportPDF = (data: {

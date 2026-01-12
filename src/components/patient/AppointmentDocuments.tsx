@@ -10,7 +10,7 @@ import { fr } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { generatePrescriptionPDF, generateMedicalReportPDF } from "@/lib/pdfGenerator";
 
-interface Document {
+interface DocumentData {
   id: string;
   title: string;
   type: string;
@@ -18,6 +18,7 @@ interface Document {
   created_at: string;
   is_signed?: boolean;
   signed_at?: string | null;
+  signature_url?: string | null;
   doctor_name?: string;
 }
 
@@ -44,11 +45,12 @@ export const AppointmentDocuments = ({
   doctorId,
   patientName = "Patient"
 }: AppointmentDocumentsProps) => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPrescription, setSelectedPrescription] = useState<MedicalRecord | null>(null);
   const [showPrescriptionViewer, setShowPrescriptionViewer] = useState(false);
+  const [documentsSignatures, setDocumentsSignatures] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     loadData();
@@ -58,10 +60,10 @@ export const AppointmentDocuments = ({
     try {
       setLoading(true);
 
-      // Fetch documents
+      // Fetch documents with signature_url
       const { data: docsData, error: docsError } = await supabase
         .from('documents')
-        .select('id, title, type, file_url, created_at, doctor_id, is_signed, signed_at')
+        .select('id, title, type, file_url, created_at, doctor_id, is_signed, signed_at, signature_url')
         .eq('patient_id', patientId)
         .eq('doctor_id', doctorId);
 
@@ -110,6 +112,13 @@ export const AppointmentDocuments = ({
         doctor_name: doctorNames[doc.doctor_id] || 'Médecin'
       }));
 
+      // Build signature map from documents
+      const sigMap: Record<string, string | null> = {};
+      (docsData || []).forEach(doc => {
+        sigMap[doc.id] = doc.signature_url || null;
+      });
+      setDocumentsSignatures(sigMap);
+
       // Enrich records with doctor names
       const enrichedRecords = (recordsData || []).map(record => ({
         ...record,
@@ -131,10 +140,10 @@ export const AppointmentDocuments = ({
     setShowPrescriptionViewer(true);
   };
 
-  const handleDownloadPrescription = (record: MedicalRecord) => {
+  const handleDownloadPrescription = async (record: MedicalRecord, signatureUrl?: string) => {
     const medications = parsePrescriptionToMedications(record.prescription || '');
     
-    generatePrescriptionPDF({
+    await generatePrescriptionPDF({
       date: format(new Date(record.date), 'dd/MM/yyyy'),
       patientName,
       doctorName: record.doctor_name || 'Médecin',
@@ -142,7 +151,8 @@ export const AppointmentDocuments = ({
       diagnosis: record.diagnosis,
       medications,
       notes: record.notes || undefined,
-      signed: true
+      signed: true,
+      signatureUrl
     });
     toast.success("Ordonnance téléchargée");
   };
@@ -159,7 +169,7 @@ export const AppointmentDocuments = ({
     toast.success("Compte-rendu téléchargé");
   };
 
-  const handleDownloadDocument = async (doc: Document) => {
+  const handleDownloadDocument = async (doc: DocumentData) => {
     if (!doc.file_url) {
       toast.error('Aucun fichier disponible');
       return;
@@ -267,7 +277,11 @@ export const AppointmentDocuments = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDownloadPrescription(record)}
+                        onClick={() => {
+                          // Find the related document's signature URL if available
+                          const docWithSig = documents.find(d => d.is_signed && d.signature_url);
+                          handleDownloadPrescription(record, docWithSig?.signature_url || undefined);
+                        }}
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Télécharger ordonnance
