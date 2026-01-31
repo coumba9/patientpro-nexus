@@ -40,7 +40,7 @@ const DoctorApplications = () => {
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [temporaryPassword, setTemporaryPassword] = useState("");
+  // Password field removed - now using secure password reset links
   const queryClient = useQueryClient();
 
   // Fetch applications
@@ -76,11 +76,11 @@ const DoctorApplications = () => {
     return specialty?.name || 'Non spécifié';
   };
 
-  // Approve mutation
+  // Approve mutation - no longer requires password (secure reset link sent automatically)
   const approveMutation = useMutation({
-    mutationFn: async ({ applicationId, password }: { applicationId: string; password: string }) => {
+    mutationFn: async ({ applicationId }: { applicationId: string }) => {
       const { data, error } = await supabase.functions.invoke('approve-doctor-application', {
-        body: { applicationId, password }
+        body: { applicationId }
       });
 
       if (error) throw error;
@@ -90,8 +90,7 @@ const DoctorApplications = () => {
       queryClient.invalidateQueries({ queryKey: ['doctor-applications'] });
       setShowApproveDialog(false);
       setSelectedApplication(null);
-      setTemporaryPassword("");
-      toast.success("Demande approuvée et email envoyé avec succès");
+      toast.success("Demande approuvée ! Un email avec un lien de création de mot de passe a été envoyé au médecin.");
     },
     onError: (error: any) => {
       console.error('Approve error:', error);
@@ -124,14 +123,9 @@ const DoctorApplications = () => {
 
   const handleApprove = () => {
     if (!selectedApplication) return;
-    if (!temporaryPassword || temporaryPassword.length < 8) {
-      toast.error("Le mot de passe doit contenir au moins 8 caractères");
-      return;
-    }
 
     approveMutation.mutate({
-      applicationId: selectedApplication.id,
-      password: temporaryPassword
+      applicationId: selectedApplication.id
     });
   };
 
@@ -339,23 +333,21 @@ const DoctorApplications = () => {
             <DialogHeader>
               <DialogTitle>Approuver la demande</DialogTitle>
               <DialogDescription>
-                Créez un mot de passe temporaire pour Dr {selectedApplication?.first_name} {selectedApplication?.last_name}. 
-                Ce mot de passe sera envoyé par email.
+                Confirmez l'approbation de la demande de Dr {selectedApplication?.first_name} {selectedApplication?.last_name}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="password">Mot de passe temporaire</Label>
-                <Input
-                  id="password"
-                  type="text"
-                  placeholder="Au moins 8 caractères"
-                  value={temporaryPassword}
-                  onChange={(e) => setTemporaryPassword(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Le médecin devra changer ce mot de passe lors de sa première connexion
-                </p>
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-green-600 dark:text-green-400 mt-0.5">🔐</div>
+                  <div>
+                    <p className="font-medium text-green-800 dark:text-green-200">Sécurité renforcée</p>
+                    <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                      Un lien sécurisé de création de mot de passe sera envoyé par email au médecin. 
+                      Ce lien expire automatiquement après 24 heures pour plus de sécurité.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
