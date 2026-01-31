@@ -11,7 +11,7 @@ const corsHeaders = {
 
 interface ApproveApplicationRequest {
   applicationId: string;
-  password: string;
+  // password field removed - we now use password reset links for security
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -51,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Unauthorized: Admin access required");
     }
 
-    const { applicationId, password }: ApproveApplicationRequest = await req.json();
+    const { applicationId }: ApproveApplicationRequest = await req.json();
 
     console.log("Approving application:", applicationId);
 
@@ -81,18 +81,22 @@ const handler = async (req: Request): Promise<Response> => {
     let userId: string | null = existingProfile?.id ?? null;
 
     // Create the user account only if it doesn't already exist
+    // Generate a secure random temporary password (user won't know it - they'll use reset link)
+    const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+    
     if (!userId) {
       const { data: newUser, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
         email: application.email,
-        password: password,
-        email_confirm: false, // We'll send a custom verification email
+        password: tempPassword, // Secure random password - user will never see this
+        email_confirm: true, // Mark email as confirmed since admin approved
         user_metadata: {
           first_name: application.first_name,
           last_name: application.last_name,
           role: 'doctor',
           speciality: application.specialty_id,
           licenseNumber: application.license_number,
-          yearsOfExperience: application.years_of_experience
+          yearsOfExperience: application.years_of_experience,
+          must_reset_password: true // Flag to force password change
         }
       });
 
@@ -169,7 +173,25 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send approval email (non bloquant en cas d'erreur d'envoi)
+    // Generate password reset link for secure password setup
+    const siteUrl = "https://jammsante.lovable.app";
+    const { data: resetLinkData, error: resetLinkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: application.email,
+      options: {
+        redirectTo: `${siteUrl}/reset-password`
+      }
+    });
+
+    if (resetLinkError) {
+      console.error("Error generating reset link:", resetLinkError);
+      // Continue anyway - we can still send an email asking them to use "Forgot Password"
+    }
+
+    const resetLink = resetLinkData?.properties?.action_link || `${siteUrl}/login`;
+    console.log("Generated reset link for new doctor");
+
+    // Send approval email with secure password setup link (non bloquant en cas d'erreur d'envoi)
     let emailResponse;
     try {
       emailResponse = await resend.emails.send({
@@ -189,6 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
               .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
               .info-box { background: white; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0; }
               .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+              .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
             </style>
           </head>
           <body>
@@ -209,19 +232,22 @@ const handler = async (req: Request): Promise<Response> => {
                 </div>
 
                 <div class="info-box">
-                  <h3>🔐 Vos identifiants de connexion</h3>
+                  <h3>🔐 Configurez votre mot de passe</h3>
                   <p><strong>Email :</strong> ${application.email}</p>
-                  <p><strong>Mot de passe temporaire :</strong> ${password}</p>
-                  <p style="color: #e74c3c; font-size: 14px;">⚠️ Pour des raisons de sécurité, veuillez changer votre mot de passe lors de votre première connexion.</p>
+                  <p>Pour des raisons de sécurité, veuillez cliquer sur le bouton ci-dessous pour créer votre mot de passe personnel.</p>
+                </div>
+
+                <div class="warning">
+                  <p><strong>⚠️ Important :</strong> Ce lien expire dans 24 heures. Si le lien a expiré, utilisez l'option "Mot de passe oublié" sur la page de connexion.</p>
                 </div>
 
                 <p style="text-align: center;">
-                  <a href="${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovableproject.com') || ''}/login" class="button">
-                    Se connecter maintenant
+                  <a href="${resetLink}" class="button">
+                    🔑 Créer mon mot de passe
                   </a>
                 </p>
 
-                <p>Vous pouvez maintenant accéder à toutes les fonctionnalités de la plateforme :</p>
+                <p>Une fois votre mot de passe créé, vous pourrez accéder à toutes les fonctionnalités de la plateforme :</p>
                 <ul>
                   <li>Gérer vos rendez-vous</li>
                   <li>Consulter vos patients</li>
