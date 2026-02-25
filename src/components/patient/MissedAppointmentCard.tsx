@@ -48,7 +48,7 @@ export const MissedAppointmentCard = ({
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                   <h3 className="font-semibold text-lg">
-                    Dr. {(appointment as any).doctor?.profile?.first_name} {(appointment as any).doctor?.profile?.last_name}
+                    {appointment.doctor || 'Médecin'}
                   </h3>
                   <Badge variant="destructive">Rendez-vous manqué</Badge>
                 </div>

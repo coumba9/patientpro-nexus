@@ -91,7 +91,7 @@ export const RealAppointmentsPage = () => {
       time: apt.time,
       location: apt.location || 'À définir',
       type: apt.type,
-      status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation" | "completed" | "cancelled",
+      status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation" | "completed" | "cancelled" | "no_show",
       doctorId: apt.doctor_id,
       mode: apt.mode,
     }));

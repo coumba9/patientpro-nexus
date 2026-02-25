@@ -8,4 +8,5 @@ export interface Appointment {
   type: string;
   status: "confirmed" | "pending" | "awaiting_patient_confirmation" | "cancelled" | "completed" | "no_show";
   doctorId?: string;
+  mode?: string;
 }

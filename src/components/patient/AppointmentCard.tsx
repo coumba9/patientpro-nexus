@@ -115,6 +115,8 @@ export const AppointmentCard = ({
         return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">Terminé</Badge>;
       case "cancelled":
         return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100">Annulé</Badge>;
+      case "no_show":
+        return <Badge variant="destructive">Absent</Badge>;
       default:
         return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">En attente</Badge>;
     }
