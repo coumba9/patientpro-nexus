@@ -23,8 +23,8 @@ class DoctorService extends BaseService<Doctor> {
     return Math.round((sum / data.length) * 10) / 10;
   }
 
-  // Get all ratings for multiple doctors at once
-  async getDoctorsRatings(doctorIds: string[]): Promise<Record<string, number>> {
+  // Get all ratings for multiple doctors at once (average + count)
+  async getDoctorsRatings(doctorIds: string[]): Promise<Record<string, { average: number; count: number }>> {
     if (doctorIds.length === 0) return {};
     
     const { data, error } = await supabase
@@ -45,13 +45,16 @@ class DoctorService extends BaseService<Doctor> {
       ratingsMap[r.doctor_id].push(r.rating);
     });
     
-    const averages: Record<string, number> = {};
+    const results: Record<string, { average: number; count: number }> = {};
     Object.entries(ratingsMap).forEach(([doctorId, ratings]) => {
       const sum = ratings.reduce((acc, r) => acc + r, 0);
-      averages[doctorId] = Math.round((sum / ratings.length) * 10) / 10;
+      results[doctorId] = {
+        average: Math.round((sum / ratings.length) * 10) / 10,
+        count: ratings.length
+      };
     });
     
-    return averages;
+    return results;
   }
 
   async getDoctorsWithDetails(): Promise<Doctor[]> {
@@ -90,7 +93,8 @@ class DoctorService extends BaseService<Doctor> {
     // Add ratings to doctors
     return doctors.map(d => ({
       ...d,
-      average_rating: ratings[d.id] || 0
+      average_rating: ratings[d.id]?.average || 0,
+      rating_count: ratings[d.id]?.count || 0
     }));
   }
 

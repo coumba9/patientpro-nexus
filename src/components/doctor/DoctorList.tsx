@@ -10,6 +10,7 @@ interface Doctor {
   location: string;
   availability: string;
   rating: number;
+  rating_count?: number;
   latitude?: number;
   longitude?: number;
   years_of_experience?: number;

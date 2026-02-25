@@ -11,6 +11,7 @@ export interface Doctor {
   location: string;
   availability: string;
   rating: number;
+  rating_count?: number;
   latitude?: number;
   longitude?: number;
   profile?: {
@@ -125,7 +126,8 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           specialty_id: doctor.specialty_id,
           location: 'Dakar',
           availability: 'Disponible',
-          rating: doctor.average_rating || 0, // Use real rating from database
+          rating: doctor.average_rating || 0,
+          rating_count: doctor.rating_count || 0,
           profile: doctor.profile,
           specialty_name: doctor.specialty?.name,
           years_of_experience: doctor.years_of_experience,

@@ -20,6 +20,7 @@ interface Doctor {
   location: string;
   availability: string;
   rating: number;
+  rating_count?: number;
   latitude?: number;
   longitude?: number;
   years_of_experience?: number;
@@ -93,8 +94,15 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
               
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="font-medium text-foreground">{doctor.rating}</span>
+                <span className="font-medium text-foreground">
+                  {doctor.rating > 0 ? doctor.rating : '—'}
+                </span>
                 <span className="text-muted-foreground">/5</span>
+                {(doctor.rating_count ?? 0) > 0 && (
+                  <span className="text-muted-foreground text-xs">
+                    ({doctor.rating_count} avis)
+                  </span>
+                )}
               </div>
             </div>
 

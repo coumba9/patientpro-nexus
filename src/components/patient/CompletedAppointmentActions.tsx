@@ -11,6 +11,8 @@ import {
 import { RatingDialog } from "@/components/appointment/RatingDialog";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { generateInvoicePDF } from "@/lib/pdfGenerator";
 
 interface CompletedAppointmentActionsProps {
   appointmentId: string;
@@ -44,9 +46,35 @@ export const CompletedAppointmentActions = ({
     navigate('/patient/prescriptions');
   };
 
-  const handleDownloadInvoice = () => {
-    // TODO: Implémenter le téléchargement de facture
-    toast.success("Téléchargement de la facture...");
+  const handleDownloadInvoice = async () => {
+    try {
+      const { data: invoice } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('appointment_id', appointmentId)
+        .maybeSingle();
+
+      if (invoice) {
+        await generateInvoicePDF({
+          invoiceNumber: invoice.invoice_number || `INV-${appointmentId.slice(0, 8)}`,
+          date: new Date(invoice.created_at).toLocaleDateString('fr-FR'),
+          patientName: 'Patient',
+          doctorName: doctorName,
+          doctorSpecialty: 'Médecin',
+          consultationType: 'Consultation',
+          consultationMode: 'Présentiel',
+          amount: invoice.amount,
+          paymentMethod: invoice.payment_method || 'Non spécifié',
+          paymentStatus: invoice.payment_status,
+        });
+        toast.success("Facture téléchargée");
+      } else {
+        toast.info("Aucune facture disponible pour ce rendez-vous");
+      }
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      toast.error("Erreur lors du téléchargement de la facture");
+    }
   };
 
   const handleBookNewAppointment = () => {
