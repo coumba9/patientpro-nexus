@@ -9,6 +9,7 @@ import {
   MonitorOff,
   PhoneOff,
   MessageSquare,
+  FileText,
 } from 'lucide-react';
 
 interface CallControlsProps {
@@ -17,11 +18,14 @@ interface CallControlsProps {
   isScreenSharing: boolean;
   isConnected: boolean;
   showChat: boolean;
+  showNotes?: boolean;
   unreadMessages: number;
+  isDoctor?: boolean;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onToggleScreenShare: () => void;
   onToggleChat: () => void;
+  onToggleNotes?: () => void;
   onEndCall: () => void;
 }
 
@@ -31,11 +35,14 @@ export const CallControls = ({
   isScreenSharing,
   isConnected,
   showChat,
+  showNotes,
   unreadMessages,
+  isDoctor,
   onToggleMute,
   onToggleVideo,
   onToggleScreenShare,
   onToggleChat,
+  onToggleNotes,
   onEndCall,
 }: CallControlsProps) => {
   return (
@@ -105,6 +112,22 @@ export const CallControls = ({
         </TooltipTrigger>
         <TooltipContent>Chat</TooltipContent>
       </Tooltip>
+
+      {isDoctor && onToggleNotes && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={showNotes ? "default" : "secondary"}
+              size="icon"
+              className="h-12 w-12 rounded-full"
+              onClick={onToggleNotes}
+            >
+              <FileText className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Notes de consultation</TooltipContent>
+        </Tooltip>
+      )}
 
       <Tooltip>
         <TooltipTrigger asChild>
