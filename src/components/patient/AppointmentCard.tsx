@@ -22,6 +22,7 @@ import { MissedAppointmentCard } from "./MissedAppointmentCard";
 import { AppointmentDocuments } from "./AppointmentDocuments";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { messageService, appointmentService } from "@/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "./types";
