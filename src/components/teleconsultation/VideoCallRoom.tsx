@@ -41,6 +41,8 @@ export const VideoCallRoom = ({
   const [showChat, setShowChat] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [readMessages, setReadMessages] = useState(0);
+  const [showEndCallWarning, setShowEndCallWarning] = useState(false);
+  const hasUnsavedNotesRef = useRef(false);
 
   const {
     localStream,
