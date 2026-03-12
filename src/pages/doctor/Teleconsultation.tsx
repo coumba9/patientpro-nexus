@@ -28,6 +28,7 @@ const Teleconsultation = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [activePatientName, setActivePatientName] = useState<string>("");
+  const [activePatientId, setActivePatientId] = useState<string>("");
   const [teleconsultations, setTeleconsultations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -78,13 +79,15 @@ const Teleconsultation = () => {
     if (location.state?.appointmentId) {
       setActiveRoomId(location.state.appointmentId);
       setActivePatientName(location.state.patient || 'Patient');
+      setActivePatientId(location.state.patientId || '');
       setActiveTab("session");
     }
   }, [location.state]);
 
-  const startConsultation = (appointmentId: string, patientName: string) => {
+  const startConsultation = (appointmentId: string, patientName: string, pId: string) => {
     setActiveRoomId(appointmentId);
     setActivePatientName(patientName);
+    setActivePatientId(pId);
     setActiveTab("session");
     toast.success(`Consultation avec ${patientName} démarrée`);
   };
@@ -217,7 +220,7 @@ const Teleconsultation = () => {
                             <div className="flex flex-col sm:flex-row gap-2">
                               <Button 
                                 size="sm"
-                                onClick={() => startConsultation(consultation.id, consultation.patientName)}
+                                onClick={() => startConsultation(consultation.id, consultation.patientName, consultation.patient_id)}
                               >
                                 <VideoIcon className="h-4 w-4 mr-2" />
                                 Démarrer
@@ -240,6 +243,8 @@ const Teleconsultation = () => {
                     userName={`Dr. ${user?.user_metadata?.first_name || 'Médecin'}`}
                     isDoctor={true}
                     remoteName={activePatientName}
+                    doctorId={user?.id}
+                    patientId={activePatientId}
                     onEndCall={endConsultation}
                   />
                   

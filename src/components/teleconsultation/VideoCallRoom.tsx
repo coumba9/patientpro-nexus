@@ -3,6 +3,7 @@ import { useVideoCall } from '@/hooks/useVideoCall';
 import { VideoPlayer } from './VideoPlayer';
 import { CallControls } from './CallControls';
 import { ConsultationChat } from './ConsultationChat';
+import { ConsultationNotes } from './ConsultationNotes';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,8 @@ interface VideoCallRoomProps {
   userName: string;
   isDoctor: boolean;
   remoteName?: string;
+  doctorId?: string;
+  patientId?: string;
   onEndCall: () => void;
 }
 
@@ -21,9 +24,12 @@ export const VideoCallRoom = ({
   userName,
   isDoctor,
   remoteName,
+  doctorId,
+  patientId,
   onEndCall,
 }: VideoCallRoomProps) => {
   const [showChat, setShowChat] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [readMessages, setReadMessages] = useState(0);
 
   const {
@@ -53,10 +59,20 @@ export const VideoCallRoom = ({
 
   const handleToggleChat = useCallback(() => {
     setShowChat(prev => {
-      if (!prev) setReadMessages(messages.length);
+      if (!prev) {
+        setReadMessages(messages.length);
+        setShowNotes(false); // Close notes when opening chat
+      }
       return !prev;
     });
   }, [messages.length]);
+
+  const handleToggleNotes = useCallback(() => {
+    setShowNotes(prev => {
+      if (!prev) setShowChat(false); // Close chat when opening notes
+      return !prev;
+    });
+  }, []);
 
   const handleEndCall = useCallback(() => {
     endCall();
@@ -120,6 +136,8 @@ export const VideoCallRoom = ({
     );
   }
 
+  const sidebarOpen = showChat || showNotes;
+
   return (
     <div className="flex flex-col h-full rounded-xl overflow-hidden border border-border bg-background">
       {/* Header bar */}
@@ -179,6 +197,18 @@ export const VideoCallRoom = ({
             />
           </div>
         )}
+
+        {/* Notes sidebar (doctor only) */}
+        {showNotes && isDoctor && doctorId && patientId && (
+          <div className="w-80 flex-shrink-0">
+            <ConsultationNotes
+              appointmentId={roomId}
+              doctorId={doctorId}
+              patientId={patientId}
+              patientName={remoteName || 'Patient'}
+            />
+          </div>
+        )}
       </div>
 
       {/* Controls */}
@@ -188,11 +218,14 @@ export const VideoCallRoom = ({
         isScreenSharing={isScreenSharing}
         isConnected={isConnected}
         showChat={showChat}
+        showNotes={showNotes}
         unreadMessages={unreadMessages}
+        isDoctor={isDoctor}
         onToggleMute={toggleMute}
         onToggleVideo={toggleVideo}
         onToggleScreenShare={toggleScreenShare}
         onToggleChat={handleToggleChat}
+        onToggleNotes={handleToggleNotes}
         onEndCall={handleEndCall}
       />
     </div>
