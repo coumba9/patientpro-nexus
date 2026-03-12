@@ -84,9 +84,10 @@ const Teleconsultation = () => {
     }
   }, [location.state]);
 
-  const startConsultation = (appointmentId: string, patientName: string) => {
+  const startConsultation = (appointmentId: string, patientName: string, pId: string) => {
     setActiveRoomId(appointmentId);
     setActivePatientName(patientName);
+    setActivePatientId(pId);
     setActiveTab("session");
     toast.success(`Consultation avec ${patientName} démarrée`);
   };
