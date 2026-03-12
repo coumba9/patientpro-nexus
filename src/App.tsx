@@ -79,6 +79,11 @@ const App = () => {
               <Route path="/register" element={<Register />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               {/* Patient Routes */}
+              <Route path="/patient/teleconsultation/:appointmentId" element={
+                <ProtectedRoute requiredRole={['patient']}>
+                  <PatientTeleconsultation />
+                </ProtectedRoute>
+              } />
               <Route path="/patient/*" element={
                 <ProtectedRoute requiredRole={['patient']}>
                   <PatientDashboard />
