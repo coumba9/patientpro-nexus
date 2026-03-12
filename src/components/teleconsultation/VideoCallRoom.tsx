@@ -157,7 +157,7 @@ export const VideoCallRoom = ({
               : "Connexion au médecin en cours..."}
           </p>
         </div>
-        <Button variant="outline" onClick={handleEndCall}>
+        <Button variant="outline" onClick={() => { endCall(); onEndCall(); }}>
           Annuler
         </Button>
       </Card>
