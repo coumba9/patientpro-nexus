@@ -78,7 +78,6 @@ const App = () => {
               <BrowserRouter>
                 <AuthGuard>
                   <Suspense fallback={<LoadingFallback />}>
-                    <ChatbotWidget />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/find-doctor" element={<FindDoctor />} />
