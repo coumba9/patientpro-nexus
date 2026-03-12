@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useVideoCall } from '@/hooks/useVideoCall';
 import { VideoPlayer } from './VideoPlayer';
 import { CallControls } from './CallControls';
@@ -7,6 +7,16 @@ import { ConsultationNotes } from './ConsultationNotes';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Video, Loader2, Clock, Shield } from 'lucide-react';
 
 interface VideoCallRoomProps {
