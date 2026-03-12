@@ -1,47 +1,48 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Eye, Filter, Edit, UserPlus } from "lucide-react";
+import { Eye, Filter, Edit, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { UserDetailsDialog } from "./UserDetailsDialog";
 import { CreateUserDialog } from "./CreateUserDialog";
 import { useAdminUsers, AdminUser } from "@/hooks/useAdminUsers";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const UsersManagementTab = () => {
-  const { users, loading } = useAdminUsers();
+  const { users, loading, updateRole, updateStatus, updateProfile, deleteUser } = useAdminUsers();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredUsers = useMemo(() => {
     let filtered = users;
-
-    // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter((user) => {
-        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
-        const email = user.email?.toLowerCase() || '';
-        const query = searchQuery.toLowerCase();
-        return fullName.includes(query) || email.includes(query);
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((u) => {
+        const name = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase();
+        return name.includes(q) || (u.email?.toLowerCase() || '').includes(q);
       });
     }
-
-    // Apply role filter
     if (roleFilter && roleFilter !== "all") {
-      filtered = filtered.filter((user) => user.role === roleFilter);
+      filtered = filtered.filter((u) => u.role === roleFilter);
     }
-
     return filtered;
   }, [users, searchQuery, roleFilter]);
 
   const handleViewUser = (user: AdminUser) => {
     setSelectedUser(user);
     setUserDialogOpen(true);
+  };
+
+  const handleQuickDelete = async (userId: string) => {
+    setDeletingId(userId);
+    try { await deleteUser(userId); } finally { setDeletingId(null); }
   };
 
   if (loading) {
@@ -58,23 +59,14 @@ export const UsersManagementTab = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Gestion des utilisateurs</h2>
         <div className="flex space-x-2">
-          <Button 
-            onClick={() => setCreateDialogOpen(true)}
-            className="flex items-center bg-green-600 hover:bg-green-700 text-white"
-          >
+          <Button onClick={() => setCreateDialogOpen(true)} className="flex items-center">
             <UserPlus className="h-4 w-4 mr-2" />
             Nouveau compte
           </Button>
           <div className="relative">
-            <Input
-              type="text"
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64 pl-9"
-            />
+            <Input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-64 pl-9" />
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Eye className="h-4 w-4 text-gray-400" />
+              <Eye className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -109,7 +101,7 @@ export const UsersManagementTab = () => {
           {filteredUsers.map((user) => {
             const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Non renseigné';
             const formattedDate = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : 'N/A';
-            
+
             return (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{fullName}</TableCell>
@@ -125,51 +117,50 @@ export const UsersManagementTab = () => {
                     {user.status === "active" ? "Actif" : user.status === "pending" ? "En attente" : "Bloqué"}
                   </Badge>
                 </TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center bg-blue-50 hover:bg-blue-100 text-blue-600 transition-all duration-200 shadow-sm hover:shadow"
-                    onClick={() => handleViewUser(user)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Voir
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center"
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Modifier
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          );
-        })}
+                <TableCell>
+                  <div className="flex space-x-1">
+                    <Button variant="outline" size="sm" onClick={() => handleViewUser(user)}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Modifier
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Supprimer {fullName} ?</AlertDialogTitle>
+                          <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleQuickDelete(user.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {deletingId === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Supprimer"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
 
       <UserDetailsDialog
         open={userDialogOpen}
         onOpenChange={setUserDialogOpen}
-        user={selectedUser ? {
-          id: parseInt(selectedUser.id),
-          name: `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || 'Non renseigné',
-          email: selectedUser.email || '',
-          role: selectedUser.role === 'admin' ? 'Admin' : selectedUser.role === 'doctor' ? 'Médecin' : 'Patient',
-          dateAdded: selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleDateString('fr-FR') : 'N/A',
-          status: selectedUser.status === 'active' ? 'Actif' : selectedUser.status === 'pending' ? 'En attente' : 'Bloqué',
-          permissions: selectedUser.role === 'admin' ? ['all'] : []
-        } : null}
+        user={selectedUser}
+        onUpdateRole={updateRole}
+        onUpdateStatus={updateStatus}
+        onUpdateProfile={updateProfile}
+        onDelete={deleteUser}
       />
 
-      <CreateUserDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
+      <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </>
   );
 };
