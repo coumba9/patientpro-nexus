@@ -63,11 +63,12 @@ export const ConsultationNotes = ({
 
   useEffect(() => {
     if (!diagnosis && !notes && !prescription) return;
+    onUnsavedChange?.(true);
     setAutoSaveStatus('saving');
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(saveDraft, 1500);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [diagnosis, notes, prescription, saveDraft]);
+  }, [diagnosis, notes, prescription, saveDraft, onUnsavedChange]);
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);
