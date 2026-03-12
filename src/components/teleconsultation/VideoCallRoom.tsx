@@ -206,6 +206,7 @@ export const VideoCallRoom = ({
               doctorId={doctorId}
               patientId={patientId}
               patientName={remoteName || 'Patient'}
+              callDuration={callDuration}
             />
           </div>
         )}
