@@ -7,14 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FileText, Save, Loader2, CheckCircle, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FileText, Save, Loader2, CheckCircle, Clock, Sparkles, Copy, Check } from 'lucide-react';
 
 interface ConsultationNotesProps {
   appointmentId: string;
   doctorId: string;
   patientId: string;
   patientName: string;
+  callDuration?: number;
   onNotesSaved?: () => void;
 }
 
@@ -23,6 +23,7 @@ export const ConsultationNotes = ({
   doctorId,
   patientId,
   patientName,
+  callDuration,
   onNotesSaved,
 }: ConsultationNotesProps) => {
   const [diagnosis, setDiagnosis] = useState('');
@@ -31,10 +32,12 @@ export const ConsultationNotes = ({
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [aiSummary, setAiSummary] = useState('');
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [copied, setCopied] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draftKey = `consultation-notes-${appointmentId}`;
 
-  // Load draft from localStorage on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(draftKey);
@@ -43,18 +46,18 @@ export const ConsultationNotes = ({
         setDiagnosis(draft.diagnosis || '');
         setNotes(draft.notes || '');
         setPrescription(draft.prescription || '');
+        if (draft.aiSummary) setAiSummary(draft.aiSummary);
       }
     } catch { /* ignore */ }
   }, [draftKey]);
 
-  // Auto-save draft to localStorage on change
   const saveDraft = useCallback(() => {
-    const draft = { diagnosis, notes, prescription, updatedAt: new Date().toISOString() };
+    const draft = { diagnosis, notes, prescription, aiSummary, updatedAt: new Date().toISOString() };
     localStorage.setItem(draftKey, JSON.stringify(draft));
     setAutoSaveStatus('saved');
     setLastSaved(new Date());
     setTimeout(() => setAutoSaveStatus('idle'), 2000);
-  }, [diagnosis, notes, prescription, draftKey]);
+  }, [diagnosis, notes, prescription, aiSummary, draftKey]);
 
   useEffect(() => {
     if (!diagnosis && !notes && !prescription) return;
@@ -64,7 +67,94 @@ export const ConsultationNotes = ({
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
   }, [diagnosis, notes, prescription, saveDraft]);
 
-  // Save to medical_records in Supabase
+  const formatDuration = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    return m > 0 ? `${m} min` : `${seconds} sec`;
+  };
+
+  // Stream AI summary
+  const generateSummary = async () => {
+    if (!diagnosis.trim()) {
+      toast.error('Saisissez un diagnostic avant de générer la synthèse');
+      return;
+    }
+
+    setGeneratingSummary(true);
+    setAiSummary('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Non authentifié');
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/consultation-summary`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            diagnosis,
+            notes,
+            prescription,
+            patientName,
+            callDuration: callDuration ? formatDuration(callDuration) : undefined,
+          }),
+        }
+      );
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: 'Erreur serveur' }));
+        throw new Error(err.error || `Erreur ${resp.status}`);
+      }
+
+      if (!resp.body) throw new Error('Pas de stream');
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let nlIdx: number;
+        while ((nlIdx = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, nlIdx);
+          buffer = buffer.slice(nlIdx + 1);
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (!line.startsWith('data: ')) continue;
+          const json = line.slice(6).trim();
+          if (json === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(json);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulated += content;
+              setAiSummary(accumulated);
+            }
+          } catch { /* partial JSON, wait */ }
+        }
+      }
+
+      toast.success('Synthèse IA générée');
+    } catch (e: any) {
+      console.error('AI summary error:', e);
+      toast.error(e.message || 'Erreur lors de la génération');
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(aiSummary);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const saveToMedicalRecords = async () => {
     if (!diagnosis.trim()) {
       toast.error('Veuillez saisir un diagnostic');
@@ -73,18 +163,22 @@ export const ConsultationNotes = ({
 
     setSaving(true);
     try {
+      const fullNotes = [
+        notes.trim(),
+        aiSummary ? `\n---\n**Synthèse IA:**\n${aiSummary}` : '',
+      ].filter(Boolean).join('\n');
+
       const { error } = await supabase.from('medical_records').insert({
         doctor_id: doctorId,
         patient_id: patientId,
         date: new Date().toISOString().split('T')[0],
         diagnosis: diagnosis.trim(),
-        notes: notes.trim() || null,
+        notes: fullNotes || null,
         prescription: prescription.trim() || null,
       });
 
       if (error) throw error;
 
-      // Also save a note linked to this consultation
       await supabase.from('notes').insert({
         doctor_id: doctorId,
         patient_id: patientId,
@@ -94,12 +188,12 @@ export const ConsultationNotes = ({
           `**Diagnostic:** ${diagnosis}`,
           notes ? `**Notes:** ${notes}` : '',
           prescription ? `**Prescription:** ${prescription}` : '',
+          aiSummary ? `\n---\n**Synthèse IA:**\n${aiSummary}` : '',
         ].filter(Boolean).join('\n\n'),
       });
 
-      // Clear draft
       localStorage.removeItem(draftKey);
-      toast.success('Notes de consultation enregistrées dans le dossier médical');
+      toast.success('Notes et synthèse enregistrées dans le dossier médical');
       onNotesSaved?.();
     } catch (error: any) {
       console.error('Error saving notes:', error);
@@ -150,7 +244,7 @@ export const ConsultationNotes = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Observations, symptômes, examen clinique..."
-              className="mt-1 text-sm min-h-[100px] resize-none"
+              className="mt-1 text-sm min-h-[80px] resize-none"
             />
           </div>
 
@@ -160,8 +254,51 @@ export const ConsultationNotes = ({
               value={prescription}
               onChange={(e) => setPrescription(e.target.value)}
               placeholder="Médicaments, posologie, durée..."
-              className="mt-1 text-sm min-h-[80px] resize-none"
+              className="mt-1 text-sm min-h-[60px] resize-none"
             />
+          </div>
+
+          {/* AI Summary Section */}
+          <div className="border border-border rounded-md overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 bg-muted/50">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-medium text-foreground">Synthèse IA</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {aiSummary && (
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyToClipboard}>
+                    {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-[10px] gap-1 px-2"
+                  onClick={generateSummary}
+                  disabled={generatingSummary || !diagnosis.trim()}
+                >
+                  {generatingSummary ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
+                  {generatingSummary ? 'Génération...' : 'Générer'}
+                </Button>
+              </div>
+            </div>
+            {aiSummary ? (
+              <div className="p-3 text-xs text-foreground whitespace-pre-wrap leading-relaxed max-h-[200px] overflow-y-auto">
+                {aiSummary}
+                {generatingSummary && <span className="inline-block w-1.5 h-3.5 bg-primary animate-pulse ml-0.5" />}
+              </div>
+            ) : (
+              <div className="p-3 text-[10px] text-muted-foreground text-center">
+                {generatingSummary
+                  ? 'Génération de la synthèse en cours...'
+                  : 'Remplissez les notes puis cliquez sur "Générer" pour créer une synthèse automatique'}
+              </div>
+            )}
           </div>
 
           {lastSaved && (
