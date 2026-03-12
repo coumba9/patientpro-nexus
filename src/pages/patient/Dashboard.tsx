@@ -49,6 +49,7 @@ const PatientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <ChatbotWidget />
       {/* Header professionnel */}
       <header className="glass-strong py-4 sticky top-0 z-50 border-b border-border/50">
         <div className="container flex justify-between items-center">
