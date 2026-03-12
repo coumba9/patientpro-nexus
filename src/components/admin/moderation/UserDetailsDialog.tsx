@@ -1,136 +1,196 @@
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Users, ShieldCheck } from "lucide-react";
-import { toast } from "sonner";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  dateAdded: string;
-  status: string;
-  permissions: string[];
-}
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Users, Trash2, Save, Loader2 } from "lucide-react";
+import { AdminUser } from "@/hooks/useAdminUsers";
 
 interface UserDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: User | null;
+  user: AdminUser | null;
+  onUpdateRole: (userId: string, role: 'admin' | 'doctor' | 'patient') => Promise<void>;
+  onUpdateStatus: (userId: string, isBlocked: boolean) => Promise<void>;
+  onUpdateProfile: (userId: string, data: { first_name: string; last_name: string; email?: string; phone_number?: string }) => Promise<void>;
+  onDelete: (userId: string) => Promise<void>;
 }
 
-const availablePermissions = [
-  { id: "view_users", label: "Voir les utilisateurs" },
-  { id: "edit_users", label: "Modifier les utilisateurs" },
-  { id: "delete_users", label: "Supprimer les utilisateurs" },
-  { id: "view_reports", label: "Voir les signalements" },
-  { id: "moderate_content", label: "Modérer le contenu" },
-  { id: "approve_doctors", label: "Approuver les médecins" },
-  { id: "edit_content", label: "Éditer le contenu" },
-  { id: "view_analytics", label: "Voir les statistiques" },
-  { id: "manage_roles", label: "Gérer les rôles" },
-  { id: "all", label: "Toutes les permissions" },
-];
+export const UserDetailsDialog = ({ open, onOpenChange, user, onUpdateRole, onUpdateStatus, onUpdateProfile, onDelete }: UserDetailsDialogProps) => {
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [role, setRole] = useState<string>("");
+  const [isActive, setIsActive] = useState(true);
 
-export const UserDetailsDialog = ({ open, onOpenChange, user }: UserDetailsDialogProps) => {
+  // Sync state when user changes
+  const initState = () => {
+    if (!user) return;
+    setFirstName(user.first_name || "");
+    setLastName(user.last_name || "");
+    setEmail(user.email || "");
+    setPhone(user.phone_number || "");
+    setRole(user.role);
+    setIsActive(user.status !== "blocked");
+  };
+
+  // Use onOpenChange to reset
+  const handleOpenChange = (v: boolean) => {
+    if (v && user) initState();
+    onOpenChange(v);
+  };
+
+  // Also init when dialog opens with user
+  if (open && user && role === "" && firstName === "" && lastName === "") {
+    initState();
+  }
+
   if (!user) return null;
 
-  const handleUpdateRole = (role: string) => {
-    toast.success(`Rôle mis à jour avec succès`);
+  const hasProfileChanges = firstName !== (user.first_name || "") || lastName !== (user.last_name || "") || email !== (user.email || "") || phone !== (user.phone_number || "");
+  const hasRoleChange = role !== user.role;
+  const hasStatusChange = isActive !== (user.status !== "blocked");
+  const hasChanges = hasProfileChanges || hasRoleChange || hasStatusChange;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (hasProfileChanges) {
+        await onUpdateProfile(user.id, { first_name: firstName, last_name: lastName, email: email || undefined, phone_number: phone || undefined });
+      }
+      if (hasRoleChange) {
+        await onUpdateRole(user.id, role as 'admin' | 'doctor' | 'patient');
+      }
+      if (hasStatusChange) {
+        await onUpdateStatus(user.id, !isActive);
+      }
+      onOpenChange(false);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await onDelete(user.id);
+      onOpenChange(false);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Détails de l'utilisateur
           </DialogTitle>
-          <DialogDescription>
-            <div className="mt-4">
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-                  <Users className="h-10 w-10 text-gray-400" />
-                </div>
-                <h2 className="text-xl font-bold">{user.name}</h2>
-                <p className="text-gray-500">{user.email}</p>
-                <Badge 
-                  className="mt-2" 
-                  variant={user.role === "Admin" ? "destructive" : user.role === "Modérateur" ? "default" : "secondary"}
-                >
-                  {user.role}
-                </Badge>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Rôle actuel</h3>
-                  <Select defaultValue={user.role} onValueChange={handleUpdateRole}>
-                    <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder="Sélectionner un rôle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Rôles disponibles</SelectLabel>
-                        <SelectItem value="Admin">Administrateur</SelectItem>
-                        <SelectItem value="Modérateur">Modérateur</SelectItem>
-                        <SelectItem value="Support">Support</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Permissions</h3>
-                  <div className="space-y-2">
-                    {user.permissions.includes("all") ? (
-                      <div className="p-3 bg-gray-50 rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">Toutes les permissions</p>
-                            <p className="text-sm text-gray-500">Accès complet à l'ensemble du système</p>
-                          </div>
-                          <ShieldCheck className="h-5 w-5 text-green-500" />
-                        </div>
-                      </div>
-                    ) : (
-                      user.permissions.map((permission) => (
-                        <div key={permission} className="p-3 bg-gray-50 rounded-md">
-                          <p className="font-medium">
-                            {availablePermissions.find(p => p.id === permission)?.label || permission}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Statut du compte</h3>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Compte actif</p>
-                      <p className="text-sm text-gray-500">L'utilisateur peut se connecter à la plateforme</p>
-                    </div>
-                    <Switch checked={user.status === "Actif"} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end space-x-2 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
-          </Button>
-          <Button className="bg-primary hover:bg-primary/90">
-            Sauvegarder les modifications
-          </Button>
+
+        <div className="space-y-4 mt-2">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+              <Users className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-semibold">{firstName} {lastName}</p>
+              <p className="text-sm text-muted-foreground">{email}</p>
+            </div>
+            <Badge className="ml-auto" variant={user.role === "admin" ? "destructive" : user.role === "doctor" ? "default" : "secondary"}>
+              {user.role === "admin" ? "Admin" : user.role === "doctor" ? "Médecin" : "Patient"}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Prénom</Label>
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div>
+              <Label>Nom</Label>
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div>
+              <Label>Téléphone</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <Label>Rôle</Label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger className="w-full mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="patient">Patient</SelectItem>
+                <SelectItem value="doctor">Médecin</SelectItem>
+                <SelectItem value="admin">Administrateur</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <p className="font-medium text-sm">Compte actif</p>
+              <p className="text-xs text-muted-foreground">L'utilisateur peut se connecter</p>
+            </div>
+            <Switch checked={isActive} onCheckedChange={setIsActive} />
+          </div>
+        </div>
+
+        <div className="flex justify-between mt-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" disabled={deleting}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Supprimer
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action est irréversible. Le compte de {firstName} {lastName} sera définitivement supprimé.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Supprimer"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
+            <Button onClick={handleSave} disabled={!hasChanges || saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+              Sauvegarder
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
