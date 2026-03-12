@@ -197,6 +197,7 @@ export const ConsultationNotes = ({
 
       localStorage.removeItem(draftKey);
       toast.success('Notes et synthèse enregistrées dans le dossier médical');
+      onUnsavedChange?.(false);
       onNotesSaved?.();
     } catch (error: any) {
       console.error('Error saving notes:', error);
