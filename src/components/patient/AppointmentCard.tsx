@@ -40,6 +40,7 @@ export const AppointmentCard = ({
   onReschedule,
   onConfirm,
 }: AppointmentCardProps) => {
+  const navigate = useNavigate();
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
