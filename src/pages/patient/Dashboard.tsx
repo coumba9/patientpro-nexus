@@ -18,6 +18,7 @@ import Prescriptions from "./Prescriptions";
 import AppointmentTickets from "./AppointmentTickets";
 import PatientAppointmentDetails from "./AppointmentDetails";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ChatbotWidget } from "@/components/patient/ChatbotWidget";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Heart, X, Search, Home, Info, Phone } from "lucide-react";
 
@@ -48,6 +49,7 @@ const PatientDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <ChatbotWidget />
       {/* Header professionnel */}
       <header className="glass-strong py-4 sticky top-0 z-50 border-b border-border/50">
         <div className="container flex justify-between items-center">

@@ -54,6 +54,7 @@ const DoctorAppointmentDetails = lazy(() => import("./pages/doctor/AppointmentDe
 const PatientAppointmentDetails = lazy(() => import("./pages/patient/AppointmentDetails"));
 const PatientTeleconsultation = lazy(() => import("./pages/patient/Teleconsultation"));
 const ChatbotWidget = lazy(() => import("@/components/patient/ChatbotWidget").then(m => ({ default: m.ChatbotWidget })));
+const UmlDiagrams = lazy(() => import("./pages/UmlDiagrams"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,7 +78,6 @@ const App = () => {
               <BrowserRouter>
                 <AuthGuard>
                   <Suspense fallback={<LoadingFallback />}>
-                    <ChatbotWidget />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/find-doctor" element={<FindDoctor />} />
@@ -219,6 +219,7 @@ const App = () => {
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
                       <Route path="/legal" element={<Legal />} />
+                      <Route path="/uml-diagrams" element={<UmlDiagrams />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
