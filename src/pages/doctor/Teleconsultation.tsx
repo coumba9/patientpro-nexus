@@ -243,6 +243,8 @@ const Teleconsultation = () => {
                     userName={`Dr. ${user?.user_metadata?.first_name || 'Médecin'}`}
                     isDoctor={true}
                     remoteName={activePatientName}
+                    doctorId={user?.id}
+                    patientId={activePatientId}
                     onEndCall={endConsultation}
                   />
                   
