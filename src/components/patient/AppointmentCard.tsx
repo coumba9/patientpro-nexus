@@ -298,6 +298,17 @@ export const AppointmentCard = ({
                     Confirmer
                   </Button>
                 )}
+
+                {isOnline && appointment.status === 'confirmed' && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => navigate(`/patient/teleconsultation/${appointment.id}`)}
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    Rejoindre
+                  </Button>
+                )}
               </div>
             )}
           </div>
