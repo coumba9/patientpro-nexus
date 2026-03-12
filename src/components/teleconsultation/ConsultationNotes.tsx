@@ -16,6 +16,7 @@ interface ConsultationNotesProps {
   patientName: string;
   callDuration?: number;
   onNotesSaved?: () => void;
+  onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 export const ConsultationNotes = ({
