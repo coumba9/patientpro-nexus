@@ -50,6 +50,7 @@ import NotificationManagement from "./pages/admin/NotificationManagement";
 import PaymentConfirmation from "./pages/PaymentConfirmation";
 import DoctorAppointmentDetails from "./pages/doctor/AppointmentDetails";
 import PatientAppointmentDetails from "./pages/patient/AppointmentDetails";
+import PatientTeleconsultation from "./pages/patient/Teleconsultation";
 import { ChatbotWidget } from "@/components/patient/ChatbotWidget";
 
 const queryClient = new QueryClient();
