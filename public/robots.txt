@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /patient/
+Disallow: /doctor/
+Disallow: /admin/
+
+Sitemap: https://jammsante.lovable.app/sitemap.xml

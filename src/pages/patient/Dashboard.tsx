@@ -18,6 +18,7 @@ import Prescriptions from "./Prescriptions";
 import AppointmentTickets from "./AppointmentTickets";
 import PatientAppointmentDetails from "./AppointmentDetails";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ChatbotWidget } from "@/components/patient/ChatbotWidget";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Heart, X, Search, Home, Info, Phone } from "lucide-react";
 
