@@ -54,6 +54,7 @@ const DoctorAppointmentDetails = lazy(() => import("./pages/doctor/AppointmentDe
 const PatientAppointmentDetails = lazy(() => import("./pages/patient/AppointmentDetails"));
 const PatientTeleconsultation = lazy(() => import("./pages/patient/Teleconsultation"));
 const ChatbotWidget = lazy(() => import("@/components/patient/ChatbotWidget").then(m => ({ default: m.ChatbotWidget })));
+const UmlDiagrams = lazy(() => import("./pages/UmlDiagrams"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
