@@ -28,6 +28,7 @@ const Teleconsultation = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [activePatientName, setActivePatientName] = useState<string>("");
+  const [activePatientId, setActivePatientId] = useState<string>("");
   const [teleconsultations, setTeleconsultations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
