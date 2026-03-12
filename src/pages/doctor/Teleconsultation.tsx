@@ -79,6 +79,7 @@ const Teleconsultation = () => {
     if (location.state?.appointmentId) {
       setActiveRoomId(location.state.appointmentId);
       setActivePatientName(location.state.patient || 'Patient');
+      setActivePatientId(location.state.patientId || '');
       setActiveTab("session");
     }
   }, [location.state]);
