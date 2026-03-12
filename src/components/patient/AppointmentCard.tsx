@@ -22,6 +22,7 @@ import { MissedAppointmentCard } from "./MissedAppointmentCard";
 import { AppointmentDocuments } from "./AppointmentDocuments";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { messageService, appointmentService } from "@/api";
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment } from "./types";
@@ -39,6 +40,7 @@ export const AppointmentCard = ({
   onReschedule,
   onConfirm,
 }: AppointmentCardProps) => {
+  const navigate = useNavigate();
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -294,6 +296,17 @@ export const AppointmentCard = ({
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Confirmer
+                  </Button>
+                )}
+
+                {isOnline && appointment.status === 'confirmed' && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => navigate(`/patient/teleconsultation/${appointment.id}`)}
+                  >
+                    <Video className="h-4 w-4 mr-2" />
+                    Rejoindre
                   </Button>
                 )}
               </div>
