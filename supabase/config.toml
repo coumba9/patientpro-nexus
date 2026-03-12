@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.admin-manage-users]
 verify_jwt = false
+
+[functions.consultation-summary]
+verify_jwt = true
