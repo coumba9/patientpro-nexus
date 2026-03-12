@@ -219,6 +219,7 @@ const App = () => {
                       <Route path="/terms" element={<Terms />} />
                       <Route path="/privacy" element={<Privacy />} />
                       <Route path="/legal" element={<Legal />} />
+                      <Route path="/uml-diagrams" element={<UmlDiagrams />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
