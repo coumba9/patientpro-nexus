@@ -86,10 +86,26 @@ export const VideoCallRoom = ({
     });
   }, []);
 
-  const handleEndCall = useCallback(() => {
+  const handleEndCallRequest = useCallback(() => {
+    if (isDoctor && hasUnsavedNotesRef.current) {
+      setShowEndCallWarning(true);
+    } else {
+      endCall();
+      onEndCall();
+    }
+  }, [endCall, onEndCall, isDoctor]);
+
+  const handleConfirmEndCall = useCallback(() => {
+    setShowEndCallWarning(false);
     endCall();
     onEndCall();
   }, [endCall, onEndCall]);
+
+  const handleOpenNotesAndCancel = useCallback(() => {
+    setShowEndCallWarning(false);
+    setShowNotes(true);
+    setShowChat(false);
+  }, []);
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
