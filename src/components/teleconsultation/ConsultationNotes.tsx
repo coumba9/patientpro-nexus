@@ -26,6 +26,7 @@ export const ConsultationNotes = ({
   patientName,
   callDuration,
   onNotesSaved,
+  onUnsavedChange,
 }: ConsultationNotesProps) => {
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
