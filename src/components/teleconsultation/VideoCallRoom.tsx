@@ -235,6 +235,8 @@ export const VideoCallRoom = ({
               patientId={patientId}
               patientName={remoteName || 'Patient'}
               callDuration={callDuration}
+              onUnsavedChange={(hasUnsaved) => { hasUnsavedNotesRef.current = hasUnsaved; }}
+              onNotesSaved={() => { hasUnsavedNotesRef.current = false; }}
             />
           </div>
         )}
