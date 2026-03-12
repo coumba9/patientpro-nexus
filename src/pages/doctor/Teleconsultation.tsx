@@ -220,7 +220,7 @@ const Teleconsultation = () => {
                             <div className="flex flex-col sm:flex-row gap-2">
                               <Button 
                                 size="sm"
-                                onClick={() => startConsultation(consultation.id, consultation.patientName)}
+                                onClick={() => startConsultation(consultation.id, consultation.patientName, consultation.patient_id)}
                               >
                                 <VideoIcon className="h-4 w-4 mr-2" />
                                 Démarrer
