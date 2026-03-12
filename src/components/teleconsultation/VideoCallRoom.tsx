@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useVideoCall } from '@/hooks/useVideoCall';
 import { VideoPlayer } from './VideoPlayer';
 import { CallControls } from './CallControls';
@@ -7,6 +7,16 @@ import { ConsultationNotes } from './ConsultationNotes';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Video, Loader2, Clock, Shield } from 'lucide-react';
 
 interface VideoCallRoomProps {
@@ -31,6 +41,8 @@ export const VideoCallRoom = ({
   const [showChat, setShowChat] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [readMessages, setReadMessages] = useState(0);
+  const [showEndCallWarning, setShowEndCallWarning] = useState(false);
+  const hasUnsavedNotesRef = useRef(false);
 
   const {
     localStream,
@@ -74,10 +86,26 @@ export const VideoCallRoom = ({
     });
   }, []);
 
-  const handleEndCall = useCallback(() => {
+  const handleEndCallRequest = useCallback(() => {
+    if (isDoctor && hasUnsavedNotesRef.current) {
+      setShowEndCallWarning(true);
+    } else {
+      endCall();
+      onEndCall();
+    }
+  }, [endCall, onEndCall, isDoctor]);
+
+  const handleConfirmEndCall = useCallback(() => {
+    setShowEndCallWarning(false);
     endCall();
     onEndCall();
   }, [endCall, onEndCall]);
+
+  const handleOpenNotesAndCancel = useCallback(() => {
+    setShowEndCallWarning(false);
+    setShowNotes(true);
+    setShowChat(false);
+  }, []);
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -129,7 +157,7 @@ export const VideoCallRoom = ({
               : "Connexion au médecin en cours..."}
           </p>
         </div>
-        <Button variant="outline" onClick={handleEndCall}>
+        <Button variant="outline" onClick={() => { endCall(); onEndCall(); }}>
           Annuler
         </Button>
       </Card>
@@ -207,6 +235,8 @@ export const VideoCallRoom = ({
               patientId={patientId}
               patientName={remoteName || 'Patient'}
               callDuration={callDuration}
+              onUnsavedChange={(hasUnsaved) => { hasUnsavedNotesRef.current = hasUnsaved; }}
+              onNotesSaved={() => { hasUnsavedNotesRef.current = false; }}
             />
           </div>
         )}
@@ -227,8 +257,31 @@ export const VideoCallRoom = ({
         onToggleScreenShare={toggleScreenShare}
         onToggleChat={handleToggleChat}
         onToggleNotes={handleToggleNotes}
-        onEndCall={handleEndCall}
+        onEndCall={handleEndCallRequest}
       />
+
+      {/* Unsaved notes warning */}
+      <AlertDialog open={showEndCallWarning} onOpenChange={setShowEndCallWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notes non enregistrées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des notes de consultation qui n'ont pas été enregistrées dans le dossier médical. Si vous terminez l'appel maintenant, ces notes pourraient être perdues.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleOpenNotesAndCancel}>
+              Sauvegarder d'abord
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmEndCall}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Terminer sans sauvegarder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

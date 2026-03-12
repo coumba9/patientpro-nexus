@@ -16,6 +16,7 @@ interface ConsultationNotesProps {
   patientName: string;
   callDuration?: number;
   onNotesSaved?: () => void;
+  onUnsavedChange?: (hasUnsaved: boolean) => void;
 }
 
 export const ConsultationNotes = ({
@@ -25,6 +26,7 @@ export const ConsultationNotes = ({
   patientName,
   callDuration,
   onNotesSaved,
+  onUnsavedChange,
 }: ConsultationNotesProps) => {
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
@@ -61,11 +63,12 @@ export const ConsultationNotes = ({
 
   useEffect(() => {
     if (!diagnosis && !notes && !prescription) return;
+    onUnsavedChange?.(true);
     setAutoSaveStatus('saving');
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(saveDraft, 1500);
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [diagnosis, notes, prescription, saveDraft]);
+  }, [diagnosis, notes, prescription, saveDraft, onUnsavedChange]);
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -194,6 +197,7 @@ export const ConsultationNotes = ({
 
       localStorage.removeItem(draftKey);
       toast.success('Notes et synthèse enregistrées dans le dossier médical');
+      onUnsavedChange?.(false);
       onNotesSaved?.();
     } catch (error: any) {
       console.error('Error saving notes:', error);
