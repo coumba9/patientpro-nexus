@@ -257,8 +257,31 @@ export const VideoCallRoom = ({
         onToggleScreenShare={toggleScreenShare}
         onToggleChat={handleToggleChat}
         onToggleNotes={handleToggleNotes}
-        onEndCall={handleEndCall}
+        onEndCall={handleEndCallRequest}
       />
+
+      {/* Unsaved notes warning */}
+      <AlertDialog open={showEndCallWarning} onOpenChange={setShowEndCallWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Notes non enregistrées</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous avez des notes de consultation qui n'ont pas été enregistrées dans le dossier médical. Si vous terminez l'appel maintenant, ces notes pourraient être perdues.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleOpenNotesAndCancel}>
+              Sauvegarder d'abord
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmEndCall}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Terminer sans sauvegarder
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
