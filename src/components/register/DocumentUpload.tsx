@@ -68,6 +68,7 @@ const FilePreviewCard = ({ file, onRemove, label }: FilePreviewCardProps) => {
             <img
               src={previewUrl}
               alt={file.name}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           ) : isPDFFile(file) ? (
