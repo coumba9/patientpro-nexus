@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
-import heroConsultation from '@/assets/hero-consultation.jpg';
-import heroTelemedicine from '@/assets/hero-telemedicine.jpg';
-import heroTeam from '@/assets/hero-team.jpg';
+import heroConsultation from '@/assets/hero-consultation.webp';
+import heroTelemedicine from '@/assets/hero-telemedicine.webp';
+import heroTeam from '@/assets/hero-team.webp';
 
 const slides = [
   {
