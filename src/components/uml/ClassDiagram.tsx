@@ -72,6 +72,8 @@ package "Utilisateurs" {
     +gererFileAttente()
     +gererRappels()
     +configurerPolitiques()
+    +gererFAQ()
+    +gererPages()
   }
 }
 
@@ -124,7 +126,7 @@ package "Rendez-vous" {
   }
 }
 
-package "Médical" {
+package "Medical" {
   class DossierMedical {
     +id: UUID
     +patientId: UUID
@@ -146,6 +148,7 @@ package "Médical" {
     +urlFichier: String
     +tailleFichier: Number
     +estSigne: Boolean
+    +urlSignature: String
     +signeLe: DateTime
     +creer()
     +signer()
@@ -308,6 +311,16 @@ package "Administration" {
     +periode: String
   }
 
+  class JournalAudit {
+    +id: UUID
+    +adminId: UUID
+    +typeAction: String
+    +nomTable: String
+    +enregistrementId: UUID
+    +details: JSON
+    +adresseIP: String
+  }
+
   class TicketSupport {
     +id: UUID
     +utilisateurId: UUID
@@ -320,6 +333,33 @@ package "Administration" {
     +resoluLe: DateTime
     +resoudre()
     +assigner()
+  }
+}
+
+package "Contenu" {
+  class FAQ {
+    +id: UUID
+    +question: String
+    +reponse: String
+    +categorie: String
+    +ordreAffichage: Number
+    +statut: String
+    +creePar: UUID
+    +creer()
+    +modifier()
+    +publier()
+  }
+
+  class Page {
+    +id: UUID
+    +titre: String
+    +slug: String
+    +contenu: String
+    +statut: String
+    +auteurId: UUID
+    +creer()
+    +modifier()
+    +publier()
   }
 }
 
@@ -346,40 +386,44 @@ package "Messages" {
   }
 }
 
-' Relations d'héritage
+' Relations d heritage
 Utilisateur <|-- Patient
 Utilisateur <|-- Medecin
 Utilisateur <|-- Administrateur
 
 ' Relations Patient
 Patient "1" -- "*" RendezVous : prend
-Patient "1" -- "*" DossierMedical : possède
-Patient "1" -- "*" Document : reçoit
+Patient "1" -- "*" DossierMedical : possede
+Patient "1" -- "*" Document : recoit
 Patient "1" -- "*" Facture : paie
 Patient "1" -- "*" Evaluation : donne
-Patient "1" -- "*" Notification : reçoit
+Patient "1" -- "*" Notification : recoit
 Patient "1" -- "*" FileAttente : rejoint
-Patient "1" -- "*" ResultatLabo : possède
-Patient "1" -- "*" ImageMedicale : possède
-Patient "1" -- "*" Vaccination : reçoit
-Patient "1" -- "*" LogSMS : reçoit
+Patient "1" -- "*" ResultatLabo : possede
+Patient "1" -- "*" ImageMedicale : possede
+Patient "1" -- "*" Vaccination : recoit
+Patient "1" -- "*" LogSMS : recoit
 
-' Relations Médecin
-Medecin "1" -- "*" RendezVous : gère
-Medecin "1" -- "*" DossierMedical : crée
+' Relations Medecin
+Medecin "1" -- "*" RendezVous : gere
+Medecin "1" -- "*" DossierMedical : cree
 Medecin "1" -- "*" Document : signe
 Medecin "1" -- "1" Specialite : appartient
-Medecin "1" -- "*" Evaluation : reçoit
+Medecin "1" -- "*" Evaluation : recoit
+Medecin "1" -- "*" Note : redige
 
 ' Relations RendezVous
-RendezVous "1" -- "1" Facture : génère
-RendezVous "1" -- "*" Rappel : déclenche
-RendezVous "1" -- "*" Notification : génère
+RendezVous "1" -- "1" Facture : genere
+RendezVous "1" -- "*" Rappel : declenche
+RendezVous "1" -- "*" Notification : genere
 
 ' Relations Admin
-Administrateur "1" -- "*" Specialite : gère
+Administrateur "1" -- "*" Specialite : gere
 Administrateur "1" -- "*" RapportModeration : traite
 Administrateur "1" -- "*" DemandeApplicationMedecin : approuve
+Administrateur "1" -- "*" FAQ : gere
+Administrateur "1" -- "*" Page : gere
+Administrateur "1" -- "*" JournalAudit : genere
 
 @enduml`;
 
@@ -412,8 +456,8 @@ export const ClassDiagram = () => {
         </Button>
       </div>
       <p className="text-muted-foreground mb-4">
-        Ce diagramme illustre les principales classes de l'application JàmmSanté incluant: gestion des rendez-vous, 
-        rappels SMS automatiques, workflow d'approbation médecin, paiements et dossiers médicaux.
+        Ce diagramme illustre les 25 classes de l'application JammSante organisees en 8 packages : 
+        Utilisateurs, Rendez-vous, Medical, Paiements, Notifications, Administration, Contenu et Messages.
       </p>
       <div className="bg-muted/50 p-4 rounded-lg overflow-auto">
         <div ref={diagramRef} className="mermaid">
@@ -463,7 +507,6 @@ export const ClassDiagram = () => {
                 +signerDocuments()
                 +accederDossierPatient()
                 +confirmerRendezVous()
-                +envoyerSMSConfirmation()
               }
               
               class Administrateur {
@@ -477,6 +520,8 @@ export const ClassDiagram = () => {
                 +gererFileAttente()
                 +gererRappelsSMS()
                 +configurerPolitiques()
+                +gererFAQ()
+                +gererPages()
               }
               
               class RendezVous {
@@ -499,6 +544,21 @@ export const ClassDiagram = () => {
                 +programmerRappelSMS()
               }
               
+              class DemandeApplicationMedecin {
+                +String id
+                +String email
+                +String prenom
+                +String nom
+                +UUID specialiteId
+                +String numeroLicence
+                +Number anneesExperience
+                +String urlDiplome
+                +String statut
+                +String raisonRejet
+                +approuver()
+                +rejeter()
+              }
+              
               class DossierMedical {
                 +String id
                 +UUID patientId
@@ -519,6 +579,7 @@ export const ClassDiagram = () => {
                 +String type
                 +String urlFichier
                 +Boolean estSigne
+                +String urlSignature
                 +DateTime signeLe
                 +creer()
                 +signer()
@@ -576,21 +637,6 @@ export const ClassDiagram = () => {
                 +DateTime envoyeLe
               }
               
-              class DemandeApplicationMedecin {
-                +String id
-                +String email
-                +String prenom
-                +String nom
-                +UUID specialiteId
-                +String numeroLicence
-                +Number anneesExperience
-                +String urlDiplome
-                +String statut
-                +String raisonRejet
-                +approuver()
-                +rejeter()
-              }
-              
               class Specialite {
                 +String id
                 +String nom
@@ -619,6 +665,59 @@ export const ClassDiagram = () => {
                 +String commentaire
               }
 
+              class JournalAudit {
+                +String id
+                +UUID adminId
+                +String typeAction
+                +String nomTable
+                +UUID enregistrementId
+                +JSON details
+                +String adresseIP
+              }
+
+              class FAQ {
+                +String id
+                +String question
+                +String reponse
+                +String categorie
+                +Number ordreAffichage
+                +String statut
+                +creer()
+                +modifier()
+              }
+
+              class Page {
+                +String id
+                +String titre
+                +String slug
+                +String contenu
+                +String statut
+                +UUID auteurId
+                +creer()
+                +modifier()
+                +publier()
+              }
+
+              class Note {
+                +String id
+                +UUID patientId
+                +UUID medecinId
+                +String titre
+                +String contenu
+                +Date date
+              }
+
+              class Message {
+                +String id
+                +UUID expediteurId
+                +UUID destinataireId
+                +String sujet
+                +String contenu
+                +Boolean estLu
+                +envoyer()
+                +marquerCommeLu()
+              }
+
               Utilisateur <|-- Patient
               Utilisateur <|-- Medecin
               Utilisateur <|-- Administrateur
@@ -642,6 +741,10 @@ export const ClassDiagram = () => {
               
               DemandeApplicationMedecin "*" -- "1" Specialite
               Administrateur "1" -- "*" DemandeApplicationMedecin
+              Administrateur "1" -- "*" FAQ
+              Administrateur "1" -- "*" Page
+              Administrateur "1" -- "*" JournalAudit
+              Medecin "1" -- "*" Note
           `}
         </div>
       </div>
