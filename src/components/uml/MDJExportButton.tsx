@@ -14,24 +14,25 @@ export const MDJExportButton = () => {
             Export StarUML (.mdj)
           </h3>
           <p className="text-muted-foreground text-sm mt-1">
-            Téléchargez tous les diagrammes en un seul fichier .mdj compatible avec StarUML
+            Telechargez tous les diagrammes en un seul fichier .mdj compatible avec StarUML
           </p>
         </div>
         <Button onClick={downloadMDJFile} className="gap-2">
           <Download className="h-4 w-4" />
-          Télécharger JammSante_Complete.mdj
+          Telecharger JammSante_Complete.mdj
         </Button>
       </div>
       
       <div className="mt-4 text-sm text-muted-foreground">
         <p className="font-medium mb-2">Contenu du fichier MDJ :</p>
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-1 list-disc list-inside">
-          <li>Diagramme de Classes (9 packages)</li>
+          <li>Diagramme de Deploiement / Architecture</li>
+          <li>Diagramme Entite-Relation (27 tables)</li>
+          <li>Diagramme de Classes (25 classes, 8 packages)</li>
           <li>Diagramme de Cas d'Utilisation</li>
-          <li>Diagramme d'États (Rendez-vous)</li>
-          <li>Diagramme d'Activité</li>
-          <li>Diagrammes de Séquence (4 flux)</li>
-          <li>Diagramme Entité-Relation (ERD)</li>
+          <li>Diagramme d'Etats (Rendez-vous)</li>
+          <li>Diagramme d'Activite</li>
+          <li>Diagrammes de Sequence (4 flux)</li>
         </ul>
       </div>
     </div>
