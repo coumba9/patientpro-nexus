@@ -13,6 +13,7 @@ import { ERDiagram } from "@/components/uml/ERDiagram";
 import { DeploymentDiagram } from "@/components/uml/DeploymentDiagram";
 import { DiagramInitializer } from "@/components/uml/DiagramInitializer";
 import { MDJExportButton } from "@/components/uml/MDJExportButton";
+import { PDFExportButton } from "@/components/uml/PDFExportButton";
 
 const UmlDiagrams = () => {
   const navigate = useNavigate();
@@ -31,7 +32,10 @@ const UmlDiagrams = () => {
             teleconsultations, gestion de contenu, FAQ, journal d'audit et architecture de deploiement.
           </p>
 
-          <MDJExportButton />
+          <div className="flex flex-wrap gap-4 mb-2">
+            <MDJExportButton />
+            <PDFExportButton />
+          </div>
 
           <div className="space-y-12">
             <DeploymentDiagram />
