@@ -34,16 +34,21 @@ export const PDFExportButton = () => {
       doc.setFont("helvetica", "normal");
       doc.text(new Date().toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" }), pageW / 2, pageH / 2 + 20, { align: "center" });
 
-      // Find all diagram sections
-      const sections = document.querySelectorAll<HTMLElement>(".space-y-12 > div");
+      // Find all diagram sections (each has border-t class)
+      const sections = document.querySelectorAll<HTMLElement>(".space-y-12 > div.border-t");
+      const totalSections = sections.length;
+      
+      toast.info(`Capture de ${totalSections} diagrammes...`);
 
-      for (let i = 0; i < sections.length; i++) {
+      for (let i = 0; i < totalSections; i++) {
         const section = sections[i];
         doc.addPage();
 
         // Get title
         const titleEl = section.querySelector("h2");
         const title = titleEl?.textContent || `Diagramme ${i + 1}`;
+        
+        toast.info(`Capture ${i + 1}/${totalSections}: ${title}`);
 
         // Header bar
         doc.setFillColor(34, 197, 94);
@@ -54,17 +59,19 @@ export const PDFExportButton = () => {
         doc.text(title, margin, 10);
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
-        doc.text(`JàmmSanté — ${i + 1}/${sections.length}`, pageW - margin, 10, { align: "right" });
+        doc.text(`JàmmSanté — ${i + 1}/${totalSections}`, pageW - margin, 10, { align: "right" });
 
-        // Capture diagram container
-        const diagramContainer = section.querySelector<HTMLElement>(".bg-muted\\/50, .overflow-auto");
+        // Capture the mermaid diagram container
+        const diagramContainer = section.querySelector<HTMLElement>(".bg-muted\\/50");
         if (!diagramContainer) continue;
 
         const canvas = await html2canvas(diagramContainer, {
-          scale: 2,
+          scale: 1.5,
           backgroundColor: "#ffffff",
           logging: false,
           useCORS: true,
+          allowTaint: true,
+          removeContainer: true,
         });
 
         const imgData = canvas.toDataURL("image/png");
