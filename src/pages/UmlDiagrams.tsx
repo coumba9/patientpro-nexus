@@ -32,7 +32,10 @@ const UmlDiagrams = () => {
             teleconsultations, gestion de contenu, FAQ, journal d'audit et architecture de deploiement.
           </p>
 
-          <MDJExportButton />
+          <div className="flex flex-wrap gap-4 mb-2">
+            <MDJExportButton />
+            <PDFExportButton />
+          </div>
 
           <div className="space-y-12">
             <DeploymentDiagram />
