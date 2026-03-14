@@ -13,6 +13,7 @@ import { ERDiagram } from "@/components/uml/ERDiagram";
 import { DeploymentDiagram } from "@/components/uml/DeploymentDiagram";
 import { DiagramInitializer } from "@/components/uml/DiagramInitializer";
 import { MDJExportButton } from "@/components/uml/MDJExportButton";
+import { PDFExportButton } from "@/components/uml/PDFExportButton";
 
 const UmlDiagrams = () => {
   const navigate = useNavigate();
