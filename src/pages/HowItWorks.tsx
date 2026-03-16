@@ -1,5 +1,16 @@
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const HowItWorks = () => {
+  usePageSEO({
+    title: "Comment ça marche",
+    description: "Recherchez un médecin, prenez rendez-vous en ligne et consultez en cabinet ou en téléconsultation sur JàmmSanté.",
+    path: "/how-it-works",
+    jsonLd: { "@type": "HowTo", name: "Comment utiliser JàmmSanté", step: [
+      { "@type": "HowToStep", name: "Rechercher un médecin", text: "Utilisez le moteur de recherche pour trouver un professionnel de santé" },
+      { "@type": "HowToStep", name: "Prendre rendez-vous", text: "Choisissez un créneau et réservez en ligne" },
+      { "@type": "HowToStep", name: "Consulter", text: "Consultez en cabinet ou en téléconsultation" },
+    ]},
+  });
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container">

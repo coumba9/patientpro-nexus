@@ -1,9 +1,15 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Video, Check, Clock, Calendar } from "lucide-react";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const Teleconsultation = () => {
+  usePageSEO({
+    title: "Téléconsultation",
+    description: "Consultez un médecin à distance grâce à la téléconsultation sécurisée JàmmSanté. Vidéo HD, ordonnance numérique, paiement en ligne.",
+    path: "/teleconsultation",
+    jsonLd: { "@type": "MedicalProcedure", name: "Téléconsultation médicale", procedureType: "http://schema.org/NoninvasiveProcedure" },
+  });
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container">

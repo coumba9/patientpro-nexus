@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +5,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import emailjs from "emailjs-com";
 import { useToast } from "@/components/ui/use-toast";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const Contact = () => {
+  usePageSEO({
+    title: "Contact",
+    description: "Contactez l'équipe JàmmSanté. Nous sommes disponibles pour répondre à vos questions sur nos services de santé digitale.",
+    path: "/contact",
+    jsonLd: { "@type": "ContactPage", name: "Contactez JàmmSanté" },
+  });
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({

@@ -11,6 +11,7 @@ import DoctorSearchForm from "@/components/doctor/DoctorSearchForm";
 import DoctorFilters, { FilterState } from "@/components/doctor/DoctorFilters";
 import { DoctorProvider, useDoctorContext, Doctor } from "@/contexts/DoctorContext";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const defaultFilters: FilterState = {
   availability: 'all',
@@ -24,6 +25,12 @@ const FindDoctorContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  usePageSEO({
+    title: "Trouver un médecin",
+    description: "Recherchez et trouvez un médecin près de chez vous au Sénégal. Filtrez par spécialité, localisation et disponibilité sur JàmmSanté.",
+    path: "/find-doctor",
+    jsonLd: { "@type": "SearchAction", target: "https://jammsante.lovable.app/find-doctor?q={search_term}", "query-input": "required name=search_term" },
+  });
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(defaultFilters);

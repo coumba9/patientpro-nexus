@@ -12,6 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 // Medical cross SVG component
 const MedicalCross = ({ className }: { className?: string }) => (
@@ -23,6 +24,18 @@ const MedicalCross = ({ className }: { className?: string }) => (
 const Index = () => {
   const navigate = useNavigate();
   const { user, userRole, loading, logout } = useAuth();
+  usePageSEO({
+    title: "Votre santé, notre priorité",
+    description: "JàmmSanté - Plateforme de santé digitale au Sénégal. Prenez rendez-vous avec les meilleurs médecins, téléconsultation, dossier médical sécurisé.",
+    path: "/",
+    jsonLd: {
+      "@type": "MedicalBusiness",
+      name: "JàmmSanté",
+      url: "https://jammsante.lovable.app",
+      description: "Plateforme de santé digitale au Sénégal",
+      areaServed: { "@type": "Country", name: "Sénégal" },
+    },
+  });
 
   const handleGetStarted = () => {
     if (user) {
