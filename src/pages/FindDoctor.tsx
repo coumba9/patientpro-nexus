@@ -11,6 +11,7 @@ import DoctorSearchForm from "@/components/doctor/DoctorSearchForm";
 import DoctorFilters, { FilterState } from "@/components/doctor/DoctorFilters";
 import { DoctorProvider, useDoctorContext, Doctor } from "@/contexts/DoctorContext";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const defaultFilters: FilterState = {
   availability: 'all',

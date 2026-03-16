@@ -1,9 +1,15 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const About = () => {
+  usePageSEO({
+    title: "À propos",
+    description: "Découvrez JàmmSanté, la plateforme de santé digitale qui révolutionne l'accès aux soins au Sénégal.",
+    path: "/about",
+    jsonLd: { "@type": "AboutPage", name: "À propos de JàmmSanté" },
+  });
   return (
     <div className="min-h-screen">
       <div className="relative bg-gradient-to-b from-sky-50 to-white pt-24 pb-32">

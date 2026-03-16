@@ -1,9 +1,14 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { usePageSEO } from "@/hooks/usePageSEO";
 
 const Pricing = () => {
+  usePageSEO({
+    title: "Tarifs",
+    description: "Découvrez les tarifs des consultations médicales et téléconsultations sur JàmmSanté. Paiement sécurisé via Wave, Orange Money.",
+    path: "/pricing",
+  });
   const navigate = useNavigate();
   
   return (
