@@ -47,6 +47,7 @@ export const PatientSidebar = () => {
     { to: "/patient/payments", icon: CreditCard, label: "Paiements" },
     { to: "/patient/messages", icon: MessageCircle, label: "Messages" },
     { to: "/patient/documents", icon: FileText, label: "Documents" },
+    { to: "/find-doctor", icon: Heart, label: "Médecins favoris" },
     { to: "/patient/support", icon: HelpCircle, label: "Support" },
     { to: "/patient/profile", icon: User, label: "Mon profil" },
     { to: "/patient/settings", icon: Settings, label: "Paramètres" },
