@@ -44,7 +44,13 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending ticket email to:", patientEmail);
 
     const modeText = mode === 'teleconsultation' ? 'Téléconsultation' : 'Consultation en personne';
-    const locationText = location ? `<p><strong>Lieu:</strong> ${location}</p>` : '';
+    const safeDoctorName = escapeHtml(doctorName);
+    const safeSpecialtyName = escapeHtml(specialtyName);
+    const safeLocation = escapeHtml(location);
+    const safeDate = escapeHtml(date);
+    const safeTime = escapeHtml(time);
+    const safeType = escapeHtml(type);
+    const safeAppointmentId = escapeHtml(appointmentId);
 
     const emailResponse = await resend.emails.send({
       from: "Medical Appointment <onboarding@resend.dev>",
