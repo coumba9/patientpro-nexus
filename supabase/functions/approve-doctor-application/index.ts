@@ -221,7 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <h1>🎉 Bienvenue chez JàmmSanté !</h1>
               </div>
               <div class="content">
-                <p>Bonjour Dr ${application.first_name} ${application.last_name},</p>
+                <p>Bonjour Dr ${escapeHtml(application.first_name)} ${escapeHtml(application.last_name)},</p>
                 
                 <p><strong>Félicitations !</strong> Votre demande d'inscription en tant que médecin sur JàmmSanté a été approuvée.</p>
                 
