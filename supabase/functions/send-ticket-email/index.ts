@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
               <div class="qr-section">
                 <p><strong>ID du rendez-vous (pour check-in):</strong></p>
                 <p style="font-family: monospace; font-size: 14px; background-color: white; padding: 10px; border-radius: 4px; display: inline-block;">
-                  ${appointmentId}
+                  ${safeAppointmentId}
                 </p>
               </div>
 

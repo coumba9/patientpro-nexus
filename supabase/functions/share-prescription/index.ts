@@ -209,10 +209,10 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #2563eb; margin-bottom: 20px;">Ordonnance partagée</h1>
           
-          ${message ? `
+          ${safeMessage ? `
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
               <h3 style="margin: 0 0 10px 0; color: #1f2937;">Message personnel :</h3>
-              <p style="margin: 0; color: #374151;">${message}</p>
+              <p style="margin: 0; color: #374151;">${safeMessage}</p>
             </div>
           ` : ''}
           

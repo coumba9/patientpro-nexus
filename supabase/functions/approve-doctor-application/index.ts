@@ -234,7 +234,7 @@ const handler = async (req: Request): Promise<Response> => {
 
                 <div class="info-box">
                   <h3>🔐 Configurez votre mot de passe</h3>
-                  <p><strong>Email :</strong> ${application.email}</p>
+                  <p><strong>Email :</strong> ${escapeHtml(application.email)}</p>
                   <p>Pour des raisons de sécurité, veuillez cliquer sur le bouton ci-dessous pour créer votre mot de passe personnel.</p>
                 </div>
 
