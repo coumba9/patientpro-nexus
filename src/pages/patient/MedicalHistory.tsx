@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, FileText, Download, Eye, Activity, Pill, MessageCircle, Calendar } from "lucide-react";
+import { Loader2, FileText, Download, Eye, Activity, Pill, MessageCircle, Calendar, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { generatePrescriptionPDF, generateMedicalReportPDF } from "@/lib/pdfGenerator";
+import { generatePrescriptionPDF, generateMedicalReportPDF, generateFullMedicalRecordPDF } from "@/lib/pdfGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface MedicalRecord {
