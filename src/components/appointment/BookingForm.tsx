@@ -36,6 +36,7 @@ const bookingFormSchema = z.object({
 });
 
 export const BookingForm = ({
+  doctorId,
   doctorName,
   specialty,
   doctorFees,
