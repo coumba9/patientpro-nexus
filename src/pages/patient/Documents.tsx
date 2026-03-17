@@ -31,6 +31,25 @@ import { AppointmentHistory } from "@/components/patient/AppointmentHistory";
 import { HealthRecommendations } from "@/components/patient/HealthRecommendations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
+const isExternalFileUrl = (value: string) => /^(https?:\/\/|blob:|data:)/i.test(value);
+
+const getFileExtension = (url: string): string | null => {
+  const sanitizePath = (path: string) => {
+    const filename = path.split('/').pop() ?? '';
+    if (!filename.includes('.')) return null;
+    return filename.split('.').pop()?.toLowerCase() ?? null;
+  };
+
+  try {
+    return sanitizePath(new URL(url).pathname);
+  } catch {
+    const [cleanPath] = url.split('?');
+    return sanitizePath(cleanPath);
+  }
+};
+
+const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+
 const Documents = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<any[]>([]);
@@ -59,27 +78,30 @@ const Documents = () => {
   }, [user]);
 
   const handleDownload = (documentId: string) => {
-    const doc = documents.find(d => d.id === documentId);
-    if (doc?.file_url) {
-      window.open(doc.file_url, '_blank');
-    } else {
+    const doc = documents.find((d) => d.id === documentId);
+    if (!doc?.file_url) {
       toast.error("Ce document n'a pas de fichier associé");
+      return;
     }
+
+    if (isExternalFileUrl(doc.file_url)) {
+      window.open(doc.file_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const textBlob = new Blob([doc.file_url], { type: "text/plain;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(textBlob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = `${doc.title || "document"}.txt`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(blobUrl);
   };
 
   const handleView = (doc: any) => {
-    if (doc.file_url) {
-      // If it's a viewable file (PDF, image), open in dialog or new tab
-      const ext = doc.file_url.split('.').pop()?.toLowerCase();
-      if (['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) {
-        setSelectedDoc(doc);
-      } else {
-        window.open(doc.file_url, '_blank');
-      }
-    } else {
-      // Show document info in dialog
-      setSelectedDoc(doc);
-    }
+    setSelectedDoc(doc);
   };
 
   const filteredDocuments = documents.filter(doc =>
@@ -232,32 +254,40 @@ const Documents = () => {
             </DialogHeader>
             <div className="space-y-4">
               {selectedDoc.file_url ? (
-                (() => {
-                  const ext = selectedDoc.file_url.split('.').pop()?.toLowerCase();
-                  if (ext === 'pdf') {
+                isExternalFileUrl(selectedDoc.file_url) ? (
+                  (() => {
+                    const ext = getFileExtension(selectedDoc.file_url);
+                    if (ext === "pdf") {
+                      return (
+                        <iframe
+                          src={selectedDoc.file_url}
+                          className="w-full h-[60vh] rounded border"
+                          title={selectedDoc.title}
+                        />
+                      );
+                    }
+
+                    if (imageExtensions.includes(ext || "")) {
+                      return (
+                        <img
+                          src={selectedDoc.file_url}
+                          alt={selectedDoc.title}
+                          className="w-full rounded border"
+                        />
+                      );
+                    }
+
                     return (
-                      <iframe
-                        src={selectedDoc.file_url}
-                        className="w-full h-[60vh] rounded border"
-                        title={selectedDoc.title}
-                      />
+                      <p className="text-muted-foreground text-center py-8">
+                        Aperçu non disponible dans la visionneuse pour ce type de fichier.
+                      </p>
                     );
-                  }
-                  if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) {
-                    return (
-                      <img
-                        src={selectedDoc.file_url}
-                        alt={selectedDoc.title}
-                        className="w-full rounded border"
-                      />
-                    );
-                  }
-                  return (
-                    <p className="text-muted-foreground text-center py-8">
-                      Aperçu non disponible pour ce type de fichier.
-                    </p>
-                  );
-                })()
+                  })()
+                ) : (
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{selectedDoc.file_url}</p>
+                  </div>
+                )
               ) : (
                 <div className="bg-muted p-6 rounded-lg text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
