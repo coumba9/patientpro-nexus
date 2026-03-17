@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,42 +19,53 @@ interface PayTechPaymentConfig {
   target_payment?: string;
 }
 
+const extractUserIdFromBearer = (authHeader: string | null): string | null => {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+
+  const token = authHeader.slice(7);
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+
+  try {
+    const payload = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+    const decoded = JSON.parse(atob(padded));
+    return typeof decoded?.sub === 'string' ? decoded.sub : null;
+  } catch {
+    return null;
+  }
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // verify_jwt=true validates token at gateway level; this extracts user id for app-level checks/logging
+    const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
+    const requesterId = extractUserIdFromBearer(authHeader);
 
-    // Authenticate user
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      console.error('Authentication failed:', authError);
+    if (!requesterId) {
       return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
+        JSON.stringify({ success: 0, message: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // Parse payment details
-    const { 
-      item_name, 
-      item_price, 
-      ref_command, 
-      command_name, 
+    const {
+      item_name,
+      item_price,
+      ref_command,
+      command_name,
       currency = "XOF",
       env = "test",
-      success_url, 
-      cancel_url, 
+      success_url,
+      cancel_url,
       custom_field,
       target_payment,
       ipn_url
@@ -64,8 +74,8 @@ serve(async (req) => {
     // Validate required fields
     if (!item_name || !item_price || !ref_command || !command_name || !success_url || !cancel_url) {
       return new Response(
-        JSON.stringify({ error: 'Missing required payment fields: item_name, item_price, ref_command, command_name, success_url, cancel_url' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: 0, message: 'Champs manquants: item_name, item_price, ref_command, command_name, success_url, cancel_url' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -76,12 +86,12 @@ serve(async (req) => {
     if (!paytechApiKey || !paytechApiSecret) {
       console.error('PayTech credentials not configured');
       return new Response(
-        JSON.stringify({ error: 'Payment service not configured' }),
+        JSON.stringify({ success: 0, message: 'Payment service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    console.log('Initiating PayTech payment for ref:', ref_command);
+
+    console.log('Initiating PayTech payment for ref:', ref_command, 'user:', requesterId);
 
     // Production: Call actual PayTech API
     const paytechResponse = await fetch("https://paytech.sn/api/payment/request-payment", {
@@ -107,12 +117,30 @@ serve(async (req) => {
     });
 
     if (!paytechResponse.ok) {
-      console.error('PayTech API error:', paytechResponse.status);
-      throw new Error('Payment processing failed');
+      const providerError = await paytechResponse.text();
+      console.error('PayTech API error:', paytechResponse.status, providerError);
+
+      return new Response(
+        JSON.stringify({
+          success: 0,
+          message: 'Le service de paiement a rejeté la requête',
+          provider_status: paytechResponse.status,
+          provider_error: providerError?.slice(0, 400)
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const paytechData = await paytechResponse.json();
-    
+    let paytechData: any = null;
+    try {
+      paytechData = await paytechResponse.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ success: 0, message: 'Réponse invalide du fournisseur de paiement' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('PayTech response received successfully');
 
     return new Response(
@@ -122,13 +150,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Payment initiation error:', error);
-    
+
     return new Response(
-      JSON.stringify({ 
-        error: 'Payment initiation failed',
+      JSON.stringify({
+        success: 0,
         message: error instanceof Error ? error.message : 'Unknown error'
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 })
