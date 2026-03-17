@@ -69,12 +69,12 @@ class AppointmentService extends BaseService<Appointment> {
     notes?: string;
     status?: string; // Optionnel pour forcer un statut
   }): Promise<Appointment> {
-    // Vérifier la disponibilité avant de créer
+    // Vérifier uniquement les conflits (pas les contraintes temporelles, déjà validées avant paiement)
     const slotCheck = await this.checkSlotAvailability({
       doctor_id: appointmentData.doctor_id,
       date: appointmentData.date,
       time: appointmentData.time
-    });
+    }, { skipTimeValidation: true });
 
     if (!slotCheck.available) {
       throw new Error(slotCheck.error || 'Ce créneau n\'est pas disponible');
