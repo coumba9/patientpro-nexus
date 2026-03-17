@@ -171,6 +171,25 @@ const MedicalHistory = () => {
     setShowViewer(true);
   };
 
+  const handleExportFullRecord = () => {
+    if (medicalHistory.length === 0) {
+      toast.error("Aucun dossier médical à exporter");
+      return;
+    }
+    generateFullMedicalRecordPDF({
+      patientName,
+      records: medicalHistory.map(record => ({
+        date: format(new Date(record.date), 'dd/MM/yyyy'),
+        diagnosis: record.diagnosis,
+        prescription: record.prescription || undefined,
+        notes: record.notes || undefined,
+        doctorName: record.doctor_name || 'Médecin',
+        doctorSpecialty: record.doctor_specialty
+      }))
+    });
+    toast.success("Dossier médical complet exporté en PDF");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
