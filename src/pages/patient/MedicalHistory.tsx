@@ -201,11 +201,19 @@ const MedicalHistory = () => {
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <h2 className="text-2xl font-bold">Mon Dossier Médical</h2>
-          <Badge variant="secondary">
-            {medicalHistory.length} consultation(s)
-          </Badge>
+          <div className="flex items-center gap-2">
+            {medicalHistory.length > 0 && (
+              <Button variant="outline" onClick={handleExportFullRecord}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Exporter tout en PDF
+              </Button>
+            )}
+            <Badge variant="secondary">
+              {medicalHistory.length} consultation(s)
+            </Badge>
+          </div>
         </div>
         
         {medicalHistory.length === 0 ? (
