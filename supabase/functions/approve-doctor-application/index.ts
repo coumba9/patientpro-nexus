@@ -227,9 +227,9 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 <div class="info-box">
                   <h3>📋 Vos informations</h3>
-                  <p><strong>Spécialité :</strong> ${specialtyName}</p>
-                  <p><strong>Numéro de licence :</strong> ${application.license_number}</p>
-                  <p><strong>Années d'expérience :</strong> ${application.years_of_experience} ans</p>
+                   <p><strong>Spécialité :</strong> ${escapeHtml(specialtyName)}</p>
+                   <p><strong>Numéro de licence :</strong> ${escapeHtml(application.license_number)}</p>
+                   <p><strong>Années d'expérience :</strong> ${application.years_of_experience} ans</p>
                 </div>
 
                 <div class="info-box">
