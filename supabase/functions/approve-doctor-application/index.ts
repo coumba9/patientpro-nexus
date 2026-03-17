@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { Resend } from "npm:resend@2.0.0";
+import { escapeHtml } from '../_shared/htmlEscape.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -220,20 +221,20 @@ const handler = async (req: Request): Promise<Response> => {
                 <h1>🎉 Bienvenue chez JàmmSanté !</h1>
               </div>
               <div class="content">
-                <p>Bonjour Dr ${application.first_name} ${application.last_name},</p>
+                <p>Bonjour Dr ${escapeHtml(application.first_name)} ${escapeHtml(application.last_name)},</p>
                 
                 <p><strong>Félicitations !</strong> Votre demande d'inscription en tant que médecin sur JàmmSanté a été approuvée.</p>
                 
                 <div class="info-box">
                   <h3>📋 Vos informations</h3>
-                  <p><strong>Spécialité :</strong> ${specialtyName}</p>
-                  <p><strong>Numéro de licence :</strong> ${application.license_number}</p>
-                  <p><strong>Années d'expérience :</strong> ${application.years_of_experience} ans</p>
+                   <p><strong>Spécialité :</strong> ${escapeHtml(specialtyName)}</p>
+                   <p><strong>Numéro de licence :</strong> ${escapeHtml(application.license_number)}</p>
+                   <p><strong>Années d'expérience :</strong> ${application.years_of_experience} ans</p>
                 </div>
 
                 <div class="info-box">
                   <h3>🔐 Configurez votre mot de passe</h3>
-                  <p><strong>Email :</strong> ${application.email}</p>
+                  <p><strong>Email :</strong> ${escapeHtml(application.email)}</p>
                   <p>Pour des raisons de sécurité, veuillez cliquer sur le bouton ci-dessous pour créer votre mot de passe personnel.</p>
                 </div>
 

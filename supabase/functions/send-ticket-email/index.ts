@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { escapeHtml } from '../_shared/htmlEscape.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -43,12 +44,18 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending ticket email to:", patientEmail);
 
     const modeText = mode === 'teleconsultation' ? 'Téléconsultation' : 'Consultation en personne';
-    const locationText = location ? `<p><strong>Lieu:</strong> ${location}</p>` : '';
+    const safeDoctorName = escapeHtml(doctorName);
+    const safeSpecialtyName = escapeHtml(specialtyName);
+    const safeLocation = escapeHtml(location);
+    const safeDate = escapeHtml(date);
+    const safeTime = escapeHtml(time);
+    const safeType = escapeHtml(type);
+    const safeAppointmentId = escapeHtml(appointmentId);
 
     const emailResponse = await resend.emails.send({
       from: "Medical Appointment <onboarding@resend.dev>",
       to: [patientEmail],
-      subject: `Ticket de rendez-vous - ${doctorName}`,
+      subject: `Ticket de rendez-vous - ${safeDoctorName}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -115,30 +122,30 @@ const handler = async (req: Request): Promise<Response> => {
 
               <div class="info-section">
                 <div class="info-row">
-                  <span class="info-label">Médecin:</span> ${doctorName}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Spécialité:</span> ${specialtyName}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Date:</span> ${date}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Heure:</span> ${time}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Type:</span> ${type}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Mode:</span> ${modeText}
-                </div>
-                ${location ? `<div class="info-row"><span class="info-label">Lieu:</span> ${location}</div>` : ''}
+                   <span class="info-label">Médecin:</span> ${safeDoctorName}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Spécialité:</span> ${safeSpecialtyName}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Date:</span> ${safeDate}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Heure:</span> ${safeTime}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Type:</span> ${safeType}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Mode:</span> ${modeText}
+                 </div>
+                 ${safeLocation ? `<div class="info-row"><span class="info-label">Lieu:</span> ${safeLocation}</div>` : ''}
               </div>
 
               <div class="qr-section">
                 <p><strong>ID du rendez-vous (pour check-in):</strong></p>
                 <p style="font-family: monospace; font-size: 14px; background-color: white; padding: 10px; border-radius: 4px; display: inline-block;">
-                  ${appointmentId}
+                  ${safeAppointmentId}
                 </p>
               </div>
 

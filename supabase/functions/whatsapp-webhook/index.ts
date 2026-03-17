@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const WHATSAPP_RATE_LIMIT = { maxRequests: 5, windowMs: 60_000 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -34,7 +36,7 @@ serve(async (req) => {
     // Handle incoming WhatsApp messages (POST request)
     if (req.method === "POST") {
       const body = await req.json();
-      console.log("Received WhatsApp webhook:", JSON.stringify(body, null, 2));
+      console.log("WhatsApp webhook received, entries:", body.entry?.length ?? 0);
 
       // Check if it's a message
       if (body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]) {
@@ -42,7 +44,15 @@ serve(async (req) => {
         const from = message.from; // sender's phone number
         const messageBody = message.text?.body || "";
 
-        console.log(`Message from ${from}: ${messageBody}`);
+        // Log only metadata, not message content
+        console.log(`WhatsApp message from ${from.substring(0, 4)}***, length: ${messageBody.length}`);
+
+        // Rate limit per phone number
+        const { allowed, retryAfterMs } = checkRateLimit(`wa:${from}`, WHATSAPP_RATE_LIMIT);
+        if (!allowed) {
+          console.log(`Rate limited phone ${from.substring(0, 4)}***`);
+          return rateLimitResponse(retryAfterMs);
+        }
 
         // Get AI response using Lovable AI
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -87,10 +97,9 @@ serve(async (req) => {
         );
 
         if (!whatsappResponse.ok) {
-          const errorText = await whatsappResponse.text();
-          console.error("WhatsApp API error:", errorText);
+          console.error("WhatsApp API error, status:", whatsappResponse.status);
         } else {
-          console.log("Reply sent successfully to", from);
+          console.log("Reply sent successfully");
         }
       }
 
@@ -101,9 +110,9 @@ serve(async (req) => {
 
     return new Response("Method not allowed", { status: 405 });
   } catch (error) {
-    console.error("WhatsApp webhook error:", error);
+    console.error("WhatsApp webhook error:", error instanceof Error ? error.message : "Unknown error");
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

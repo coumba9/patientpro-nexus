@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { escapeHtml } from '../_shared/htmlEscape.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -100,20 +101,23 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Parse prescription data from document
+    // Parse prescription data from document - escape all user-controlled values
     const prescription = {
       id: document.id,
-      date: document.created_at,
-      doctor: `Dr. ${document.doctor?.profile?.first_name} ${document.doctor?.profile?.last_name}`,
+      date: escapeHtml(document.created_at),
+      doctor: escapeHtml(`Dr. ${document.doctor?.profile?.first_name} ${document.doctor?.profile?.last_name}`),
       medications: [], // TODO: Parse from document content or related table
       duration: "À compléter",
       signed: document.is_signed,
-      patientName: "Patient", // TODO: Get from patient profile
-      patientAge: document.patient?.birth_date ? String(new Date().getFullYear() - new Date(document.patient.birth_date).getFullYear()) : "N/A",
+      patientName: escapeHtml("Patient"), // TODO: Get from patient profile
+      patientAge: escapeHtml(document.patient?.birth_date ? String(new Date().getFullYear() - new Date(document.patient.birth_date).getFullYear()) : "N/A"),
       diagnosis: "",
-      doctorSpecialty: document.doctor?.specialty?.name || "Médecin généraliste",
-      doctorAddress: "Cabinet médical",
+      doctorSpecialty: escapeHtml(document.doctor?.specialty?.name || "Médecin généraliste"),
+      doctorAddress: escapeHtml("Cabinet médical"),
     };
+
+    // Escape user-provided message
+    const safeMessage = escapeHtml(message || '');
 
     console.log(`User ${user.id} sharing prescription ${document_id} to ${email}`);
 
@@ -205,10 +209,10 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #2563eb; margin-bottom: 20px;">Ordonnance partagée</h1>
           
-          ${message ? `
+          ${safeMessage ? `
             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
               <h3 style="margin: 0 0 10px 0; color: #1f2937;">Message personnel :</h3>
-              <p style="margin: 0; color: #374151;">${message}</p>
+              <p style="margin: 0; color: #374151;">${safeMessage}</p>
             </div>
           ` : ''}
           
