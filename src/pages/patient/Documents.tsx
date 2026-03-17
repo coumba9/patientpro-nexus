@@ -31,6 +31,25 @@ import { AppointmentHistory } from "@/components/patient/AppointmentHistory";
 import { HealthRecommendations } from "@/components/patient/HealthRecommendations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
+const isExternalFileUrl = (value: string) => /^(https?:\/\/|blob:|data:)/i.test(value);
+
+const getFileExtension = (url: string): string | null => {
+  const sanitizePath = (path: string) => {
+    const filename = path.split('/').pop() ?? '';
+    if (!filename.includes('.')) return null;
+    return filename.split('.').pop()?.toLowerCase() ?? null;
+  };
+
+  try {
+    return sanitizePath(new URL(url).pathname);
+  } catch {
+    const [cleanPath] = url.split('?');
+    return sanitizePath(cleanPath);
+  }
+};
+
+const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+
 const Documents = () => {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<any[]>([]);
