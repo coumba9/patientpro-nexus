@@ -6,40 +6,20 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fonction pour vérifier et mettre à jour les rendez-vous passés
   const updatePastAppointments = async (appointmentsList: Appointment[]) => {
     const now = new Date();
-    const updatesToMake = [];
+    const updatesToMake = appointmentsList
+      .filter(apt => {
+        const dt = new Date(`${apt.date}T${apt.time}`);
+        return dt < now && ['pending', 'confirmed', 'awaiting_patient_confirmation'].includes(apt.status);
+      })
+      .map(apt => apt.id);
 
-    for (const appointment of appointmentsList) {
-      // Créer la date et heure du rendez-vous
-      const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
-      
-      // Si le rendez-vous est passé et toujours en statut pending ou confirmed
-      if (appointmentDateTime < now && 
-          (appointment.status === 'pending' || 
-           appointment.status === 'confirmed' || 
-           appointment.status === 'awaiting_patient_confirmation')) {
-        updatesToMake.push(appointment.id);
-      }
-    }
-
-    // Mettre à jour tous les rendez-vous passés en batch
     if (updatesToMake.length > 0) {
-      try {
-        const { error } = await supabase
-          .from('appointments')
-          .update({ status: 'completed' })
-          .in('id', updatesToMake);
-
-        if (error) {
-          console.error('Error updating past appointments:', error);
-        } else {
-          console.log(`${updatesToMake.length} rendez-vous passés mis à jour`);
-        }
-      } catch (error) {
-        console.error('Error updating past appointments:', error);
-      }
+      await supabase
+        .from('appointments')
+        .update({ status: 'completed' })
+        .in('id', updatesToMake);
     }
   };
 
@@ -49,79 +29,62 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
       return;
     }
 
-    // Initial fetch
     const fetchAppointments = async () => {
       try {
-        // Récupérer les appointments
         const { data: appointmentsData, error: appointmentsError } = await supabase
           .from('appointments')
           .select('*')
           .eq(userRole === 'doctor' ? 'doctor_id' : 'patient_id', userId)
           .order('date', { ascending: true });
 
-        if (appointmentsError) {
-          console.error('Error fetching appointments:', appointmentsError);
-          return;
-        }
-
-        if (!appointmentsData || appointmentsData.length === 0) {
+        if (appointmentsError || !appointmentsData || appointmentsData.length === 0) {
           setAppointments([]);
           return;
         }
 
-        // Pour chaque appointment, récupérer les infos des médecins et patients
-        const enrichedAppointments = await Promise.all(
-          appointmentsData.map(async (appointment) => {
-            let enrichedAppointment = { ...appointment };
+        // Batch: collect unique doctor and patient IDs
+        const doctorIds = [...new Set(appointmentsData.map(a => a.doctor_id))];
+        const patientIds = [...new Set(appointmentsData.map(a => a.patient_id))];
 
-            // Utiliser la fonction sécurisée pour récupérer les infos du médecin
-            const { data: doctorBrief, error: doctorError } = await supabase
-              .rpc('get_doctor_brief', { doctor_id: appointment.doctor_id })
-              .single();
+        // Fetch all doctor briefs and patient profiles in parallel
+        const [doctorResults, patientProfiles] = await Promise.all([
+          Promise.all(doctorIds.map(id =>
+            supabase.rpc('get_doctor_brief', { doctor_id: id }).single().then(r => ({ id, data: r.data }))
+          )),
+          supabase.from('profiles').select('id, first_name, last_name, email').in('id', patientIds)
+        ]);
 
-            if (doctorError) {
-              console.error('Error fetching doctor brief:', doctorError);
-            } else if (doctorBrief) {
-              (enrichedAppointment as any).doctor = {
-                id: doctorBrief.id,
-                license_number: '',
-                years_of_experience: 0,
-                specialty_id: doctorBrief.specialty_id,
-                profile: {
-                  first_name: doctorBrief.first_name,
-                  last_name: doctorBrief.last_name,
-                  email: doctorBrief.email
-                },
-                specialty: doctorBrief.specialty_name ? {
-                  id: doctorBrief.specialty_id,
-                  name: doctorBrief.specialty_name
-                } : null
-              };
-            }
+        // Build lookup maps
+        const doctorMap = new Map<string, any>();
+        for (const r of doctorResults) {
+          if (r.data) doctorMap.set(r.id, r.data);
+        }
 
-            // Récupérer les infos du patient
-            const { data: patientProfile, error: patientError } = await supabase
-              .from('profiles')
-              .select('first_name, last_name, email')
-              .eq('id', appointment.patient_id)
-              .maybeSingle();
+        const patientMap = new Map<string, any>();
+        for (const p of (patientProfiles.data || [])) {
+          patientMap.set(p.id, p);
+        }
 
-            if (patientError) console.error('Error fetching patient profile:', patientError);
+        // Enrich in one pass
+        const enriched = appointmentsData.map(apt => {
+          const doc = doctorMap.get(apt.doctor_id);
+          const pat = patientMap.get(apt.patient_id);
+          return {
+            ...apt,
+            doctor: doc ? {
+              id: doc.id,
+              license_number: '',
+              years_of_experience: 0,
+              specialty_id: doc.specialty_id,
+              profile: { first_name: doc.first_name, last_name: doc.last_name, email: doc.email },
+              specialty: doc.specialty_name ? { id: doc.specialty_id, name: doc.specialty_name } : null
+            } : undefined,
+            patient: pat ? { profile: pat } : undefined
+          };
+        });
 
-            if (patientProfile) {
-              (enrichedAppointment as any).patient = {
-                profile: patientProfile
-              };
-            }
-
-            return enrichedAppointment;
-          })
-        );
-
-        setAppointments(enrichedAppointments as Appointment[]);
-        
-        // Vérifier et mettre à jour les rendez-vous passés
-        await updatePastAppointments(enrichedAppointments as Appointment[]);
+        setAppointments(enriched as Appointment[]);
+        await updatePastAppointments(enriched as Appointment[]);
       } catch (error) {
         console.error('Error fetching appointments:', error);
       } finally {
@@ -131,12 +94,8 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
 
     fetchAppointments();
 
-    // Vérifier les rendez-vous passés toutes les 5 minutes
-    const intervalId = setInterval(() => {
-      fetchAppointments();
-    }, 5 * 60 * 1000); // 5 minutes
+    const intervalId = setInterval(fetchAppointments, 5 * 60 * 1000);
 
-    // Set up realtime subscription
     const channel = supabase
       .channel('appointments-changes')
       .on(
@@ -148,15 +107,10 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
           filter: userRole === 'doctor' ? `doctor_id=eq.${userId}` : `patient_id=eq.${userId}`
         },
         (payload) => {
-          console.log('Appointment change received:', payload);
-          
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            // Refetch to get complete data with relations for INSERT and UPDATE
+          if (payload.eventType === 'DELETE') {
+            setAppointments(prev => prev.filter(apt => apt.id !== payload.old.id));
+          } else {
             fetchAppointments();
-          } else if (payload.eventType === 'DELETE') {
-            setAppointments(prev => 
-              prev.filter(apt => apt.id !== payload.old.id)
-            );
           }
         }
       )
@@ -168,9 +122,5 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
     };
   }, [userId, userRole]);
 
-  return { appointments, loading, refetch: () => {
-    // Trigger refetch if needed
-    setLoading(true);
-    setTimeout(() => setLoading(false), 100);
-  }};
+  return { appointments, loading, refetch: () => {} };
 };

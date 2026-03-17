@@ -282,23 +282,13 @@ const MedicalHistory = () => {
                       <Eye className="h-4 w-4 mr-2" />
                       Voir détails
                     </Button>
-                    {record.prescription && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadPrescription(record)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Ordonnance PDF
-                      </Button>
-                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownloadReport(record)}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Compte-rendu PDF
+                      Télécharger PDF
                     </Button>
                   </div>
                 </CardContent>

@@ -13,6 +13,7 @@ import {
   Heart,
   BookOpen,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { documentService } from "@/api";
@@ -28,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientNotes } from "@/components/patient/PatientNotes";
 import { AppointmentHistory } from "@/components/patient/AppointmentHistory";
 import { HealthRecommendations } from "@/components/patient/HealthRecommendations";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const Documents = () => {
   const { user } = useAuth();
@@ -35,6 +37,7 @@ const Documents = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -61,6 +64,21 @@ const Documents = () => {
       window.open(doc.file_url, '_blank');
     } else {
       toast.error("Ce document n'a pas de fichier associé");
+    }
+  };
+
+  const handleView = (doc: any) => {
+    if (doc.file_url) {
+      // If it's a viewable file (PDF, image), open in dialog or new tab
+      const ext = doc.file_url.split('.').pop()?.toLowerCase();
+      if (['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) {
+        setSelectedDoc(doc);
+      } else {
+        window.open(doc.file_url, '_blank');
+      }
+    } else {
+      // Show document info in dialog
+      setSelectedDoc(doc);
     }
   };
 
@@ -138,7 +156,7 @@ const Documents = () => {
                     {filteredDocuments.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                        className="flex items-center justify-between p-4 bg-muted/50 hover:bg-muted rounded-lg transition-colors"
                       >
                         <div className="flex items-center gap-4 flex-1">
                           <FileText className="h-5 w-5 text-primary" />
@@ -159,13 +177,24 @@ const Documents = () => {
                             </div>
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDownload(doc.id)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleView(doc)}
+                            title="Visualiser"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDownload(doc.id)}
+                            title="Télécharger"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -187,6 +216,77 @@ const Documents = () => {
           <PatientNotes />
         </TabsContent>
       </Tabs>
+
+      {/* Document viewer dialog */}
+      {selectedDoc && (
+        <Dialog open={!!selectedDoc} onOpenChange={(open) => !open && setSelectedDoc(null)}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {selectedDoc.title}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedDoc.type} — {new Date(selectedDoc.created_at).toLocaleDateString('fr-FR')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {selectedDoc.file_url ? (
+                (() => {
+                  const ext = selectedDoc.file_url.split('.').pop()?.toLowerCase();
+                  if (ext === 'pdf') {
+                    return (
+                      <iframe
+                        src={selectedDoc.file_url}
+                        className="w-full h-[60vh] rounded border"
+                        title={selectedDoc.title}
+                      />
+                    );
+                  }
+                  if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) {
+                    return (
+                      <img
+                        src={selectedDoc.file_url}
+                        alt={selectedDoc.title}
+                        className="w-full rounded border"
+                      />
+                    );
+                  }
+                  return (
+                    <p className="text-muted-foreground text-center py-8">
+                      Aperçu non disponible pour ce type de fichier.
+                    </p>
+                  );
+                })()
+              ) : (
+                <div className="bg-muted p-6 rounded-lg text-center">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    Ce document n'a pas de fichier associé pour la visualisation.
+                  </p>
+                  <div className="mt-4 space-y-2 text-sm text-left">
+                    <p><span className="font-medium">Titre :</span> {selectedDoc.title}</p>
+                    <p><span className="font-medium">Type :</span> {selectedDoc.type}</p>
+                    <p><span className="font-medium">Date :</span> {new Date(selectedDoc.created_at).toLocaleDateString('fr-FR')}</p>
+                    {selectedDoc.is_signed && <p><span className="font-medium">Statut :</span> Signé</p>}
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" onClick={() => setSelectedDoc(null)}>
+                  Fermer
+                </Button>
+                {selectedDoc.file_url && (
+                  <Button onClick={() => handleDownload(selectedDoc.id)}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Télécharger
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
