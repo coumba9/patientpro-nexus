@@ -36,7 +36,7 @@ interface DoctorCardProps {
   onToggleFavorite?: (doctorId: string) => void;
 }
 
-const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
+const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, onToggleFavorite }) => {
   // Mock next available slots - in real app, this would come from the doctor's schedule
   const nextSlots = doctor.nextAvailableSlots || ['10:00', '10:30', '11:00', '14:00', '15:30'];
   
