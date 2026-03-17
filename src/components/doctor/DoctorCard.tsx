@@ -32,6 +32,8 @@ interface Doctor {
 interface DoctorCardProps {
   doctor: Doctor;
   onBooking: (doctor: Doctor) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (doctorId: string) => void;
 }
 
 const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
