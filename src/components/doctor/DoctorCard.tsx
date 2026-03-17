@@ -9,7 +9,8 @@ import {
   Calendar, 
   Shield,
   ChevronRight,
-  User
+  User,
+  Heart
 } from "lucide-react";
 import { motion } from "framer-motion";
 
