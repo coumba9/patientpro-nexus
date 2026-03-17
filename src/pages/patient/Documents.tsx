@@ -254,32 +254,40 @@ const Documents = () => {
             </DialogHeader>
             <div className="space-y-4">
               {selectedDoc.file_url ? (
-                (() => {
-                  const ext = selectedDoc.file_url.split('.').pop()?.toLowerCase();
-                  if (ext === 'pdf') {
+                isExternalFileUrl(selectedDoc.file_url) ? (
+                  (() => {
+                    const ext = getFileExtension(selectedDoc.file_url);
+                    if (ext === "pdf") {
+                      return (
+                        <iframe
+                          src={selectedDoc.file_url}
+                          className="w-full h-[60vh] rounded border"
+                          title={selectedDoc.title}
+                        />
+                      );
+                    }
+
+                    if (imageExtensions.includes(ext || "")) {
+                      return (
+                        <img
+                          src={selectedDoc.file_url}
+                          alt={selectedDoc.title}
+                          className="w-full rounded border"
+                        />
+                      );
+                    }
+
                     return (
-                      <iframe
-                        src={selectedDoc.file_url}
-                        className="w-full h-[60vh] rounded border"
-                        title={selectedDoc.title}
-                      />
+                      <p className="text-muted-foreground text-center py-8">
+                        Aperçu non disponible dans la visionneuse pour ce type de fichier.
+                      </p>
                     );
-                  }
-                  if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) {
-                    return (
-                      <img
-                        src={selectedDoc.file_url}
-                        alt={selectedDoc.title}
-                        className="w-full rounded border"
-                      />
-                    );
-                  }
-                  return (
-                    <p className="text-muted-foreground text-center py-8">
-                      Aperçu non disponible pour ce type de fichier.
-                    </p>
-                  );
-                })()
+                  })()
+                ) : (
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{selectedDoc.file_url}</p>
+                  </div>
+                )
               ) : (
                 <div className="bg-muted p-6 rounded-lg text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
