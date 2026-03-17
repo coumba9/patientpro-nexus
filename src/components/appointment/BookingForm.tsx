@@ -163,11 +163,12 @@ export const BookingForm = ({
 
           <DateSelector
             form={form}
+            doctorId={doctorId}
             onDateChange={setSelectedDate}
             selectedDate={selectedDate}
           />
 
-          <TimeSelector form={form} selectedDate={selectedDate} />
+          <TimeSelector form={form} doctorId={doctorId} selectedDate={selectedDate} />
 
           {/* Patient Information */}
           <PatientInfoForm form={form} />
