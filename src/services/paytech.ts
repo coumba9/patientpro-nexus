@@ -30,11 +30,23 @@ export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Prom
   try {
     // Import supabase client
     const { supabase } = await import("@/integrations/supabase/client");
-    
-    // Get current session
-    const { data: { session } } = await supabase.auth.getSession();
+
+    // Get and validate session (refresh once if needed)
+    let { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        session = refreshError ? null : (refreshData.session ?? null);
+      }
+    }
+
     if (!session) {
-      throw new Error("Authentication required");
+      return {
+        success: 0,
+        message: "Session expirée. Veuillez vous reconnecter puis réessayer."
+      };
     }
 
     // Call secure edge function instead of direct API
