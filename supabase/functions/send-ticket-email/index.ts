@@ -122,24 +122,24 @@ const handler = async (req: Request): Promise<Response> => {
 
               <div class="info-section">
                 <div class="info-row">
-                  <span class="info-label">Médecin:</span> ${doctorName}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Spécialité:</span> ${specialtyName}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Date:</span> ${date}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Heure:</span> ${time}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Type:</span> ${type}
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Mode:</span> ${modeText}
-                </div>
-                ${location ? `<div class="info-row"><span class="info-label">Lieu:</span> ${location}</div>` : ''}
+                   <span class="info-label">Médecin:</span> ${safeDoctorName}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Spécialité:</span> ${safeSpecialtyName}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Date:</span> ${safeDate}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Heure:</span> ${safeTime}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Type:</span> ${safeType}
+                 </div>
+                 <div class="info-row">
+                   <span class="info-label">Mode:</span> ${modeText}
+                 </div>
+                 ${safeLocation ? `<div class="info-row"><span class="info-label">Lieu:</span> ${safeLocation}</div>` : ''}
               </div>
 
               <div class="qr-section">
