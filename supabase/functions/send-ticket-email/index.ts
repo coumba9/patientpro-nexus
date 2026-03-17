@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Medical Appointment <onboarding@resend.dev>",
       to: [patientEmail],
-      subject: `Ticket de rendez-vous - ${doctorName}`,
+      subject: `Ticket de rendez-vous - ${safeDoctorName}`,
       html: `
         <!DOCTYPE html>
         <html>
