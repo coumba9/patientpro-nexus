@@ -1,11 +1,11 @@
-
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home, Loader2 } from "lucide-react";
+import { ArrowLeft, Home, Loader2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { PrescriptionCard } from "@/components/patient/PrescriptionCard";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Prescriptions = () => {
   const navigate = useNavigate();
@@ -19,17 +19,42 @@ const Prescriptions = () => {
       
       try {
         setLoading(true);
-        const { medicalRecordService } = await import("@/api");
-        const records = await medicalRecordService.getRecordsByPatient(user.id);
-        
-        // Transformer les records en format prescription
-        const transformedPrescriptions = records
-          .filter(record => record.prescription)
-          .map((record, index) => ({
+
+        // Direct Supabase query instead of service with complex joins
+        const { data: records, error } = await supabase
+          .from('medical_records')
+          .select('id, date, diagnosis, prescription, notes, doctor_id')
+          .eq('patient_id', user.id)
+          .not('prescription', 'is', null)
+          .order('date', { ascending: false });
+
+        if (error) throw error;
+
+        if (!records || records.length === 0) {
+          setPrescriptions([]);
+          return;
+        }
+
+        // Batch fetch doctor profiles
+        const doctorIds = [...new Set(records.map(r => r.doctor_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .in('id', doctorIds);
+
+        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+        const transformed = records.map((record, index) => {
+          const docProfile = profileMap.get(record.doctor_id);
+          const doctorName = docProfile
+            ? `Dr. ${docProfile.first_name || ''} ${docProfile.last_name || ''}`.trim()
+            : 'Médecin';
+
+          return {
             id: index + 1,
             recordId: record.id,
             date: record.date,
-            doctor: `Dr. ${(record as any).doctor?.profile?.first_name || ''} ${(record as any).doctor?.profile?.last_name || ''}`.trim() || "Médecin",
+            doctor: doctorName,
             medications: record.prescription ? [
               { name: record.prescription, dosage: "Selon prescription", frequency: "Voir ordonnance" }
             ] : [],
@@ -38,11 +63,12 @@ const Prescriptions = () => {
             patientName: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim(),
             patientAge: "N/A",
             diagnosis: record.diagnosis,
-            doctorSpecialty: (record as any).doctor?.specialty?.name || "Médecin généraliste",
+            doctorSpecialty: "Médecin",
             doctorAddress: "Cabinet médical"
-          }));
+          };
+        });
         
-        setPrescriptions(transformedPrescriptions);
+        setPrescriptions(transformed);
       } catch (error) {
         console.error("Erreur lors du chargement des ordonnances:", error);
         toast.error("Erreur lors du chargement des ordonnances");
@@ -59,13 +85,11 @@ const Prescriptions = () => {
     if (!prescription) return;
 
     try {
-      // Importer jsPDF et html2canvas dynamiquement
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
         import('jspdf'),
         import('html2canvas')
       ]);
 
-      // Créer une div temporaire avec le contenu de l'ordonnance
       const tempDiv = document.createElement('div');
       tempDiv.style.position = 'absolute';
       tempDiv.style.left = '-9999px';
@@ -80,7 +104,6 @@ const Prescriptions = () => {
             <div>
               <h2 style="font-size: 24px; font-weight: bold; color: #111827; margin: 0 0 10px 0;">${prescription.doctor}</h2>
               <p style="color: #6b7280; margin: 0;">${prescription.doctorSpecialty || "Médecin généraliste"}</p>
-              <p style="font-size: 14px; color: #9ca3af; margin: 10px 0 0 0;">${prescription.doctorAddress || "Cabinet médical"}</p>
             </div>
             <div style="text-align: right;">
               <h1 style="font-size: 32px; font-weight: bold; color: #2563eb; margin: 0 0 10px 0;">ORDONNANCE</h1>
@@ -88,102 +111,57 @@ const Prescriptions = () => {
             </div>
           </div>
         </div>
-
         <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-          <h3 style="font-weight: 600; color: #111827; margin: 0 0 15px 0;">Informations du patient</h3>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div>
-              <p style="margin: 5px 0;"><span style="font-weight: 500;">Nom:</span> ${prescription.patientName || "Patient"}</p>
-              <p style="margin: 5px 0;"><span style="font-weight: 500;">Âge:</span> ${prescription.patientAge || "N/A"}</p>
-            </div>
-            <div>
-              <p style="margin: 5px 0;"><span style="font-weight: 500;">Date de consultation:</span> ${prescription.date}</p>
-              ${prescription.diagnosis ? `<p style="margin: 5px 0;"><span style="font-weight: 500;">Diagnostic:</span> ${prescription.diagnosis}</p>` : ''}
-            </div>
-          </div>
+          <h3 style="font-weight: 600; color: #111827; margin: 0 0 15px 0;">Patient</h3>
+          <p style="margin: 5px 0;"><span style="font-weight: 500;">Nom:</span> ${prescription.patientName || "Patient"}</p>
+          ${prescription.diagnosis ? `<p style="margin: 5px 0;"><span style="font-weight: 500;">Diagnostic:</span> ${prescription.diagnosis}</p>` : ''}
         </div>
-
         <div style="margin: 30px 0;">
-          <h3 style="font-weight: 600; color: #111827; margin: 0 0 20px 0; font-size: 20px;">Prescription médicamenteuse</h3>
-          ${prescription.medications.map((med, idx) => `
-            <div style="margin: 20px 0; padding: 15px; border-left: 4px solid #3b82f6; background: #eff6ff;">
-              <h4 style="font-weight: bold; font-size: 18px; color: #111827; margin: 0 0 8px 0;">${med.name}</h4>
-              <p style="color: #374151; margin: 5px 0;"><span style="font-weight: 500;">Dosage:</span> ${med.dosage}</p>
-              <p style="color: #374151; margin: 5px 0;"><span style="font-weight: 500;">Posologie:</span> ${med.frequency}</p>
-              <p style="color: #6b7280; margin: 5px 0; font-size: 14px;">Durée: ${prescription.duration}</p>
+          <h3 style="font-weight: 600; font-size: 20px; margin: 0 0 20px 0;">Prescription</h3>
+          ${prescription.medications.map((med: any) => `
+            <div style="margin: 15px 0; padding: 15px; border-left: 4px solid #3b82f6; background: #eff6ff;">
+              <h4 style="font-weight: bold; font-size: 16px; margin: 0 0 8px 0;">${med.name}</h4>
+              <p style="color: #374151; margin: 5px 0;">Dosage: ${med.dosage}</p>
+              <p style="color: #374151; margin: 5px 0;">Posologie: ${med.frequency}</p>
             </div>
           `).join('')}
         </div>
-
-        <div style="background: #fefce8; padding: 20px; border-radius: 8px; margin: 30px 0;">
-          <h4 style="font-weight: 600; color: #111827; margin: 0 0 10px 0;">Instructions importantes</h4>
-          <ul style="color: #374151; font-size: 14px; line-height: 1.6; margin: 0; padding-left: 20px;">
-            <li>Respecter scrupuleusement la posologie indiquée</li>
-            <li>Terminer le traitement même en cas d'amélioration</li>
-            <li>En cas d'effets indésirables, contacter immédiatement votre médecin</li>
-            <li>Conserver les médicaments dans un endroit sec et à l'abri de la lumière</li>
-          </ul>
-        </div>
-
-        ${prescription.signed ? `
-          <div style="margin-top: 40px; text-align: right;">
-            <p style="color: #374151; margin-bottom: 20px;">Fait le ${prescription.date}</p>
-            <div style="border-top: 1px solid #d1d5db; padding-top: 20px; width: 250px; margin-left: auto;">
-              <p style="font-weight: 600; margin: 0;">${prescription.doctor}</p>
-              <p style="font-size: 14px; color: #6b7280; margin: 5px 0 0 0;">Signature et cachet</p>
-            </div>
+        <div style="margin-top: 40px; text-align: right;">
+          <p style="color: #374151;">Fait le ${prescription.date}</p>
+          <div style="border-top: 1px solid #d1d5db; padding-top: 20px; width: 250px; margin-left: auto;">
+            <p style="font-weight: 600; margin: 0;">${prescription.doctor}</p>
+            <p style="font-size: 14px; color: #6b7280;">Signature et cachet</p>
           </div>
-        ` : ''}
-
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-          <p style="font-size: 12px; color: #9ca3af;">
-            Cette ordonnance est valide pour une durée déterminée. 
-            Consultez votre pharmacien pour plus d'informations.
-          </p>
         </div>
       `;
 
       document.body.appendChild(tempDiv);
 
-      // Générer le canvas à partir du HTML
       const canvas = await html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: '#ffffff'
       });
 
-      // Créer le PDF
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const imgWidth = 210;
-      const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-
       let position = 0;
 
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      heightLeft -= 295;
 
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        heightLeft -= 295;
       }
 
-      // Télécharger le PDF
       pdf.save(`ordonnance-${prescription.date}.pdf`);
-
-      // Nettoyer
       document.body.removeChild(tempDiv);
-      
-      toast.success("Ordonnance téléchargée en PDF avec succès");
+      toast.success("Ordonnance téléchargée en PDF");
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
       toast.error("Erreur lors du téléchargement du PDF");
@@ -192,23 +170,14 @@ const Prescriptions = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-background rounded-lg shadow-sm p-6">
         <div className="mb-6 flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             Retour
           </Button>
           <Link to="/">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               Accueil
             </Button>
@@ -216,15 +185,30 @@ const Prescriptions = () => {
         </div>
         
         <h2 className="text-2xl font-bold mb-6">Mes Ordonnances</h2>
-        <div className="space-y-4">
-          {prescriptions.map((prescription) => (
-            <PrescriptionCard
-              key={prescription.id}
-              prescription={prescription}
-              onDownload={handleDownload}
-            />
-          ))}
-        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : prescriptions.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Aucune ordonnance</h3>
+            <p className="text-muted-foreground">
+              Vos ordonnances apparaîtront ici après vos consultations
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {prescriptions.map((prescription) => (
+              <PrescriptionCard
+                key={prescription.id}
+                prescription={prescription}
+                onDownload={handleDownload}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

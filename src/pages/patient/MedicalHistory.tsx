@@ -282,23 +282,13 @@ const MedicalHistory = () => {
                       <Eye className="h-4 w-4 mr-2" />
                       Voir détails
                     </Button>
-                    {record.prescription && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadPrescription(record)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Ordonnance PDF
-                      </Button>
-                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDownloadReport(record)}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Compte-rendu PDF
+                      Télécharger PDF
                     </Button>
                   </div>
                 </CardContent>
@@ -370,15 +360,9 @@ const MedicalHistory = () => {
               )}
 
               <div className="flex gap-2 pt-4 border-t">
-                {selectedRecord.prescription && (
-                  <Button onClick={() => handleDownloadPrescription(selectedRecord)}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Télécharger ordonnance
-                  </Button>
-                )}
-                <Button variant="outline" onClick={() => handleDownloadReport(selectedRecord)}>
+                <Button onClick={() => handleDownloadReport(selectedRecord)}>
                   <Download className="h-4 w-4 mr-2" />
-                  Télécharger compte-rendu
+                  Télécharger PDF
                 </Button>
               </div>
             </div>
