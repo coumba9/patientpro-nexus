@@ -14,7 +14,7 @@ class AppointmentService extends BaseService<Appointment> {
     doctor_id: string;
     date: string;
     time: string;
-  }): Promise<{ available: boolean; error?: string }> {
+  }, options?: { skipTimeValidation?: boolean }): Promise<{ available: boolean; error?: string }> {
     const { data: existingAppointments, error: fetchError } = await supabase
       .from('appointments')
       .select('*')
@@ -26,20 +26,33 @@ class AppointmentService extends BaseService<Appointment> {
       return { available: false, error: `Erreur lors de la vérification: ${fetchError.message}` };
     }
 
-    // Validate appointment scheduling
-    const validation = validateAppointmentScheduling(
-      {
-        ...appointmentData,
-        doctorId: appointmentData.doctor_id,
-        patientId: 'temp', // temporary ID just for validation
-        type: 'consultation',
-        mode: 'presentiel'
-      },
-      (existingAppointments as any[]) || []
-    );
+    // Check for direct time conflict only
+    const normalizedTime = appointmentData.time.substring(0, 5);
+    const hasConflict = (existingAppointments || []).some((apt: any) => {
+      const existingTime = apt.time?.substring(0, 5);
+      return existingTime === normalizedTime;
+    });
 
-    if (!validation.valid) {
-      return { available: false, error: validation.errors.join(', ') };
+    if (hasConflict) {
+      return { available: false, error: 'Ce créneau est déjà occupé' };
+    }
+
+    // Only run full scheduling validation (future date, business hours, etc.) when not skipping
+    if (!options?.skipTimeValidation) {
+      const validation = validateAppointmentScheduling(
+        {
+          ...appointmentData,
+          doctorId: appointmentData.doctor_id,
+          patientId: 'temp',
+          type: 'consultation',
+          mode: 'presentiel'
+        },
+        (existingAppointments as any[]) || []
+      );
+
+      if (!validation.valid) {
+        return { available: false, error: validation.errors.join(', ') };
+      }
     }
 
     return { available: true };
