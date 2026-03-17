@@ -57,7 +57,19 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, 
       className="bg-card border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/20 group"
     >
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Doctor Avatar & Basic Info */}
+        {/* Favorite button */}
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(doctor.id); }}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-accent transition-colors"
+            aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+          >
+            <Heart
+              className={`h-5 w-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+            />
+          </button>
+        )}
+        
         <div className="flex items-start gap-4 flex-1">
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
