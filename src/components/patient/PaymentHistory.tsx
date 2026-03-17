@@ -8,7 +8,7 @@ import { Download, CreditCard, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
-import { generateInvoicePDF } from "@/lib/pdfGenerator";
+import { generateInvoicePDF, generatePaymentReceiptPDF } from "@/lib/pdfGenerator";
 
 interface AppointmentPayment {
   id: string;
