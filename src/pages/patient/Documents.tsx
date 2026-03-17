@@ -78,27 +78,30 @@ const Documents = () => {
   }, [user]);
 
   const handleDownload = (documentId: string) => {
-    const doc = documents.find(d => d.id === documentId);
-    if (doc?.file_url) {
-      window.open(doc.file_url, '_blank');
-    } else {
+    const doc = documents.find((d) => d.id === documentId);
+    if (!doc?.file_url) {
       toast.error("Ce document n'a pas de fichier associé");
+      return;
     }
+
+    if (isExternalFileUrl(doc.file_url)) {
+      window.open(doc.file_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const textBlob = new Blob([doc.file_url], { type: "text/plain;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(textBlob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = `${doc.title || "document"}.txt`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(blobUrl);
   };
 
   const handleView = (doc: any) => {
-    if (doc.file_url) {
-      // If it's a viewable file (PDF, image), open in dialog or new tab
-      const ext = doc.file_url.split('.').pop()?.toLowerCase();
-      if (['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext || '')) {
-        setSelectedDoc(doc);
-      } else {
-        window.open(doc.file_url, '_blank');
-      }
-    } else {
-      // Show document info in dialog
-      setSelectedDoc(doc);
-    }
+    setSelectedDoc(doc);
   };
 
   const filteredDocuments = documents.filter(doc =>
