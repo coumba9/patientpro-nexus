@@ -12,7 +12,8 @@ import {
   User,
   Heart
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { AvailabilityCalendar } from './AvailabilityCalendar';
 
 interface Doctor {
   id: string;
