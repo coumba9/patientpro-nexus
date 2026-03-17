@@ -54,7 +54,7 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, 
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/20 group"
+      className="bg-card border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/20 group relative"
     >
       <div className="flex flex-col md:flex-row gap-6">
         {/* Favorite button */}
