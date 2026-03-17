@@ -16,6 +16,7 @@ export interface BookingFormValues {
 }
 
 export interface BookingFormProps {
+  doctorId?: string | null;
   doctorName?: string | null;
   specialty?: string | null;
   doctorFees: {

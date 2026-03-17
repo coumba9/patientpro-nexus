@@ -150,6 +150,7 @@ export const AppointmentHandler = ({
 
   return (
     <BookingForm
+      doctorId={doctorId}
       doctorName={doctorName}
       specialty={specialty}
       doctorFees={doctorInfo.fees}
