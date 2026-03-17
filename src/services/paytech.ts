@@ -59,9 +59,13 @@ export const initiatePayTechPayment = async (config: PayTechPaymentConfig): Prom
 
     if (error) {
       console.error("PayTech edge function error:", error);
+      const rawMessage = (error as any)?.message || "Erreur de paiement";
+      const isNon2xx = rawMessage.toLowerCase().includes("non-2xx");
       return {
         success: 0,
-        message: error.message
+        message: isNon2xx
+          ? "Session expirée ou invalide. Veuillez vous reconnecter puis réessayer."
+          : rawMessage
       };
     }
 
