@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { SearchX } from 'lucide-react';
+import { SearchX, Heart, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import DoctorCard from './DoctorCard';
+import { useFavoriteDoctors } from '@/hooks/useFavoriteDoctors';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Doctor {
   id: string;
@@ -23,6 +26,15 @@ interface DoctorListProps {
 }
 
 const DoctorList: React.FC<DoctorListProps> = ({ doctors, onBooking }) => {
+  const { user, userRole } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavoriteDoctors();
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const isPatient = user && userRole === 'patient';
+
+  const displayedDoctors = showFavoritesOnly
+    ? doctors.filter(d => isFavorite(d.id))
+    : doctors;
+
   if (doctors.length === 0) {
     return (
       <motion.div
@@ -45,7 +57,23 @@ const DoctorList: React.FC<DoctorListProps> = ({ doctors, onBooking }) => {
 
   return (
     <div className="space-y-4">
-      {doctors.map((doctor, index) => (
+      {isPatient && (
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showFavoritesOnly ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className="gap-2"
+          >
+            <Heart className={`h-4 w-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+            Mes favoris
+          </Button>
+          {showFavoritesOnly && displayedDoctors.length === 0 && (
+            <span className="text-sm text-muted-foreground">Aucun médecin favori trouvé</span>
+          )}
+        </div>
+      )}
+      {displayedDoctors.map((doctor, index) => (
         <motion.div
           key={doctor.id}
           initial={{ opacity: 0, y: 20 }}
@@ -54,7 +82,9 @@ const DoctorList: React.FC<DoctorListProps> = ({ doctors, onBooking }) => {
         >
           <DoctorCard 
             doctor={doctor} 
-            onBooking={onBooking} 
+            onBooking={onBooking}
+            isFavorite={isFavorite(doctor.id)}
+            onToggleFavorite={isPatient ? toggleFavorite : undefined}
           />
         </motion.div>
       ))}
