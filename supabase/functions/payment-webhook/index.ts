@@ -7,6 +7,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Convert ArrayBuffer to hex string
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Verify HMAC signature from payment provider
+async function verifySignature(body: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature || !secret) return false;
+
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const expectedSig = toHex(await crypto.subtle.sign('HMAC', key, encoder.encode(body)));
+
+  // Support both raw hex and prefixed formats (e.g. "sha256=...")
+  const cleanSig = signature.replace(/^sha256=/, '');
+  return cleanSig.toLowerCase() === expectedSig.toLowerCase();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,6 +44,29 @@ serve(async (req) => {
   if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
+    // Read the raw body once for both signature verification and parsing
+    const rawBody = await req.text();
+
+    // Verify payment provider signature
+    const webhookSecret = Deno.env.get('PAYMENT_WEBHOOK_SECRET') || Deno.env.get('PAYTECH_API_SECRET') || '';
+    const signature = req.headers.get('x-paydunya-signature')
+      || req.headers.get('x-hub-signature-256')
+      || req.headers.get('x-paytech-signature')
+      || req.headers.get('x-webhook-signature');
+
+    if (webhookSecret) {
+      const valid = await verifySignature(rawBody, signature, webhookSecret);
+      if (!valid) {
+        console.warn('Payment webhook signature verification failed');
+        return new Response(
+          JSON.stringify({ error: 'Invalid signature' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      console.warn('No webhook secret configured — signature verification skipped');
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -27,12 +76,11 @@ serve(async (req) => {
 
     const contentType = req.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
-      payload = await req.json();
+      payload = JSON.parse(rawBody);
     } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const text = await req.text();
-      payload = Object.fromEntries(new URLSearchParams(text));
+      payload = Object.fromEntries(new URLSearchParams(rawBody));
     } else {
-      payload = await req.json().catch(() => ({}));
+      try { payload = JSON.parse(rawBody); } catch { payload = {}; }
     }
 
     console.log('Payment webhook received:', JSON.stringify(payload));
@@ -42,9 +90,6 @@ serve(async (req) => {
     const transactionId = (payload.custom_data as Record<string, string>)?.transactionId
       || payload.transactionId as string
       || payload.transaction_id as string
-      || '';
-    const userId = (payload.custom_data as Record<string, string>)?.userId
-      || payload.userId as string
       || '';
     const invoiceToken = payload.token as string || payload.invoice_token as string || '';
     const responseCode = payload.response_code as string || '';
@@ -124,9 +169,10 @@ serve(async (req) => {
       console.warn('No appointment found for transactionId:', transactionId);
     }
 
-    // Log the webhook event in audit
+    // Log the webhook event in audit — use a fixed system UUID, not caller-supplied userId
+    const SYSTEM_WEBHOOK_UUID = '00000000-0000-0000-0000-000000000000';
     await supabase.from('admin_audit_logs').insert({
-      admin_id: userId || '00000000-0000-0000-0000-000000000000',
+      admin_id: SYSTEM_WEBHOOK_UUID,
       action_type: 'payment_webhook',
       table_name: 'appointments',
       record_id: appointments?.[0]?.id || null,
