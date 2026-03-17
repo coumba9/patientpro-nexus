@@ -171,6 +171,15 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, 
               variant="outline"
               size="icon"
               className="rounded-xl"
+              title="Voir les disponibilités"
+              onClick={() => setShowCalendar(!showCalendar)}
+            >
+              <Clock className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-xl"
               title="Téléconsultation disponible"
             >
               <Video className="w-4 h-4" />
@@ -178,6 +187,24 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, 
           </div>
         </div>
       </div>
+
+      {/* Expandable availability calendar */}
+      <AnimatePresence>
+        {showCalendar && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden mt-4 pt-4 border-t border-border/50"
+          >
+            <AvailabilityCalendar
+              doctorId={doctor.id}
+              onSelectSlot={(date, time) => onBooking(doctor)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
