@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, FileText, Download, Eye, Activity, Pill, MessageCircle, Calendar } from "lucide-react";
+import { Loader2, FileText, Download, Eye, Activity, Pill, MessageCircle, Calendar, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { generatePrescriptionPDF, generateMedicalReportPDF } from "@/lib/pdfGenerator";
+import { generatePrescriptionPDF, generateMedicalReportPDF, generateFullMedicalRecordPDF } from "@/lib/pdfGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface MedicalRecord {
@@ -171,6 +171,25 @@ const MedicalHistory = () => {
     setShowViewer(true);
   };
 
+  const handleExportFullRecord = () => {
+    if (medicalHistory.length === 0) {
+      toast.error("Aucun dossier médical à exporter");
+      return;
+    }
+    generateFullMedicalRecordPDF({
+      patientName,
+      records: medicalHistory.map(record => ({
+        date: format(new Date(record.date), 'dd/MM/yyyy'),
+        diagnosis: record.diagnosis,
+        prescription: record.prescription || undefined,
+        notes: record.notes || undefined,
+        doctorName: record.doctor_name || 'Médecin',
+        doctorSpecialty: record.doctor_specialty
+      }))
+    });
+    toast.success("Dossier médical complet exporté en PDF");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -182,11 +201,19 @@ const MedicalHistory = () => {
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <h2 className="text-2xl font-bold">Mon Dossier Médical</h2>
-          <Badge variant="secondary">
-            {medicalHistory.length} consultation(s)
-          </Badge>
+          <div className="flex items-center gap-2">
+            {medicalHistory.length > 0 && (
+              <Button variant="outline" onClick={handleExportFullRecord}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Exporter tout en PDF
+              </Button>
+            )}
+            <Badge variant="secondary">
+              {medicalHistory.length} consultation(s)
+            </Badge>
+          </div>
         </div>
         
         {medicalHistory.length === 0 ? (

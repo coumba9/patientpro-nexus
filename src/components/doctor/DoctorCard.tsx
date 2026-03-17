@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -9,9 +9,11 @@ import {
   Calendar, 
   Shield,
   ChevronRight,
-  User
+  User,
+  Heart
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { AvailabilityCalendar } from './AvailabilityCalendar';
 
 interface Doctor {
   id: string;
@@ -31,9 +33,12 @@ interface Doctor {
 interface DoctorCardProps {
   doctor: Doctor;
   onBooking: (doctor: Doctor) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (doctorId: string) => void;
 }
 
-const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
+const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, onToggleFavorite }) => {
+  const [showCalendar, setShowCalendar] = useState(false);
   // Mock next available slots - in real app, this would come from the doctor's schedule
   const nextSlots = doctor.nextAvailableSlots || ['10:00', '10:30', '11:00', '14:00', '15:30'];
   
@@ -51,10 +56,22 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/20 group"
+      className="bg-card border border-border/50 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:border-primary/20 group relative"
     >
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Doctor Avatar & Basic Info */}
+        {/* Favorite button */}
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(doctor.id); }}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-accent transition-colors"
+            aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+          >
+            <Heart
+              className={`h-5 w-5 transition-colors ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+            />
+          </button>
+        )}
+        
         <div className="flex items-start gap-4 flex-1">
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -154,6 +171,15 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
               variant="outline"
               size="icon"
               className="rounded-xl"
+              title="Voir les disponibilités"
+              onClick={() => setShowCalendar(!showCalendar)}
+            >
+              <Clock className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-xl"
               title="Téléconsultation disponible"
             >
               <Video className="w-4 h-4" />
@@ -161,6 +187,24 @@ const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking }) => {
           </div>
         </div>
       </div>
+
+      {/* Expandable availability calendar */}
+      <AnimatePresence>
+        {showCalendar && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden mt-4 pt-4 border-t border-border/50"
+          >
+            <AvailabilityCalendar
+              doctorId={doctor.id}
+              onSelectSlot={(date, time) => onBooking(doctor)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

@@ -15,7 +15,201 @@ interface InvoiceData {
   paymentStatus: string;
   paymentMethod?: string;
   paymentDate?: string;
+  transactionRef?: string;
 }
+
+interface MedicalRecordExport {
+  date: string;
+  diagnosis: string;
+  prescription?: string;
+  notes?: string;
+  doctorName: string;
+  doctorSpecialty?: string;
+}
+
+export const generateFullMedicalRecordPDF = (data: {
+  patientName: string;
+  patientAge?: string;
+  records: MedicalRecordExport[];
+}): void => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // Header
+  doc.setFillColor(34, 197, 94);
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('JàmmSanté', 20, 22);
+  doc.setFontSize(14);
+  doc.text('DOSSIER MÉDICAL COMPLET', pageWidth - 20, 22, { align: 'right' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - 20, 32, { align: 'right' });
+
+  // Patient info
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Patient', 20, 55);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Nom: ${data.patientName}`, 20, 63);
+  if (data.patientAge) doc.text(`Âge: ${data.patientAge}`, 20, 70);
+  doc.text(`Nombre de consultations: ${data.records.length}`, 20, data.patientAge ? 77 : 70);
+
+  let yPos = data.patientAge ? 90 : 83;
+
+  data.records.forEach((record, index) => {
+    // Check if we need a new page
+    if (yPos > pageHeight - 60) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Record header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos, pageWidth - 40, 12, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${index + 1}. Consultation du ${record.date} — Dr. ${record.doctorName}`, 25, yPos + 8);
+    if (record.doctorSpecialty) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text(record.doctorSpecialty, pageWidth - 25, yPos + 8, { align: 'right' });
+    }
+    yPos += 16;
+
+    // Diagnosis
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(153, 27, 27);
+    doc.text('Diagnostic:', 25, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const diagLines = doc.splitTextToSize(record.diagnosis, pageWidth - 55);
+    doc.text(diagLines, 70, yPos);
+    yPos += diagLines.length * 5 + 4;
+
+    // Prescription
+    if (record.prescription) {
+      if (yPos > pageHeight - 40) { doc.addPage(); yPos = 20; }
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(30, 64, 175);
+      doc.text('Prescription:', 25, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      const presLines = doc.splitTextToSize(record.prescription, pageWidth - 55);
+      doc.text(presLines, 70, yPos);
+      yPos += presLines.length * 5 + 4;
+    }
+
+    // Notes
+    if (record.notes) {
+      if (yPos > pageHeight - 40) { doc.addPage(); yPos = 20; }
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(133, 77, 14);
+      doc.text('Notes:', 25, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      const noteLines = doc.splitTextToSize(record.notes, pageWidth - 55);
+      doc.text(noteLines, 70, yPos);
+      yPos += noteLines.length * 5 + 4;
+    }
+
+    yPos += 6;
+  });
+
+  // Footer on last page
+  doc.setFontSize(8);
+  doc.setTextColor(128, 128, 128);
+  doc.text('Document confidentiel — JàmmSanté', pageWidth / 2, pageHeight - 15, { align: 'center' });
+
+  doc.save(`dossier_medical_${data.patientName.replace(/\s+/g, '_')}.pdf`);
+};
+
+export const generatePaymentReceiptPDF = (data: InvoiceData): void => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Header
+  doc.setFillColor(34, 197, 94);
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.text('JàmmSanté', 20, 25);
+  doc.setFontSize(18);
+  doc.text('REÇU DE PAIEMENT', pageWidth - 20, 25, { align: 'right' });
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`N° ${data.invoiceNumber}`, pageWidth - 20, 35, { align: 'right' });
+
+  // Date
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Date: ${data.paymentDate || data.date}`, pageWidth - 20, 50, { align: 'right' });
+
+  // Patient & Doctor
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Patient', 20, 60);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(data.patientName, 20, 68);
+  if (data.patientEmail) doc.text(data.patientEmail, 20, 74);
+  if (data.patientPhone) doc.text(data.patientPhone, 20, 80);
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Praticien', pageWidth / 2 + 10, 60);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Dr. ${data.doctorName}`, pageWidth / 2 + 10, 68);
+  if (data.doctorSpecialty) doc.text(data.doctorSpecialty, pageWidth / 2 + 10, 74);
+
+  // Payment details box
+  doc.setFillColor(240, 249, 240);
+  doc.rect(20, 95, pageWidth - 40, 55, 'F');
+  doc.setDrawColor(34, 197, 94);
+  doc.setLineWidth(1);
+  doc.rect(20, 95, pageWidth - 40, 55, 'S');
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Détails du paiement', 25, 107);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Prestation: ${data.consultationType}`, 25, 117);
+  doc.text(`Mode: ${data.consultationMode === 'in_person' ? 'En cabinet' : 'Téléconsultation'}`, 25, 124);
+  if (data.paymentMethod) doc.text(`Méthode: ${data.paymentMethod}`, 25, 131);
+  if (data.transactionRef) doc.text(`Réf. transaction: ${data.transactionRef}`, 25, 138);
+
+  // Total
+  doc.setFillColor(34, 197, 94);
+  doc.roundedRect(pageWidth - 90, 115, 65, 20, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${data.amount.toLocaleString()} FCFA`, pageWidth - 57, 128, { align: 'center' });
+
+  // Status
+  doc.setTextColor(34, 197, 94);
+  doc.setFontSize(14);
+  doc.text('✓ PAYÉ', pageWidth / 2, 170, { align: 'center' });
+
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(128, 128, 128);
+  doc.text('Ce reçu fait foi de preuve de paiement.', pageWidth / 2, 260, { align: 'center' });
+  doc.text('JàmmSanté — www.jammsante.sn', pageWidth / 2, 267, { align: 'center' });
+
+  doc.save(`recu_${data.invoiceNumber}.pdf`);
+};
 
 interface PrescriptionData {
   date: string;
