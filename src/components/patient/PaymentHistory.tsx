@@ -91,7 +91,6 @@ export const PaymentHistory = () => {
 
   const handleDownloadInvoice = async (apt: AppointmentPayment) => {
     try {
-      // Fetch patient profile
       const { data: patientProfile } = await supabase
         .from('profiles')
         .select('first_name, last_name, email, phone_number')
@@ -117,13 +116,52 @@ export const PaymentHistory = () => {
         consultationMode: apt.mode,
         amount: getConsultationPrice(apt),
         paymentStatus: apt.status === 'completed' ? 'paid' : (apt.payment_status || 'pending'),
-        paymentDate: apt.status === 'completed' ? format(new Date(apt.date), 'dd/MM/yyyy') : undefined
+        paymentDate: apt.status === 'completed' ? format(new Date(apt.date), 'dd/MM/yyyy') : undefined,
+        transactionRef: apt.payment_id || undefined
       });
       
       toast.success("Facture téléchargée avec succès");
     } catch (error) {
       console.error('Error generating invoice:', error);
       toast.error("Erreur lors de la génération de la facture");
+    }
+  };
+
+  const handleDownloadReceipt = async (apt: AppointmentPayment) => {
+    try {
+      const { data: patientProfile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email, phone_number')
+        .eq('id', user?.id)
+        .maybeSingle();
+
+      const patientName = patientProfile 
+        ? `${patientProfile.first_name || ''} ${patientProfile.last_name || ''}`.trim()
+        : 'Patient';
+
+      const doctorName = apt.doctorProfile 
+        ? `${apt.doctorProfile.first_name || ''} ${apt.doctorProfile.last_name || ''}`.trim()
+        : 'Médecin';
+
+      generatePaymentReceiptPDF({
+        invoiceNumber: `REC-${apt.id.substring(0, 8).toUpperCase()}`,
+        date: format(new Date(apt.date), 'dd/MM/yyyy'),
+        patientName,
+        patientEmail: patientProfile?.email || undefined,
+        patientPhone: patientProfile?.phone_number || undefined,
+        doctorName,
+        consultationType: getTypeLabel(apt.type),
+        consultationMode: apt.mode,
+        amount: getConsultationPrice(apt),
+        paymentStatus: 'paid',
+        paymentDate: format(new Date(apt.date), 'dd/MM/yyyy'),
+        transactionRef: apt.payment_id || undefined
+      });
+      
+      toast.success("Reçu de paiement téléchargé");
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      toast.error("Erreur lors de la génération du reçu");
     }
   };
 
