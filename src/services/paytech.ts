@@ -97,7 +97,7 @@ export const checkPaymentStatus = async (token: string): Promise<boolean> => {
     if (DEV_MODE) {
       console.log("DEV MODE: Vérification du paiement pour le token:", token);
       const storedToken = localStorage.getItem("paytech_last_token");
-      
+
       // Vérifier si le token correspond
       if (storedToken === token) {
         // Simuler un délai réseau
@@ -106,11 +106,11 @@ export const checkPaymentStatus = async (token: string): Promise<boolean> => {
       }
       return false;
     }
-    
+
     // En production, utiliser l'edge function sécurisée pour vérifier le statut
     const { supabase } = await import("@/integrations/supabase/client");
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       console.error("Authentication required for payment status check");
       return false;
@@ -125,16 +125,26 @@ export const checkPaymentStatus = async (token: string): Promise<boolean> => {
 
     if (error) {
       console.error("Payment status check error:", error);
-      const msg = (error as any)?.message || '';
-      // Fallback: some PayTech tokens may return 404 on status, but redirect to success_url implies payment success.
-      if (msg.includes('404') || msg.toLowerCase().includes('paytech api error')) {
-        console.warn('Assuming payment success based on redirect and 404 status check');
-        return true;
-      }
       return false;
     }
 
-    return data.success && data.status === "completed";
+    if (!data || typeof data !== 'object') {
+      return false;
+    }
+
+    const status = String((data as any).status || '').toLowerCase();
+    const success =
+      (data as any).success === true ||
+      (data as any).success === 1 ||
+      (data as any).verified === true;
+
+    const completedStatuses = new Set(['completed', 'success', 'paid', 'sale_complete', 'succeeded', 'approved', 'done']);
+
+    if (success && (!status || completedStatuses.has(status))) {
+      return true;
+    }
+
+    return completedStatuses.has(status);
   } catch (error) {
     console.error("Error checking payment status:", error);
     return false;
