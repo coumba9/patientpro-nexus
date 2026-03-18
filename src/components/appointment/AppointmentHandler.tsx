@@ -86,6 +86,7 @@ export const AppointmentHandler = ({
         const successUrl = `${window.location.origin}/payment-confirmation?method=${encodeURIComponent(data.paymentMethod)}`;
         const cancelUrl = `${window.location.origin}/book-appointment?doctor=${encodeURIComponent(doctorName || "")}&specialty=${encodeURIComponent(specialty || "")}&cancelled=1`;
         const ipnUrl = `https://diieheagpzlqatqpzjua.supabase.co/functions/v1/verify-payment`;
+        const paytechEnv = "test";
         
         const paymentResponse = await initiatePayTechPayment({
           item_name: `Consultation ${specialty || "médicale"}`,
@@ -93,7 +94,7 @@ export const AppointmentHandler = ({
           currency: "XOF",
           ref_command: `APPOINTMENT-${Date.now()}`,
           command_name: `Rendez-vous ${data.type} avec ${doctorName || "Médecin"}`,
-          env: "test",
+          env: paytechEnv,
           success_url: successUrl,
           cancel_url: cancelUrl,
           ipn_url: ipnUrl,
@@ -112,7 +113,7 @@ export const AppointmentHandler = ({
           }
           try {
             localStorage.setItem("paytech_last_method", data.paymentMethod);
-            localStorage.setItem("paytech_last_env", "prod");
+            localStorage.setItem("paytech_last_env", paytechEnv);
             localStorage.setItem("paytech_last_amount", String(fee));
           } catch {}
           if (paymentResponse.redirect_url) {

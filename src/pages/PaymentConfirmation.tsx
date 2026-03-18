@@ -54,7 +54,8 @@ const PaymentConfirmation = () => {
   
   // Validate payment method
   const rawMethod = searchParams.get("method") || searchParams.get("methods") || searchParams.get("payment_method") || searchParams.get("channel") || safeLocalStorageGet("paytech_last_method");
-  const methodValidation = paymentMethodSchema.safeParse(rawMethod);
+  const normalizedMethod = rawMethod ? rawMethod.trim().replace(/[;,\s]+$/g, "") : null;
+  const methodValidation = paymentMethodSchema.safeParse(normalizedMethod);
   const method = methodValidation.success ? methodValidation.data : null;
 
   useEffect(() => {
