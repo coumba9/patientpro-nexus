@@ -1,8 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import mermaid from "mermaid";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { DiagramExportButtons } from "./DiagramExportButtons";
 
 // PlantUML export for StarUML compatibility
 const plantUMLCode = `@startuml JammSante_TeleconsultationDiagram
@@ -111,15 +110,39 @@ S --> UIP : Facture PDF
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_TeleconsultationDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCodeTeleconsult = `sequenceDiagram
+  participant P as Patient
+  participant UIP as Interface Patient
+  participant S as Système
+  participant V as Service Vidéo
+  participant DB as Base de Données
+  participant SMS as SMS
+  participant N as Notifications
+  participant UIM as Interface Médecin
+  participant M as Médecin
+  rect rgb(230, 245, 255)
+    Note over P,M: Prise de RDV Téléconsultation
+    P->>UIP: Sélectionne mode téléconsultation
+    UIP->>S: POST /appointments (mode=teleconsultation)
+    S->>DB: INSERT appointment
+    N->>P: "RDV confirmé"
+    N->>M: "Nouveau RDV"
+  end
+  rect rgb(230, 255, 230)
+    Note over M,P: Session Vidéo
+    M->>UIM: Ouvre interface téléconsultation
+    UIM->>V: Créer session vidéo
+    P->>UIP: Clique lien
+    UIP->>V: Rejoindre session
+    P<<->>M: Échange vidéo/audio
+  end
+  rect rgb(255, 245, 230)
+    Note over M,P: Fin Consultation
+    M->>V: Termine session
+    M->>S: Rédige ordonnance
+    S->>DB: INSERT medical_record
+    N->>P: "Ordonnance disponible"
+  end`;
 
 export const TeleconsultationDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -132,12 +155,13 @@ export const TeleconsultationDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme de Séquence - Téléconsultation</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCodeTeleconsult}
+          diagramName="JammSante_TeleconsultationDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre le flux complet de téléconsultation: prise de RDV, préparation, 

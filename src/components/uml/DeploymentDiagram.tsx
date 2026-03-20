@@ -1,8 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import mermaid from "mermaid";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { DiagramExportButtons } from "./DiagramExportButtons";
 
 const plantUMLCode = `@startuml JammSante_DeploymentDiagram
 
@@ -82,15 +81,30 @@ edge --> db : Service Role Key
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_DeploymentDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCodeDeploy = `graph TB
+  subgraph CLIENT["Client - Navigateur"]
+    SPA["React SPA + PWA"]
+    SW["Service Worker"]
+  end
+  subgraph SUPABASE["Supabase Cloud"]
+    AUTH["JWT + RLS"]
+    DATABASE["27 Tables PostgreSQL"]
+    EDGE["12 Edge Functions"]
+    STORAGE["Storage"]
+    RT["Realtime WebSocket"]
+  end
+  subgraph EXTERNAL["Services Externes"]
+    PAYTECH["PayTech API"]
+    SMS["Dexchange SMS"]
+    EMAIL["Resend Email"]
+    VIDEO["PeerJS Video"]
+  end
+  SPA --> AUTH
+  SPA --> DATABASE
+  SPA --> EDGE
+  EDGE --> PAYTECH
+  EDGE --> SMS
+  EDGE --> EMAIL`;
 
 export const DeploymentDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -103,12 +117,13 @@ export const DeploymentDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme de Deploiement / Architecture</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCodeDeploy}
+          diagramName="JammSante_DeploymentDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre l'architecture technique complete de JammSante : application React PWA, 

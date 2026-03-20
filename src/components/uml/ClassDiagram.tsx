@@ -1,8 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import mermaid from "mermaid";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { DiagramExportButtons } from "./DiagramExportButtons";
 
 // PlantUML export for StarUML compatibility
 const plantUMLCode = `@startuml JammSante_ClassDiagram
@@ -427,15 +426,40 @@ Administrateur "1" -- "*" JournalAudit : genere
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_ClassDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCode = `classDiagram
+  class Utilisateur {
+    +String id
+    +String nom
+    +String prenom
+    +String email
+    +String telephone
+    +String role
+    +authentifier()
+    +gererProfil()
+  }
+  class Patient {
+    +String dateNaissance
+    +String sexe
+    +String groupeSanguin
+    +prendreRendezVous()
+    +payerConsultation()
+    +recevoirRappelsSMS()
+  }
+  class Medecin {
+    +String specialiteId
+    +String numeroLicence
+    +gererRendezVous()
+    +creerOrdonnance()
+    +teleconsultation()
+  }
+  class Administrateur {
+    +gererUtilisateurs()
+    +modererContenu()
+    +consulterAnalytics()
+  }
+  Utilisateur <|-- Patient
+  Utilisateur <|-- Medecin
+  Utilisateur <|-- Administrateur`;
 
 export const ClassDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -448,12 +472,13 @@ export const ClassDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme de Classes</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCode}
+          diagramName="JammSante_ClassDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre les 25 classes de l'application JammSante organisees en 8 packages : 

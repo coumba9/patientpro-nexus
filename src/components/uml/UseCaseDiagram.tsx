@@ -1,8 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import mermaid from "mermaid";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { DiagramExportButtons } from "./DiagramExportButtons";
 
 // PlantUML export for StarUML compatibility
 const plantUMLCode = `@startuml JammSante_UseCaseDiagram
@@ -62,6 +61,7 @@ rectangle "JammSante - Plateforme de Sante" {
     usecase "Payer via Orange Money" as UC_OM
     usecase "Payer via Free Money" as UC_FREE
     usecase "Payer par carte bancaire" as UC_CB
+    usecase "Payer sur place au cabinet" as UC_SURPLACE
     usecase "Consulter historique paiements" as UC_HIST_PAY
     usecase "Telecharger facture PDF" as UC_FACT_PDF
   }
@@ -143,6 +143,7 @@ P --> UC_WAVE
 P --> UC_OM
 P --> UC_FREE
 P --> UC_CB
+P --> UC_SURPLACE
 P --> UC_HIST_PAY
 P --> UC_FACT_PDF
 
@@ -203,15 +204,23 @@ UC_POST ..> UC_DOC_POST : <<include>>
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_UseCaseDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCodeUC = `flowchart TD
+  Patient["Patient"]
+  Medecin["Medecin"]
+  Admin["Administrateur"]
+  Systeme["Systeme"]
+  UC3["Prendre rendez-vous"]
+  UC11["Payer via Wave"]
+  UC12["Payer via Orange Money"]
+  UC13["Payer via Free Money"]
+  UC14["Payer par carte bancaire"]
+  UC14b["Payer sur place au cabinet"]
+  Patient --> UC3
+  Patient --> UC11
+  Patient --> UC12
+  Patient --> UC13
+  Patient --> UC14
+  Patient --> UC14b`;
 
 export const UseCaseDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -224,12 +233,13 @@ export const UseCaseDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme de Cas d'Utilisation</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCodeUC}
+          diagramName="JammSante_UseCaseDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre tous les cas d'utilisation pour Patient, Medecin, Administrateur et Systeme automatise, 
@@ -261,6 +271,7 @@ export const UseCaseDiagram = () => {
               UC12["Payer via Orange Money"]
               UC13["Payer via Free Money"]
               UC14["Payer par carte bancaire"]
+              UC14b["Payer sur place au cabinet"]
               
               UC15["Envoyer message"]
               UC16["Utiliser chatbot IA"]
@@ -309,6 +320,7 @@ export const UseCaseDiagram = () => {
               Patient --> UC12
               Patient --> UC13
               Patient --> UC14
+              Patient --> UC14b
               Patient --> UC15
               Patient --> UC16
               Patient --> UC17
