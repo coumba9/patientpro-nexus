@@ -57,39 +57,49 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
     toast.success("Fichier Mermaid téléchargé");
   };
 
-  const handleDrawio = () => {
-    // Download the mermaid code as .drawio XML wrapper
-    downloadFile(mermaidCode, `${diagramName}.mmd`);
-    toast.success("Fichier Mermaid téléchargé — importable dans Draw.io");
-  };
-
   const openPlantUMLOnline = () => {
-    // Encode PlantUML for online viewer
-    const encoded = btoa(unescape(encodeURIComponent(plantUMLCode)));
-    window.open(`https://www.plantuml.com/plantuml/uml/~h${encoded.substring(0, 100)}`, "_blank");
-    // Fallback: copy to clipboard for manual paste
+    // Copy to clipboard then open PlantUML editor
     navigator.clipboard.writeText(plantUMLCode).then(() => {
-      toast.success("Code PlantUML copié ! Collez-le sur plantuml.com");
+      toast.success("Code PlantUML copié dans le presse-papier ! Collez-le dans l'éditeur qui va s'ouvrir.");
+      setTimeout(() => {
+        window.open("https://www.plantuml.com/plantuml/uml/", "_blank");
+      }, 500);
+    }).catch(() => {
+      // Fallback: download file instead
+      downloadFile(plantUMLCode, `${diagramName}.puml`);
+      toast.info("Fichier téléchargé. Ouvrez plantuml.com et importez le fichier.");
+      window.open("https://www.plantuml.com/plantuml/uml/", "_blank");
     });
   };
 
   const openMermaidLive = () => {
-    // Mermaid Live Editor accepts base64 encoded JSON state
-    const state = JSON.stringify({ code: mermaidCode, mermaid: { theme: "default" } });
-    const encoded = btoa(unescape(encodeURIComponent(state)));
-    window.open(`https://mermaid.live/edit#base64:${encoded}`, "_blank");
-    toast.info("Ouverture de Mermaid Live Editor...");
+    // Copy code to clipboard then open Mermaid Live
+    navigator.clipboard.writeText(mermaidCode).then(() => {
+      toast.success("Code Mermaid copié ! Collez-le dans l'éditeur qui va s'ouvrir.");
+      setTimeout(() => {
+        window.open("https://mermaid.live/edit", "_blank");
+      }, 500);
+    }).catch(() => {
+      downloadFile(mermaidCode, `${diagramName}.mmd`);
+      toast.info("Fichier téléchargé. Ouvrez mermaid.live et collez le contenu.");
+      window.open("https://mermaid.live/edit", "_blank");
+    });
   };
 
   const openDrawio = () => {
-    window.open("https://app.diagrams.net/", "_blank");
     navigator.clipboard.writeText(mermaidCode).then(() => {
       toast.success("Code copié ! Dans Draw.io: Extras > Edit Diagram > collez le code");
+      setTimeout(() => {
+        window.open("https://app.diagrams.net/", "_blank");
+      }, 500);
+    }).catch(() => {
+      downloadFile(mermaidCode, `${diagramName}.mmd`);
+      toast.info("Fichier téléchargé. Importez-le dans Draw.io");
+      window.open("https://app.diagrams.net/", "_blank");
     });
   };
 
   const exportSVG = () => {
-    // Find the rendered SVG in the closest diagram container
     const svgEl = document.querySelector(`[data-diagram="${diagramName}"] svg`) ||
       document.querySelector(".mermaid svg");
     if (svgEl) {
@@ -105,7 +115,6 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
     try {
       const { default: html2canvas } = await import("html2canvas");
       const containers = document.querySelectorAll<HTMLElement>(".bg-muted\\/50");
-      // Find the right container by checking proximity
       let targetContainer: HTMLElement | null = null;
       containers.forEach(c => {
         if (c.querySelector(".mermaid") && !targetContainer) {

@@ -542,7 +542,7 @@ export const ERDiagram = () => {
               }
               
               DOCTORS {
-                uuid id PK_FK
+                uuid id PK
                 uuid specialty_id FK
                 text license_number
                 int years_of_experience
