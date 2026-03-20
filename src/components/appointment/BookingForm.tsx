@@ -55,7 +55,7 @@ export const BookingForm = ({
     defaultValues: {
       type: "consultation",
       consultationType: "presentiel",
-      paymentMethod: "card",
+      paymentMethod: "on-site",
       firstName: "",
       lastName: "",
       phone: "",
