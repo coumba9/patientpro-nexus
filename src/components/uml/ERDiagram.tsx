@@ -438,15 +438,15 @@ profiles ||--o{ pages : "redige"
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_ERDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCodeERD = `erDiagram
+  PROFILES ||--o{ USER_ROLES : "a"
+  PROFILES ||--o| PATIENTS : "est"
+  PROFILES ||--o| DOCTORS : "est"
+  DOCTORS }o--|| SPECIALTIES : "appartient"
+  DOCTORS ||--o{ APPOINTMENTS : "gere"
+  PATIENTS ||--o{ APPOINTMENTS : "prend"
+  APPOINTMENTS ||--o| INVOICES : "genere"
+  APPOINTMENTS ||--o{ REMINDERS : "declenche"`;
 
 export const ERDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -459,12 +459,13 @@ export const ERDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme Entite-Relation (ERD)</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCodeERD}
+          diagramName="JammSante_ERDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre la structure complete de la base de donnees Supabase avec les 27 tables,

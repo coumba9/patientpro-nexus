@@ -202,15 +202,23 @@ UC_POST ..> UC_DOC_POST : <<include>>
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_UseCaseDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCodeUC = `flowchart TD
+  Patient["Patient"]
+  Medecin["Medecin"]
+  Admin["Administrateur"]
+  Systeme["Systeme"]
+  UC3["Prendre rendez-vous"]
+  UC11["Payer via Wave"]
+  UC12["Payer via Orange Money"]
+  UC13["Payer via Free Money"]
+  UC14["Payer par carte bancaire"]
+  UC14b["Payer sur place au cabinet"]
+  Patient --> UC3
+  Patient --> UC11
+  Patient --> UC12
+  Patient --> UC13
+  Patient --> UC14
+  Patient --> UC14b`;
 
 export const UseCaseDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -223,12 +231,13 @@ export const UseCaseDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme de Cas d'Utilisation</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCodeUC}
+          diagramName="JammSante_UseCaseDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre tous les cas d'utilisation pour Patient, Medecin, Administrateur et Systeme automatise, 
