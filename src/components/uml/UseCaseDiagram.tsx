@@ -61,6 +61,7 @@ rectangle "JammSante - Plateforme de Sante" {
     usecase "Payer via Orange Money" as UC_OM
     usecase "Payer via Free Money" as UC_FREE
     usecase "Payer par carte bancaire" as UC_CB
+    usecase "Payer sur place au cabinet" as UC_SURPLACE
     usecase "Consulter historique paiements" as UC_HIST_PAY
     usecase "Telecharger facture PDF" as UC_FACT_PDF
   }
