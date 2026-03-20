@@ -140,36 +140,12 @@ export const AvailabilitySettings = () => {
     if (!user?.id) return;
     
     try {
-      // Get doctor profile name
-      const { data: profile } = await supabase.rpc('get_safe_profile', { target_user_id: user.id }).single();
-      const doctorName = profile ? `Dr. ${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Un médecin';
-
-      // Get admin user IDs
-      const { data: adminRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'admin');
-
-      if (!adminRoles || adminRoles.length === 0) return;
-
-      // Create notifications for all admins
-      const notifications = adminRoles.map(admin => ({
-        user_id: admin.user_id,
-        type: 'availability_change',
-        title: 'Modification de disponibilité',
-        message: `${doctorName} a ${changeType} ses disponibilités : ${details}`,
-        priority: 'medium' as const,
-      }));
-
-      // Insert notifications - admins can only insert for themselves, so use edge function or direct insert
-      // Since notifications RLS requires user_id = auth.uid(), we'll need to handle this differently
-      // For now, we'll log it and the system can pick it up
-      for (const notif of notifications) {
-        await supabase.from('notifications').insert(notif);
-      }
+      await supabase.functions.invoke('notify-availability-change', {
+        body: { changeType, details }
+      });
     } catch (error) {
       console.error('Error notifying admin:', error);
-      // Non-blocking - don't prevent the availability change
+      // Non-blocking
     }
   };
 
