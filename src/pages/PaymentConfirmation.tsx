@@ -343,11 +343,11 @@ const PaymentConfirmation = () => {
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2 text-red-600">
+            <h2 className="text-xl font-semibold mb-2 text-destructive">
               Erreur lors de la création du rendez-vous
             </h2>
-            <p className="text-gray-600 mb-6">
-              Le créneau sélectionné n'est plus disponible. Veuillez en choisir un autre.
+            <p className="text-muted-foreground mb-6">
+              {errorMessage}
             </p>
             <div className="space-y-2">
               <Button
