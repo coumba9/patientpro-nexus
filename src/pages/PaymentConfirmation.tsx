@@ -87,10 +87,44 @@ const PaymentConfirmation = () => {
       const proceedWithoutToken = !paymentToken && !!safeLocalStorageGet("pendingAppointment");
 
       if (!user) {
-        console.error("User not authenticated");
-        setStatus("error");
-        toast.error("Utilisateur non authentifié");
+        // Try to recover session after redirect
+        console.log("No user found, attempting session recovery...");
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          console.error("User not authenticated after recovery attempt");
+          setErrorMessage("Vous n'êtes pas connecté. Veuillez vous reconnecter et réessayer.");
+          setStatus("error");
+          toast.error("Utilisateur non authentifié");
+          return;
+        }
+        // Session recovered but user state hasn't updated yet - let effect re-run
+        processedRef.current = false;
         return;
+      }
+
+      // Ensure patient record exists (required by FK constraint)
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: patientRecord } = await supabase
+          .from('patients')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (!patientRecord) {
+          console.log("Creating missing patient record for user:", user.id);
+          const { error: insertErr } = await supabase
+            .from('patients')
+            .insert({ id: user.id });
+          if (insertErr) {
+            console.error("Failed to create patient record:", insertErr);
+          } else {
+            console.log("Patient record created successfully");
+          }
+        }
+      } catch (patientErr) {
+        console.warn("Patient record check/create failed:", patientErr);
       }
 
       // Idempotency guard - create early lock to avoid duplicate creations
