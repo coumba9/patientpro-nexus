@@ -268,8 +268,9 @@ const PaymentConfirmation = () => {
 
           // Fallback: si le créneau est marqué indisponible, vérifier si un rendez-vous existe déjà pour ce créneau
           try {
-            const { supabase } = await import("@/integrations/supabase/client");
-            const dateStr = data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0];
+            const dateStr = typeof data.date === 'string' 
+              ? new Date(data.date).toISOString().split('T')[0] 
+              : data.date.toISOString().split('T')[0];
             const { data: existing } = await supabase
               .from('appointments')
               .select('*')
