@@ -55,7 +55,7 @@ export const BookingForm = ({
     defaultValues: {
       type: "consultation",
       consultationType: "presentiel",
-      paymentMethod: "card",
+      paymentMethod: "on-site",
       firstName: "",
       lastName: "",
       phone: "",
@@ -227,6 +227,7 @@ export const BookingForm = ({
           <PaymentSummary
             consultationType={consultationType}
             doctorFees={doctorFees}
+            paymentMethod={form.watch("paymentMethod")}
             onSubmit={form.handleSubmit(handleFormSubmit)}
           />
         </div>
