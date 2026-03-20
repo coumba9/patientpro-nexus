@@ -531,11 +531,11 @@ export const ERDiagram = () => {
               }
               
               PATIENTS {
-                uuid id PK_FK
+                uuid id PK
                 date birth_date
                 text gender
                 text blood_type
-                text_arr allergies
+                text allergies
                 jsonb medical_history
                 jsonb beneficiaries
                 boolean is_active
