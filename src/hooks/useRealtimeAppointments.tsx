@@ -47,11 +47,13 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
         const patientIds = [...new Set(appointmentsData.map(a => a.patient_id))];
 
         // Fetch all doctor briefs and patient profiles in parallel
-        const [doctorResults, patientProfiles] = await Promise.all([
+        const [doctorResults, patientResults] = await Promise.all([
           Promise.all(doctorIds.map(id =>
             supabase.rpc('get_doctor_brief', { doctor_id: id }).single().then(r => ({ id, data: r.data }))
           )),
-          supabase.from('profiles').select('id, first_name, last_name, email').in('id', patientIds)
+          Promise.all(patientIds.map(id =>
+            supabase.rpc('get_safe_profile', { target_user_id: id }).single().then(r => ({ id, data: r.data }))
+          ))
         ]);
 
         // Build lookup maps
@@ -61,8 +63,8 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
         }
 
         const patientMap = new Map<string, any>();
-        for (const p of (patientProfiles.data || [])) {
-          patientMap.set(p.id, p);
+        for (const r of patientResults) {
+          if (r.data) patientMap.set(r.id, r.data);
         }
 
         // Enrich in one pass
