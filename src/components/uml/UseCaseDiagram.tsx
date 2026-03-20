@@ -320,6 +320,7 @@ export const UseCaseDiagram = () => {
               Patient --> UC12
               Patient --> UC13
               Patient --> UC14
+              Patient --> UC14b
               Patient --> UC15
               Patient --> UC16
               Patient --> UC17
