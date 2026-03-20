@@ -227,6 +227,7 @@ export const BookingForm = ({
           <PaymentSummary
             consultationType={consultationType}
             doctorFees={doctorFees}
+            paymentMethod={form.watch("paymentMethod")}
             onSubmit={form.handleSubmit(handleFormSubmit)}
           />
         </div>

@@ -89,11 +89,50 @@ export const AppointmentHandler = ({
     
     localStorage.setItem("pendingAppointment", JSON.stringify(appointmentData));
     
-    // Traitement en fonction du mode de paiement
+    // === Paiement sur place : créer le rendez-vous directement ===
+    if (data.paymentMethod === "on-site") {
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
+        const dateStr = data.date instanceof Date
+          ? data.date.toISOString().split('T')[0]
+          : new Date(data.date).toISOString().split('T')[0];
+
+        const { error: insertError } = await supabase
+          .from("appointments")
+          .insert({
+            patient_id: user.id,
+            doctor_id: doctorId || user.id,
+            date: dateStr,
+            time: data.time,
+            type: data.type,
+            mode: data.consultationType === "teleconsultation" ? "teleconsultation" : "in_person",
+            status: "pending",
+            payment_status: "on_site",
+            payment_amount: fee,
+            notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
+          });
+
+        if (insertError) {
+          console.error("Appointment insert error:", insertError);
+          toast.error("Erreur lors de la création du rendez-vous");
+          return;
+        }
+
+        localStorage.removeItem("pendingAppointment");
+        toast.success("Rendez-vous confirmé ! Le paiement sera effectué sur place.");
+        navigate("/patient");
+      } catch (error) {
+        console.error("On-site booking error:", error);
+        toast.error("Erreur lors de la création du rendez-vous");
+      }
+      return;
+    }
+
+    // === Paiement en ligne ===
     const supportedMethods = getSupportedPaymentMethods().map(m => m.id);
     
     if (supportedMethods.includes(data.paymentMethod)) {
-      // Intégration PayTech
       const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
       
       try {
@@ -152,17 +191,7 @@ export const AppointmentHandler = ({
       return;
     }
     
-    // Pour les autres méthodes de paiement
-    let paymentMessage = "Rendez-vous pris avec succès !";
-    if (["card", "thirdparty", "cash"].includes(data.paymentMethod)) {
-      paymentMessage = `Rendez-vous confirmé. ${
-        data.paymentMethod === "card" ? "Votre carte a été débitée." : 
-        data.paymentMethod === "thirdparty" ? "Votre tiers payant a été informé." : 
-        "Veuillez prévoir un paiement en espèces lors de votre visite."
-      }`;
-    }
-    
-    toast.success(paymentMessage);
+    toast.success("Rendez-vous pris avec succès !");
     navigate("/patient");
   };
 
