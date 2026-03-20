@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { appointmentService } from "@/api";
 import { checkPaymentStatus } from "@/services/paytech";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 // Validation schemas for security
@@ -89,7 +89,6 @@ const PaymentConfirmation = () => {
       if (!user) {
         // Try to recover session after redirect
         console.log("No user found, attempting session recovery...");
-        const { supabase } = await import("@/integrations/supabase/client");
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session) {
           console.error("User not authenticated after recovery attempt");
@@ -105,7 +104,6 @@ const PaymentConfirmation = () => {
 
       // Ensure patient record exists (required by FK constraint)
       try {
-        const { supabase } = await import("@/integrations/supabase/client");
         const { data: patientRecord } = await supabase
           .from('patients')
           .select('id')
@@ -203,28 +201,38 @@ const PaymentConfirmation = () => {
         }
 
         try {
-          console.log("Creating appointment in Supabase...");
+          console.log("Creating appointment directly in Supabase (post-payment, skip slot check)...");
 
-          // Le rendez-vous est automatiquement confirmé car le créneau 
-          // a été sélectionné parmi les disponibilités du médecin
-          const appointment = await appointmentService.createAppointment({
-            doctor_id: data.doctorId,
-            patient_id: user.id,
-            date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-            time: data.time,
-            type: data.type,
-            mode: data.consultationType,
-            status: 'confirmed', // Auto-confirmé car dans les créneaux de disponibilité
-            location: data.consultationType === 'presentiel' ? 'Cabinet médical' : 'Téléconsultation',
-            notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
-          });
+          const dateStr = typeof data.date === 'string' 
+            ? new Date(data.date).toISOString().split('T')[0] 
+            : data.date.toISOString().split('T')[0];
+
+          // Direct insert — slot was validated BEFORE payment, no need to re-check
+          const { data: appointment, error: insertError } = await supabase
+            .from('appointments')
+            .insert({
+              doctor_id: data.doctorId,
+              patient_id: user.id,
+              date: dateStr,
+              time: data.time,
+              type: data.type || 'consultation',
+              mode: data.consultationType || 'presentiel',
+              status: 'confirmed',
+              location: (data.consultationType === 'presentiel' || data.consultationType === 'in_person') ? 'Cabinet médical' : 'Téléconsultation',
+              notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            throw new Error(insertError.message);
+          }
 
           console.log("Appointment created successfully");
 
           // Mettre à jour le numéro de téléphone du patient s'il a été fourni
           if (data.phone) {
             console.log("Updating patient phone number:", data.phone);
-            const { supabase } = await import("@/integrations/supabase/client");
             const { error: updateError } = await supabase
               .from('patients')
               .update({ phone_number: data.phone })
@@ -257,8 +265,9 @@ const PaymentConfirmation = () => {
 
           // Fallback: si le créneau est marqué indisponible, vérifier si un rendez-vous existe déjà pour ce créneau
           try {
-            const { supabase } = await import("@/integrations/supabase/client");
-            const dateStr = data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0];
+            const dateStr = typeof data.date === 'string' 
+              ? new Date(data.date).toISOString().split('T')[0] 
+              : data.date.toISOString().split('T')[0];
             const { data: existing } = await supabase
               .from('appointments')
               .select('*')
