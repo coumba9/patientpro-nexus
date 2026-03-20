@@ -300,9 +300,10 @@ const PaymentConfirmation = () => {
           return;
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erreur lors de la vérification du paiement:", error);
         setStatus("error");
+        setErrorMessage(error?.message || "Erreur lors de la vérification du paiement");
         toast.error("Erreur lors de la vérification du paiement");
       }
     };
