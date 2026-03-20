@@ -115,26 +115,41 @@ export const EnhancedDashboard = () => {
       });
 
       // Prochains rendez-vous détaillés
+      const today = format(new Date(), 'yyyy-MM-dd');
       const { data: nextAppts } = await supabase
         .from('appointments')
-        .select(`
-          id,
-          date,
-          time,
-          status,
-          doctor:doctor_id (
-            id,
-            profile:id (first_name, last_name),
-            specialty:specialty_id (name)
-          )
-        `)
+        .select('id, date, time, status, doctor_id')
         .eq('patient_id', user.id)
-        .gte('date', format(new Date(), 'yyyy-MM-dd'))
+        .gte('date', today)
+        .not('status', 'in', '("cancelled","completed","no_show")')
         .order('date', { ascending: true })
         .order('time', { ascending: true })
         .limit(3);
 
-      setNextAppointments((nextAppts || []) as any);
+      if (nextAppts && nextAppts.length > 0) {
+        const doctorIds = [...new Set(nextAppts.map(a => a.doctor_id))];
+        const doctorResults = await Promise.all(
+          doctorIds.map(id =>
+            supabase.rpc('get_doctor_brief', { doctor_id: id }).single().then(r => ({ id, data: r.data }))
+          )
+        );
+        const doctorMap = new Map<string, any>();
+        for (const r of doctorResults) {
+          if (r.data) doctorMap.set(r.id, r.data);
+        }
+        setNextAppointments(nextAppts.map(appt => {
+          const doc = doctorMap.get(appt.doctor_id);
+          return {
+            ...appt,
+            doctor: doc ? {
+              profile: { first_name: doc.first_name, last_name: doc.last_name },
+              specialty: { name: doc.specialty_name }
+            } : null
+          };
+        }) as any);
+      } else {
+        setNextAppointments([]);
+      }
 
     } catch (error) {
       console.error('Erreur chargement dashboard:', error);
