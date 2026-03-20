@@ -43,6 +43,7 @@ const PaymentConfirmation = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string>("Une erreur s'est produite");
   const [appointmentData, setAppointmentData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const processedRef = useRef(false);
@@ -86,10 +87,44 @@ const PaymentConfirmation = () => {
       const proceedWithoutToken = !paymentToken && !!safeLocalStorageGet("pendingAppointment");
 
       if (!user) {
-        console.error("User not authenticated");
-        setStatus("error");
-        toast.error("Utilisateur non authentifié");
+        // Try to recover session after redirect
+        console.log("No user found, attempting session recovery...");
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          console.error("User not authenticated after recovery attempt");
+          setErrorMessage("Vous n'êtes pas connecté. Veuillez vous reconnecter et réessayer.");
+          setStatus("error");
+          toast.error("Utilisateur non authentifié");
+          return;
+        }
+        // Session recovered but user state hasn't updated yet - let effect re-run
+        processedRef.current = false;
         return;
+      }
+
+      // Ensure patient record exists (required by FK constraint)
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: patientRecord } = await supabase
+          .from('patients')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (!patientRecord) {
+          console.log("Creating missing patient record for user:", user.id);
+          const { error: insertErr } = await supabase
+            .from('patients')
+            .insert({ id: user.id });
+          if (insertErr) {
+            console.error("Failed to create patient record:", insertErr);
+          } else {
+            console.log("Patient record created successfully");
+          }
+        }
+      } catch (patientErr) {
+        console.warn("Patient record check/create failed:", patientErr);
       }
 
       // Idempotency guard - create early lock to avoid duplicate creations
@@ -257,19 +292,18 @@ const PaymentConfirmation = () => {
           setStatus("error");
           setIsCreating(false);
 
-          // Message d'erreur plus clair
-          const errorMessage = (error as any)?.message || "Une erreur s'est produite";
-          if (errorMessage.includes("créneau")) {
-            toast.error("Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
-          } else {
-            toast.error("Erreur: " + errorMessage);
-          }
+          // Show the ACTUAL error message
+          const actualError = (error as any)?.message || "Une erreur s'est produite lors de la création du rendez-vous";
+          console.error("Appointment creation error details:", actualError);
+          setErrorMessage(actualError);
+          toast.error("Erreur: " + actualError);
           return;
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erreur lors de la vérification du paiement:", error);
         setStatus("error");
+        setErrorMessage(error?.message || "Erreur lors de la vérification du paiement");
         toast.error("Erreur lors de la vérification du paiement");
       }
     };
@@ -309,11 +343,11 @@ const PaymentConfirmation = () => {
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2 text-red-600">
+            <h2 className="text-xl font-semibold mb-2 text-destructive">
               Erreur lors de la création du rendez-vous
             </h2>
-            <p className="text-gray-600 mb-6">
-              Le créneau sélectionné n'est plus disponible. Veuillez en choisir un autre.
+            <p className="text-muted-foreground mb-6">
+              {errorMessage}
             </p>
             <div className="space-y-2">
               <Button

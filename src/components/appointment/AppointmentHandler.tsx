@@ -37,6 +37,23 @@ export const AppointmentHandler = ({
       return;
     }
 
+    // Ensure patient record exists before proceeding (FK constraint)
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: patientRecord } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (!patientRecord) {
+        console.log("Creating patient record for user:", user.id);
+        await supabase.from('patients').insert({ id: user.id });
+      }
+    } catch (e) {
+      console.warn("Patient record check failed:", e);
+    }
+
     // Vérifier la disponibilité du créneau AVANT le paiement
     if (doctorId && data.date && data.time) {
       try {
