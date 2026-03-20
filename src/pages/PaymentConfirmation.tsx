@@ -43,6 +43,7 @@ const PaymentConfirmation = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string>("Une erreur s'est produite");
   const [appointmentData, setAppointmentData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const processedRef = useRef(false);
