@@ -292,13 +292,11 @@ const PaymentConfirmation = () => {
           setStatus("error");
           setIsCreating(false);
 
-          // Message d'erreur plus clair
-          const errorMessage = (error as any)?.message || "Une erreur s'est produite";
-          if (errorMessage.includes("créneau")) {
-            toast.error("Ce créneau n'est plus disponible. Veuillez en choisir un autre.");
-          } else {
-            toast.error("Erreur: " + errorMessage);
-          }
+          // Show the ACTUAL error message
+          const actualError = (error as any)?.message || "Une erreur s'est produite lors de la création du rendez-vous";
+          console.error("Appointment creation error details:", actualError);
+          setErrorMessage(actualError);
+          toast.error("Erreur: " + actualError);
           return;
         }
 
