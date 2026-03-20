@@ -271,6 +271,7 @@ export const UseCaseDiagram = () => {
               UC12["Payer via Orange Money"]
               UC13["Payer via Free Money"]
               UC14["Payer par carte bancaire"]
+              UC14b["Payer sur place au cabinet"]
               
               UC15["Envoyer message"]
               UC16["Utiliser chatbot IA"]
