@@ -41,9 +41,17 @@ export const useRealPatients = (doctorId: string | null) => {
         const transformedPatients: RealPatient[] = data.map((patient: any) => {
           const profile = patient.profile;
           const birthDate = patient.birth_date ? new Date(patient.birth_date) : null;
-          const age = birthDate 
-            ? new Date().getFullYear() - birthDate.getFullYear()
-            : 0;
+          
+          // Calculate precise age accounting for month and day
+          let age = 0;
+          if (birthDate) {
+            const today = new Date();
+            age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+          }
 
           const lastName = profile?.last_name || '';
           const firstName = profile?.first_name || '';
