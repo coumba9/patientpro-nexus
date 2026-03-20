@@ -104,7 +104,6 @@ const PaymentConfirmation = () => {
 
       // Ensure patient record exists (required by FK constraint)
       try {
-        const { supabase } = await import("@/integrations/supabase/client");
         const { data: patientRecord } = await supabase
           .from('patients')
           .select('id')
