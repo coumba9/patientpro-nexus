@@ -48,18 +48,23 @@ class DocumentService extends BaseService<Document> {
     // Get unique patient IDs
     const patientIds = [...new Set(documents.map((doc: any) => doc.patient_id))];
     
-    // Fetch patient profiles
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name')
-      .in('id', patientIds);
+    // Fetch patient profiles using get_safe_profile RPC (bypasses RLS)
+    const profileResults = await Promise.all(
+      patientIds.map(id =>
+        supabase.rpc('get_safe_profile', { target_user_id: id }).single()
+      )
+    );
     
-    if (profilesError) {
-      console.error('Error fetching patient profiles:', profilesError);
-    }
-    
-    // Create profile map
-    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+    // Create profile map from RPC results
+    const profileMap = new Map<string, { first_name: string; last_name: string }>();
+    profileResults.forEach((result) => {
+      if (result.data) {
+        profileMap.set(result.data.id, {
+          first_name: result.data.first_name || 'Patient',
+          last_name: result.data.last_name || 'inconnu'
+        });
+      }
+    });
     
     // Merge data
     return documents.map((doc: any) => ({
