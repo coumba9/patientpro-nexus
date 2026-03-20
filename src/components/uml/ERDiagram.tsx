@@ -1,8 +1,7 @@
 
 import React, { useRef, useEffect } from "react";
 import mermaid from "mermaid";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { DiagramExportButtons } from "./DiagramExportButtons";
 
 // PlantUML export for StarUML compatibility
 const plantUMLCode = `@startuml JammSante_ERDiagram
