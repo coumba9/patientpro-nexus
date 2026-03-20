@@ -271,6 +271,66 @@ export type Database = {
           },
         ]
       }
+      doctor_availability_slots: {
+        Row: {
+          created_at: string
+          day: string
+          doctor_id: string
+          end_time: string
+          id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          doctor_id: string
+          end_time: string
+          id?: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      doctor_unavailability_periods: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          end_date: string
+          id: string
+          reason: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          end_date: string
+          id?: string
+          reason: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          end_date?: string
+          id?: string
+          reason?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctors: {
         Row: {
           address: string | null
