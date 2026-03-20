@@ -89,7 +89,6 @@ const PaymentConfirmation = () => {
       if (!user) {
         // Try to recover session after redirect
         console.log("No user found, attempting session recovery...");
-        const { supabase } = await import("@/integrations/supabase/client");
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session) {
           console.error("User not authenticated after recovery attempt");
