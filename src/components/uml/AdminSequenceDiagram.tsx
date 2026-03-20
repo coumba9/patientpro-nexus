@@ -137,15 +137,26 @@ UI --> C : "Profil configuré, prêt à recevoir patients"
 
 @enduml`;
 
-const downloadPlantUML = () => {
-  const blob = new Blob([plantUMLCode], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'JammSante_AdminSequenceDiagram.puml';
-  a.click();
-  URL.revokeObjectURL(url);
-};
+const mermaidCodeAdmin = `sequenceDiagram
+  participant C as Candidat Médecin
+  participant UI as Interface Web
+  participant S as Système
+  participant DB as Base de Données
+  participant ST as Storage
+  participant E as Service Email
+  participant A as Administrateur
+  C->>UI: Remplit formulaire
+  UI->>S: POST /doctor-applications
+  S->>DB: INSERT
+  S->>E: Email confirmation
+  A->>UI: Consulte candidatures
+  alt Approbation
+    A->>S: POST /approve-doctor
+    S->>E: Email approbation
+  else Rejet
+    A->>S: POST /reject-doctor
+    S->>E: Email rejet
+  end`;
 
 export const AdminSequenceDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
@@ -158,12 +169,13 @@ export const AdminSequenceDiagram = () => {
 
   return (
     <div className="border-t pt-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-2xl font-bold">Diagramme de Séquence - Approbation Médecin</h2>
-        <Button variant="outline" size="sm" onClick={downloadPlantUML}>
-          <Download className="h-4 w-4 mr-2" />
-          Export PlantUML (StarUML)
-        </Button>
+        <DiagramExportButtons
+          plantUMLCode={plantUMLCode}
+          mermaidCode={mermaidCodeAdmin}
+          diagramName="JammSante_AdminSequenceDiagram"
+        />
       </div>
       <p className="text-muted-foreground mb-4">
         Ce diagramme illustre le workflow complet d'approbation des médecins: soumission candidature, 
