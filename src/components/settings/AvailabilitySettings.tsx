@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -46,22 +45,9 @@ const sortSlotsByDay = (slots: TimeSlot[]) => {
 export const AvailabilitySettings = () => {
   const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState("availability");
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
-    { id: "1", day: "Lundi", startTime: "09:00", endTime: "17:00" },
-    { id: "2", day: "Mardi", startTime: "09:00", endTime: "17:00" },
-    { id: "3", day: "Mercredi", startTime: "09:00", endTime: "17:00" },
-    { id: "4", day: "Jeudi", startTime: "09:00", endTime: "17:00" },
-    { id: "5", day: "Vendredi", startTime: "09:00", endTime: "12:00" },
-  ]);
-  
-  const [holidays, setHolidays] = useState<Holiday[]>([
-    { 
-      id: "1", 
-      startDate: new Date(2024, 7, 1),
-      endDate: new Date(2024, 7, 15),
-      reason: "Congés d'été" 
-    }
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
 
   const [newTimeSlot, setNewTimeSlot] = useState<Omit<TimeSlot, "id">>({
     day: "Lundi",
@@ -81,6 +67,52 @@ export const AvailabilitySettings = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isHolidayDialogOpen, setIsHolidayDialogOpen] = useState(false);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
+
+  // Load data from Supabase
+  const loadAvailability = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const { data: slots, error: slotsError } = await supabase
+        .from('doctor_availability_slots' as any)
+        .select('*')
+        .eq('doctor_id', user.id);
+
+      if (slotsError) throw slotsError;
+
+      const { data: periods, error: periodsError } = await supabase
+        .from('doctor_unavailability_periods' as any)
+        .select('*')
+        .eq('doctor_id', user.id);
+
+      if (periodsError) throw periodsError;
+
+      const mappedSlots: TimeSlot[] = ((slots as any[]) || []).map((s: any) => ({
+        id: s.id,
+        day: s.day,
+        startTime: s.start_time?.substring(0, 5) || "09:00",
+        endTime: s.end_time?.substring(0, 5) || "17:00",
+      }));
+      setTimeSlots(sortSlotsByDay(mappedSlots));
+
+      const mappedHolidays: Holiday[] = ((periods as any[]) || []).map((h: any) => ({
+        id: h.id,
+        startDate: new Date(h.start_date),
+        endDate: new Date(h.end_date),
+        reason: h.reason,
+      }));
+      setHolidays(mappedHolidays);
+    } catch (error) {
+      console.error('Error loading availability:', error);
+      toast.error("Erreur lors du chargement des disponibilités");
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadAvailability();
+  }, [loadAvailability]);
 
   // Map French day names to JS day numbers (0=Sunday)
   const dayToJsDay: Record<string, number> = {
@@ -159,16 +191,39 @@ export const AvailabilitySettings = () => {
       return;
     }
 
-    const newSlot: TimeSlot = {
-      id: Date.now().toString(),
-      ...newTimeSlot
-    };
-    setTimeSlots(sortSlotsByDay([...timeSlots, newSlot]));
-    setIsTimeSlotDialogOpen(false);
-    setNewTimeSlot({ day: "Lundi", startTime: "09:00", endTime: "17:00" });
-    
-    toast.success("Créneau ajouté avec succès");
-    notifyAdminOfChange("ajouté", `${newTimeSlot.day} ${newTimeSlot.startTime}-${newTimeSlot.endTime}`);
+    try {
+      const { data, error } = await supabase
+        .from('doctor_availability_slots' as any)
+        .insert({
+          doctor_id: user!.id,
+          day: newTimeSlot.day,
+          start_time: newTimeSlot.startTime,
+          end_time: newTimeSlot.endTime,
+        } as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newSlot: TimeSlot = {
+        id: (data as any).id,
+        day: newTimeSlot.day,
+        startTime: newTimeSlot.startTime,
+        endTime: newTimeSlot.endTime,
+      };
+      setTimeSlots(sortSlotsByDay([...timeSlots, newSlot]));
+      setIsTimeSlotDialogOpen(false);
+      setNewTimeSlot({ day: "Lundi", startTime: "09:00", endTime: "17:00" });
+      toast.success("Créneau ajouté avec succès");
+      notifyAdminOfChange("ajouté", `${newTimeSlot.day} ${newTimeSlot.startTime}-${newTimeSlot.endTime}`);
+    } catch (error: any) {
+      console.error('Error adding slot:', error);
+      if (error?.code === '23505') {
+        toast.error("Ce créneau existe déjà");
+      } else {
+        toast.error("Erreur lors de l'ajout du créneau");
+      }
+    }
   };
 
   const handleEditTimeSlot = (slot: TimeSlot) => {
@@ -190,14 +245,29 @@ export const AvailabilitySettings = () => {
     );
     if (hasConflict) return;
 
-    setTimeSlots(sortSlotsByDay(
-      timeSlots.map(s => s.id === editingSlot.id ? editingSlot : s)
-    ));
-    setIsEditDialogOpen(false);
-    
-    toast.success("Créneau modifié avec succès");
-    notifyAdminOfChange("modifié", `${editingSlot.day} ${editingSlot.startTime}-${editingSlot.endTime}`);
-    setEditingSlot(null);
+    try {
+      const { error } = await supabase
+        .from('doctor_availability_slots' as any)
+        .update({
+          day: editingSlot.day,
+          start_time: editingSlot.startTime,
+          end_time: editingSlot.endTime,
+        } as any)
+        .eq('id', editingSlot.id);
+
+      if (error) throw error;
+
+      setTimeSlots(sortSlotsByDay(
+        timeSlots.map(s => s.id === editingSlot.id ? editingSlot : s)
+      ));
+      setIsEditDialogOpen(false);
+      toast.success("Créneau modifié avec succès");
+      notifyAdminOfChange("modifié", `${editingSlot.day} ${editingSlot.startTime}-${editingSlot.endTime}`);
+      setEditingSlot(null);
+    } catch (error) {
+      console.error('Error updating slot:', error);
+      toast.error("Erreur lors de la modification du créneau");
+    }
   };
 
   const handleDeleteTimeSlot = async (slot: TimeSlot) => {
@@ -207,10 +277,22 @@ export const AvailabilitySettings = () => {
       toast.error("Impossible de supprimer : des rendez-vous sont programmés sur ce créneau");
       return;
     }
-    
-    setTimeSlots(timeSlots.filter(s => s.id !== slot.id));
-    toast.success("Créneau supprimé");
-    notifyAdminOfChange("supprimé", `${slot.day} ${slot.startTime}-${slot.endTime}`);
+
+    try {
+      const { error } = await supabase
+        .from('doctor_availability_slots' as any)
+        .delete()
+        .eq('id', slot.id);
+
+      if (error) throw error;
+
+      setTimeSlots(timeSlots.filter(s => s.id !== slot.id));
+      toast.success("Créneau supprimé");
+      notifyAdminOfChange("supprimé", `${slot.day} ${slot.startTime}-${slot.endTime}`);
+    } catch (error) {
+      console.error('Error deleting slot:', error);
+      toast.error("Erreur lors de la suppression du créneau");
+    }
   };
 
   const handleAddHoliday = () => {
@@ -222,23 +304,59 @@ export const AvailabilitySettings = () => {
       toast.error("La date de début doit être avant la date de fin");
       return;
     }
-    const newEntry: Holiday = {
-      id: Date.now().toString(),
-      ...newHoliday
+
+    const addHolidayAsync = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('doctor_unavailability_periods' as any)
+          .insert({
+            doctor_id: user!.id,
+            start_date: newHoliday.startDate.toISOString().split('T')[0],
+            end_date: newHoliday.endDate.toISOString().split('T')[0],
+            reason: newHoliday.reason,
+          } as any)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const newEntry: Holiday = {
+          id: (data as any).id,
+          startDate: newHoliday.startDate,
+          endDate: newHoliday.endDate,
+          reason: newHoliday.reason,
+        };
+        setHolidays([...holidays, newEntry]);
+        setIsHolidayDialogOpen(false);
+        setNewHoliday({ startDate: new Date(), endDate: new Date(), reason: "" });
+        toast.success("Période d'absence ajoutée");
+        notifyAdminOfChange(
+          "ajouté une absence",
+          `${newHoliday.startDate.toLocaleDateString('fr-FR')} au ${newHoliday.endDate.toLocaleDateString('fr-FR')} (${newHoliday.reason})`
+        );
+      } catch (error) {
+        console.error('Error adding holiday:', error);
+        toast.error("Erreur lors de l'ajout de la période d'absence");
+      }
     };
-    setHolidays([...holidays, newEntry]);
-    setIsHolidayDialogOpen(false);
-    setNewHoliday({ startDate: new Date(), endDate: new Date(), reason: "" });
-    toast.success("Période d'absence ajoutée");
-    notifyAdminOfChange(
-      "ajouté une absence", 
-      `${newHoliday.startDate.toLocaleDateString('fr-FR')} au ${newHoliday.endDate.toLocaleDateString('fr-FR')} (${newHoliday.reason})`
-    );
+    addHolidayAsync();
   };
 
-  const handleDeleteHoliday = (id: string) => {
-    setHolidays(holidays.filter(holiday => holiday.id !== id));
-    toast.success("Période d'absence supprimée");
+  const handleDeleteHoliday = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('doctor_unavailability_periods' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setHolidays(holidays.filter(holiday => holiday.id !== id));
+      toast.success("Période d'absence supprimée");
+    } catch (error) {
+      console.error('Error deleting holiday:', error);
+      toast.error("Erreur lors de la suppression");
+    }
   };
 
   // Time slot dialog content (shared between add and edit)
@@ -287,6 +405,15 @@ export const AvailabilitySettings = () => {
       </Button>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 p-4">
+        <Clock className="h-5 w-5 text-primary animate-spin" />
+        <p className="text-muted-foreground">Chargement des disponibilités...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
