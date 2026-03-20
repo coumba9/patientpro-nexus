@@ -363,7 +363,7 @@ export const AvailabilitySettings = () => {
                 handleSaveEdit,
                 "Enregistrer"
               )}
-              <div className="flex items-start gap-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-md">
+              <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
                 <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                 <p>Les modifications ne sont pas possibles s'il y a des rendez-vous déjà programmés sur ce créneau.</p>
               </div>
