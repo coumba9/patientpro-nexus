@@ -203,21 +203,32 @@ const PaymentConfirmation = () => {
         }
 
         try {
-          console.log("Creating appointment in Supabase...");
+          console.log("Creating appointment directly in Supabase (post-payment, skip slot check)...");
 
-          // Le rendez-vous est automatiquement confirmé car le créneau 
-          // a été sélectionné parmi les disponibilités du médecin
-          const appointment = await appointmentService.createAppointment({
-            doctor_id: data.doctorId,
-            patient_id: user.id,
-            date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-            time: data.time,
-            type: data.type,
-            mode: data.consultationType,
-            status: 'confirmed', // Auto-confirmé car dans les créneaux de disponibilité
-            location: data.consultationType === 'presentiel' ? 'Cabinet médical' : 'Téléconsultation',
-            notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined
-          });
+          const dateStr = typeof data.date === 'string' 
+            ? new Date(data.date).toISOString().split('T')[0] 
+            : data.date.toISOString().split('T')[0];
+
+          // Direct insert — slot was validated BEFORE payment, no need to re-check
+          const { data: appointment, error: insertError } = await supabase
+            .from('appointments')
+            .insert({
+              doctor_id: data.doctorId,
+              patient_id: user.id,
+              date: dateStr,
+              time: data.time,
+              type: data.type || 'consultation',
+              mode: data.consultationType || 'presentiel',
+              status: 'confirmed',
+              location: (data.consultationType === 'presentiel' || data.consultationType === 'in_person') ? 'Cabinet médical' : 'Téléconsultation',
+              notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            throw new Error(insertError.message);
+          }
 
           console.log("Appointment created successfully");
 
