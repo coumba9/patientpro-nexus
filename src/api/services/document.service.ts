@@ -133,12 +133,17 @@ class DocumentService extends BaseService<Document> {
       throw error;
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get signed URL (bucket is private)
+    const { data: urlData, error: urlError } = await supabase.storage
       .from('signatures')
-      .getPublicUrl(data.path);
+      .createSignedUrl(data.path, 60 * 60 * 24 * 365); // 1 year
 
-    return urlData.publicUrl;
+    if (urlError || !urlData?.signedUrl) {
+      console.error('Error creating signed URL:', urlError);
+      throw new Error('Failed to create signed URL for signature');
+    }
+
+    return urlData.signedUrl;
   }
 
   async signDocument(documentId: string, signatureUrl?: string): Promise<Document> {
