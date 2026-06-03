@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    // Validate authorization for cron job
+    // Validate authorization for cron job — always require the secret
     const authHeader = req.headers.get('Authorization');
     const cronSecret = Deno.env.get('CRON_SECRET');
-    
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       console.warn('Unauthorized access attempt to process-reminders');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
