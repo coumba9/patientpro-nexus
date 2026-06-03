@@ -90,6 +90,15 @@ const Prescriptions = () => {
         import('html2canvas')
       ]);
 
+      // Escape all user-controlled values before injecting into innerHTML to prevent XSS
+      const esc = (value: unknown): string =>
+        String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+
       const tempDiv = document.createElement('div');
       tempDiv.style.position = 'absolute';
       tempDiv.style.left = '-9999px';
@@ -102,34 +111,34 @@ const Prescriptions = () => {
         <div style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 30px;">
           <div style="display: flex; justify-content: space-between; align-items: start;">
             <div>
-              <h2 style="font-size: 24px; font-weight: bold; color: #111827; margin: 0 0 10px 0;">${prescription.doctor}</h2>
-              <p style="color: #6b7280; margin: 0;">${prescription.doctorSpecialty || "Médecin généraliste"}</p>
+              <h2 style="font-size: 24px; font-weight: bold; color: #111827; margin: 0 0 10px 0;">${esc(prescription.doctor)}</h2>
+              <p style="color: #6b7280; margin: 0;">${esc(prescription.doctorSpecialty || "Médecin généraliste")}</p>
             </div>
             <div style="text-align: right;">
               <h1 style="font-size: 32px; font-weight: bold; color: #2563eb; margin: 0 0 10px 0;">ORDONNANCE</h1>
-              <p style="font-size: 14px; color: #6b7280; margin: 0;">Date: ${prescription.date}</p>
+              <p style="font-size: 14px; color: #6b7280; margin: 0;">Date: ${esc(prescription.date)}</p>
             </div>
           </div>
         </div>
         <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
           <h3 style="font-weight: 600; color: #111827; margin: 0 0 15px 0;">Patient</h3>
-          <p style="margin: 5px 0;"><span style="font-weight: 500;">Nom:</span> ${prescription.patientName || "Patient"}</p>
-          ${prescription.diagnosis ? `<p style="margin: 5px 0;"><span style="font-weight: 500;">Diagnostic:</span> ${prescription.diagnosis}</p>` : ''}
+          <p style="margin: 5px 0;"><span style="font-weight: 500;">Nom:</span> ${esc(prescription.patientName || "Patient")}</p>
+          ${prescription.diagnosis ? `<p style="margin: 5px 0;"><span style="font-weight: 500;">Diagnostic:</span> ${esc(prescription.diagnosis)}</p>` : ''}
         </div>
         <div style="margin: 30px 0;">
           <h3 style="font-weight: 600; font-size: 20px; margin: 0 0 20px 0;">Prescription</h3>
           ${prescription.medications.map((med: any) => `
             <div style="margin: 15px 0; padding: 15px; border-left: 4px solid #3b82f6; background: #eff6ff;">
-              <h4 style="font-weight: bold; font-size: 16px; margin: 0 0 8px 0;">${med.name}</h4>
-              <p style="color: #374151; margin: 5px 0;">Dosage: ${med.dosage}</p>
-              <p style="color: #374151; margin: 5px 0;">Posologie: ${med.frequency}</p>
+              <h4 style="font-weight: bold; font-size: 16px; margin: 0 0 8px 0;">${esc(med.name)}</h4>
+              <p style="color: #374151; margin: 5px 0;">Dosage: ${esc(med.dosage)}</p>
+              <p style="color: #374151; margin: 5px 0;">Posologie: ${esc(med.frequency)}</p>
             </div>
           `).join('')}
         </div>
         <div style="margin-top: 40px; text-align: right;">
-          <p style="color: #374151;">Fait le ${prescription.date}</p>
+          <p style="color: #374151;">Fait le ${esc(prescription.date)}</p>
           <div style="border-top: 1px solid #d1d5db; padding-top: 20px; width: 250px; margin-left: auto;">
-            <p style="font-weight: 600; margin: 0;">${prescription.doctor}</p>
+            <p style="font-weight: 600; margin: 0;">${esc(prescription.doctor)}</p>
             <p style="font-size: 14px; color: #6b7280;">Signature et cachet</p>
           </div>
         </div>

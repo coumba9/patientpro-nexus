@@ -39,16 +39,8 @@ export const AppointmentTicket = ({ appointment }: AppointmentTicketProps) => {
     setIsSendingEmail(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-ticket-email', {
-        body: { 
-          appointmentId: appointment.id,
-          patientEmail: appointment.patient?.profile?.email,
-          doctorName,
-          specialtyName,
-          date: formatDate(appointment.date),
-          time: appointment.time,
-          mode: appointment.mode,
-          location: appointment.location,
-          type: getTypeLabel()
+        body: {
+          appointmentId: appointment.id
         }
       });
 

@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { escapeHtml } from '../_shared/htmlEscape.ts';
+import { checkRateLimit, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -12,14 +14,6 @@ const corsHeaders = {
 
 interface TicketEmailRequest {
   appointmentId: string;
-  patientEmail: string;
-  doctorName: string;
-  specialtyName: string;
-  date: string;
-  time: string;
-  mode: string;
-  location?: string;
-  type: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -29,17 +23,87 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { 
-      appointmentId,
-      patientEmail, 
-      doctorName, 
-      specialtyName,
-      date,
-      time,
-      mode,
-      location,
-      type
-    }: TicketEmailRequest = await req.json();
+    // Require an authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    const callerId = claimsData?.claims?.sub as string | undefined;
+    if (claimsError || !callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const rl = checkRateLimit(`send-ticket-email:${callerId}`, { maxRequests: 10, windowMs: 60_000 });
+    if (!rl.allowed) {
+      const r = rateLimitResponse(rl.retryAfterMs);
+      return new Response(r.body, { status: 429, headers: { ...corsHeaders, ...Object.fromEntries(r.headers) } });
+    }
+
+    const { appointmentId }: TicketEmailRequest = await req.json();
+    if (!appointmentId) {
+      return new Response(JSON.stringify({ error: "appointmentId requis" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Load the appointment and verify the caller is involved (data sourced from DB, not the request body)
+    const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: appointment, error: apptError } = await admin
+      .from("appointments")
+      .select("id, patient_id, doctor_id, date, time, mode, type, location, specialty_id")
+      .eq("id", appointmentId)
+      .single();
+
+    if (apptError || !appointment) {
+      return new Response(JSON.stringify({ error: "Rendez-vous introuvable" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (appointment.patient_id !== callerId && appointment.doctor_id !== callerId) {
+      return new Response(JSON.stringify({ error: "Accès refusé" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Resolve patient email, doctor name and specialty from the database
+    const [{ data: patientProfile }, { data: doctorProfile }] = await Promise.all([
+      admin.from("profiles").select("email, first_name, last_name").eq("id", appointment.patient_id).single(),
+      admin.from("profiles").select("first_name, last_name").eq("id", appointment.doctor_id).single(),
+    ]);
+
+    let specialtyName = "";
+    if (appointment.specialty_id) {
+      const { data: specialty } = await admin
+        .from("specialties").select("name").eq("id", appointment.specialty_id).single();
+      specialtyName = specialty?.name ?? "";
+    }
+
+    const patientEmail = patientProfile?.email;
+    if (!patientEmail) {
+      return new Response(JSON.stringify({ error: "Email du patient introuvable" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const doctorName = `Dr. ${doctorProfile?.first_name ?? ""} ${doctorProfile?.last_name ?? ""}`.trim();
+    const date = appointment.date ?? "";
+    const time = appointment.time ?? "";
+    const mode = appointment.mode ?? "";
+    const location = appointment.location ?? "";
+    const type = appointment.type ?? "";
 
     console.log("Sending ticket email to:", patientEmail);
 

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,25 +20,6 @@ interface PayTechPaymentConfig {
   target_payment?: string;
 }
 
-const extractUserIdFromBearer = (authHeader: string | null): string | null => {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-
-  const token = authHeader.slice(7);
-  const parts = token.split('.');
-  if (parts.length < 2) return null;
-
-  try {
-    const payload = parts[1]
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
-    const decoded = JSON.parse(atob(padded));
-    return typeof decoded?.sub === 'string' ? decoded.sub : null;
-  } catch {
-    return null;
-  }
-};
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -45,11 +27,26 @@ serve(async (req) => {
   }
 
   try {
-    // verify_jwt=true validates token at gateway level; this extracts user id for app-level checks/logging
+    // Cryptographically verify the JWT server-side instead of trusting an unverified decode
     const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
-    const requesterId = extractUserIdFromBearer(authHeader);
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: 0, message: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (!requesterId) {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    const requesterId = claimsData?.claims?.sub ?? null;
+
+    if (claimsError || !requesterId) {
       return new Response(
         JSON.stringify({ success: 0, message: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
