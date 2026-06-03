@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,7 +10,7 @@ const corsHeaders = {
 interface SMSRequest {
   phoneNumber?: string;
   message: string;
-  userId: string;
+  userId?: string;
   signature?: string;
 }
 
@@ -20,18 +21,53 @@ serve(async (req) => {
   }
 
   try {
-    const { phoneNumber, message, userId, signature = 'JàmmSanté' }: SMSRequest = await req.json();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-    console.log('SMS Request:', { phoneNumber, message, userId, signature });
+    // Determine the caller: either an authenticated user (JWT) or an internal
+    // service-to-service call (process-reminders) using the service role key.
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const bearer = authHeader.replace('Bearer ', '');
+    const isServiceCall = bearer === serviceKey;
+
+    let authenticatedUserId: string | null = null;
+    if (!isServiceCall) {
+      if (!authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const authClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(bearer);
+      if (claimsError || !claimsData?.claims?.sub) {
+        return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      authenticatedUserId = claimsData.claims.sub as string;
+
+      const rl = checkRateLimit(`send-sms:${authenticatedUserId}`, { maxRequests: 5, windowMs: 60_000 });
+      if (!rl.allowed) {
+        const r = rateLimitResponse(rl.retryAfterMs);
+        return new Response(r.body, { status: 429, headers: { ...corsHeaders, ...Object.fromEntries(r.headers) } });
+      }
+    }
+
+    const { phoneNumber, message, userId: bodyUserId, signature = 'JàmmSanté' }: SMSRequest = await req.json();
+
+    // For end-user calls, force userId to the verified identity (never trust the body).
+    // For internal service calls, the body userId is trusted.
+    const userId = isServiceCall ? bodyUserId : authenticatedUserId;
+
+    console.log('SMS Request:', { phoneNumber, message, userId, signature, isServiceCall });
 
     if (!message || !userId) {
       throw new Error('Missing required fields: message or userId');
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Initialize Supabase client with service role for DB writes
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     // Get DEXCHANGE API Key
     const apiKey = Deno.env.get('DEXCHANGE_API_KEY');
