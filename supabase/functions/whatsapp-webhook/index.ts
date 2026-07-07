@@ -54,7 +54,17 @@ serve(async (req) => {
 
     // Handle incoming WhatsApp messages (POST request)
     if (req.method === "POST") {
-      const body = await req.json();
+      // Read the raw body first so we can verify Meta's HMAC signature before trusting it
+      const rawBody = await req.text();
+
+      const APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
+      const signature = req.headers.get("x-hub-signature-256");
+      if (!APP_SECRET || !(await verifyMetaSignature(rawBody, signature, APP_SECRET))) {
+        console.warn("WhatsApp webhook signature verification failed");
+        return new Response("Forbidden", { status: 403 });
+      }
+
+      const body = JSON.parse(rawBody);
       console.log("WhatsApp webhook received, entries:", body.entry?.length ?? 0);
 
       // Check if it's a message
