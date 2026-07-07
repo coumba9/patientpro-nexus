@@ -12,7 +12,7 @@ interface PayTechPaymentConfig {
   ref_command: string;
   command_name: string;
   currency?: string;
-  env?: string;
+  // env is server-controlled only and intentionally not accepted from clients
   ipn_url?: string;
   success_url: string;
   cancel_url: string;
@@ -60,13 +60,15 @@ serve(async (req) => {
       ref_command,
       command_name,
       currency = "XOF",
-      env = "test",
       success_url,
       cancel_url,
       custom_field,
       target_payment,
       ipn_url
     }: PayTechPaymentConfig = await req.json();
+
+    // Environment is server-controlled only — never trust a client-supplied value
+    const env = Deno.env.get('PAYTECH_ENV') ?? 'test';
 
     // Validate required fields
     if (!item_name || !item_price || !ref_command || !command_name || !success_url || !cancel_url) {

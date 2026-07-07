@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { Resend } from "npm:resend@2.0.0";
+import { escapeHtml } from '../_shared/htmlEscape.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -124,22 +125,22 @@ const handler = async (req: Request): Promise<Response> => {
                 <h1>Mise à jour de votre demande</h1>
               </div>
               <div class="content">
-                <p>Bonjour ${application.first_name} ${application.last_name},</p>
+                <p>Bonjour ${escapeHtml(application.first_name)} ${escapeHtml(application.last_name)},</p>
                 
                 <p>Nous vous remercions de l'intérêt que vous portez à JàmmSanté et d'avoir pris le temps de soumettre votre demande d'inscription en tant que médecin.</p>
                 
                 <div class="info-box">
                   <h3>📋 Informations de votre demande</h3>
-                  <p><strong>Spécialité :</strong> ${specialtyName}</p>
-                  <p><strong>Numéro de licence :</strong> ${application.license_number}</p>
-                  <p><strong>Années d'expérience :</strong> ${application.years_of_experience} ans</p>
+                  <p><strong>Spécialité :</strong> ${escapeHtml(specialtyName)}</p>
+                  <p><strong>Numéro de licence :</strong> ${escapeHtml(application.license_number)}</p>
+                  <p><strong>Années d'expérience :</strong> ${escapeHtml(String(application.years_of_experience))} ans</p>
                 </div>
 
                 <p>Après examen attentif de votre dossier, nous sommes au regret de vous informer que nous ne pouvons pas donner suite favorable à votre demande pour le moment.</p>
 
                 <div class="reason-box">
                   <h3>📝 Motif du refus</h3>
-                  <p>${reason}</p>
+                  <p>${escapeHtml(reason)}</p>
                 </div>
 
                 <p><strong>Que faire maintenant ?</strong></p>

@@ -8,6 +8,25 @@ const corsHeaders = {
 
 const WHATSAPP_RATE_LIMIT = { maxRequests: 5, windowMs: 60_000 };
 
+// Verify Meta's X-Hub-Signature-256 HMAC over the raw request body
+async function verifyMetaSignature(rawBody: string, signature: string | null, appSecret: string): Promise<boolean> {
+  if (!signature || !appSecret) return false;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(appSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
+  const expected = Array.from(new Uint8Array(sigBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const provided = signature.replace(/^sha256=/, "").toLowerCase();
+  return provided === expected.toLowerCase();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -35,7 +54,17 @@ serve(async (req) => {
 
     // Handle incoming WhatsApp messages (POST request)
     if (req.method === "POST") {
-      const body = await req.json();
+      // Read the raw body first so we can verify Meta's HMAC signature before trusting it
+      const rawBody = await req.text();
+
+      const APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
+      const signature = req.headers.get("x-hub-signature-256");
+      if (!APP_SECRET || !(await verifyMetaSignature(rawBody, signature, APP_SECRET))) {
+        console.warn("WhatsApp webhook signature verification failed");
+        return new Response("Forbidden", { status: 403 });
+      }
+
+      const body = JSON.parse(rawBody);
       console.log("WhatsApp webhook received, entries:", body.entry?.length ?? 0);
 
       // Check if it's a message
