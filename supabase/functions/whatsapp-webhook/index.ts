@@ -8,6 +8,25 @@ const corsHeaders = {
 
 const WHATSAPP_RATE_LIMIT = { maxRequests: 5, windowMs: 60_000 };
 
+// Verify Meta's X-Hub-Signature-256 HMAC over the raw request body
+async function verifyMetaSignature(rawBody: string, signature: string | null, appSecret: string): Promise<boolean> {
+  if (!signature || !appSecret) return false;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(appSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
+  const expected = Array.from(new Uint8Array(sigBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const provided = signature.replace(/^sha256=/, "").toLowerCase();
+  return provided === expected.toLowerCase();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
