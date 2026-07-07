@@ -54,17 +54,21 @@ serve(async (req) => {
       || req.headers.get('x-paytech-signature')
       || req.headers.get('x-webhook-signature');
 
-    if (webhookSecret) {
-      const valid = await verifySignature(rawBody, signature, webhookSecret);
-      if (!valid) {
-        console.warn('Payment webhook signature verification failed');
-        return new Response(
-          JSON.stringify({ error: 'Invalid signature' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } else {
-      console.warn('No webhook secret configured — signature verification skipped');
+    if (!webhookSecret) {
+      console.error('No webhook secret configured — rejecting request');
+      return new Response(
+        JSON.stringify({ error: 'Webhook not configured' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const valid = await verifySignature(rawBody, signature, webhookSecret);
+    if (!valid) {
+      console.warn('Payment webhook signature verification failed');
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const supabase = createClient(
