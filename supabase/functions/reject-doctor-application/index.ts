@@ -140,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
 
                 <div class="reason-box">
                   <h3>📝 Motif du refus</h3>
-                  <p>${reason}</p>
+                  <p>${escapeHtml(reason)}</p>
                 </div>
 
                 <p><strong>Que faire maintenant ?</strong></p>
