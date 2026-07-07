@@ -12,7 +12,7 @@ interface PayTechPaymentConfig {
   ref_command: string;
   command_name: string;
   currency?: string;
-  env?: string;
+  // env is server-controlled only and intentionally not accepted from clients
   ipn_url?: string;
   success_url: string;
   cancel_url: string;
