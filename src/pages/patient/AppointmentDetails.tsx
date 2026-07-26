@@ -25,8 +25,34 @@ const AppointmentDetails = () => {
       if (!id) return;
       
       try {
-        const data = await appointmentService.getById(id);
-        setAppointment(data);
+        const data: any = await appointmentService.getById(id);
+
+        let enriched = data;
+        if (data?.doctor_id) {
+          const { data: doc } = await supabase
+            .rpc("get_doctor_brief", { doctor_id: data.doctor_id })
+            .maybeSingle();
+
+          if (doc) {
+            enriched = {
+              ...data,
+              doctor: {
+                id: (doc as any).id,
+                profile: {
+                  first_name: (doc as any).first_name,
+                  last_name: (doc as any).last_name,
+                  email: (doc as any).email,
+                },
+                specialty: (doc as any).specialty_name
+                  ? { id: (doc as any).specialty_id, name: (doc as any).specialty_name }
+                  : null,
+              },
+            };
+          }
+        }
+
+        setAppointment(enriched);
+
 
         // Vérifier si le patient a déjà noté ce rendez-vous
         const { data: ratingData } = await supabase
