@@ -169,7 +169,7 @@ export const AppointmentHandler = ({
             appointmentType: data.type,
             hasMedicalInfo: data.medicalInfo ? "true" : "false"
           }),
-          target_payment: methodName
+          target_payment: PAYTECH_TARGETS[data.paymentMethod] || methodName
         });
         
         if (paymentResponse.success === 1) {
