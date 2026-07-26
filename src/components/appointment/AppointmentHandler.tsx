@@ -7,6 +7,14 @@ import { initiatePayTechPayment } from "@/services/paytech";
 import { getSupportedPaymentMethods } from "@/services/africaPayment";
 import { useAuth } from "@/hooks/useAuth";
 
+// Libellés exacts acceptés par PayTech pour target_payment
+const PAYTECH_TARGETS: Record<string, string> = {
+  wave: "Wave",
+  "orange-money": "Orange Money",
+  "free-money": "Free Money",
+  card: "Carte Bancaire",
+};
+
 interface AppointmentHandlerProps {
   doctorId: string | null;
   doctorName: string | null;
@@ -161,7 +169,7 @@ export const AppointmentHandler = ({
             appointmentType: data.type,
             hasMedicalInfo: data.medicalInfo ? "true" : "false"
           }),
-          target_payment: methodName
+          target_payment: PAYTECH_TARGETS[data.paymentMethod] || methodName
         });
         
         if (paymentResponse.success === 1) {
