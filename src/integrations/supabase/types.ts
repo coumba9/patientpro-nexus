@@ -1286,6 +1286,14 @@ export type Database = {
           specialty_name: string
         }[]
       }
+      get_doctor_rating_stats: {
+        Args: { doctor_ids?: string[] }
+        Returns: {
+          average_rating: number
+          doctor_id: string
+          rating_count: number
+        }[]
+      }
       get_safe_profile: {
         Args: { target_user_id: string }
         Returns: {
