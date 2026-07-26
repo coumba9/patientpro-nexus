@@ -4,6 +4,8 @@
 interface PayTechPaymentConfig {
   item_name: string;
   item_price: number;
+  /** Consultation type used by the server to resolve the authoritative price */
+  appointment_type: string;
   ref_command: string;
   command_name: string;
   currency?: string;
