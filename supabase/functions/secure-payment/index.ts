@@ -10,6 +10,13 @@ const corsHeaders = {
 // Paydunya API configuration
 const PAYDUNYA_API_URL = 'https://app.paydunya.com/api/v1'
 
+// Authoritative, server-side consultation fee schedule (XOF)
+const FEE_SCHEDULE: Record<string, number> = {
+  consultation: 15000,
+  followup: 12000,
+  urgent: 20000,
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
