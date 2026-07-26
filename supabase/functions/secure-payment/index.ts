@@ -136,7 +136,7 @@ serve(async (req) => {
       // Step 1: Create invoice with Paydunya
       const invoicePayload = {
         invoice: {
-          total_amount: amount,
+          total_amount: expectedAmount,
           description: description,
         },
         store: {
