@@ -6,9 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+// Authoritative, server-side consultation fee schedule (XOF).
+// Never trust a price coming from the browser.
+const FEE_SCHEDULE: Record<string, number> = {
+  consultation: 15000,
+  followup: 12000,
+  urgent: 20000,
+};
+
 interface PayTechPaymentConfig {
   item_name: string;
-  item_price: number;
+  item_price?: number; // client value is display-only and re-verified server-side
+  appointment_type?: string;
   ref_command: string;
   command_name: string;
   currency?: string;
@@ -19,6 +28,7 @@ interface PayTechPaymentConfig {
   custom_field?: string;
   target_payment?: string;
 }
+
 
 serve(async (req) => {
   // Handle CORS preflight requests
