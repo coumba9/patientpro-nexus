@@ -147,6 +147,7 @@ export const AppointmentHandler = ({
         const paymentResponse = await initiatePayTechPayment({
           item_name: `Consultation ${specialty || "médicale"}`,
           item_price: fee,
+          appointment_type: data.type,
           currency: "XOF",
           ref_command: `APPOINTMENT-${Date.now()}`,
           command_name: `Rendez-vous ${data.type} avec ${doctorName || "Médecin"}`,
