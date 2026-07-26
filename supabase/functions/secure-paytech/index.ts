@@ -67,6 +67,7 @@ serve(async (req) => {
     const {
       item_name,
       item_price,
+      appointment_type,
       ref_command,
       command_name,
       currency = "XOF",
@@ -81,12 +82,31 @@ serve(async (req) => {
     const env = Deno.env.get('PAYTECH_ENV') ?? 'test';
 
     // Validate required fields
-    if (!item_name || !item_price || !ref_command || !command_name || !success_url || !cancel_url) {
+    if (!item_name || !ref_command || !command_name || !success_url || !cancel_url) {
       return new Response(
-        JSON.stringify({ success: 0, message: 'Champs manquants: item_name, item_price, ref_command, command_name, success_url, cancel_url' }),
+        JSON.stringify({ success: 0, message: 'Champs manquants: item_name, ref_command, command_name, success_url, cancel_url' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Price is resolved server-side from the authoritative fee schedule.
+    const expectedPrice = FEE_SCHEDULE[String(appointment_type ?? '').toLowerCase()];
+    if (!expectedPrice) {
+      return new Response(
+        JSON.stringify({ success: 0, message: 'Type de consultation invalide' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Reject tampered client amounts instead of silently charging a different price.
+    if (item_price !== undefined && Number(item_price) !== expectedPrice) {
+      console.warn('Rejected payment with mismatched client price for user:', requesterId);
+      return new Response(
+        JSON.stringify({ success: 0, message: 'Montant invalide pour ce type de consultation' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
 
     // Get PayTech credentials from environment
     const paytechApiKey = Deno.env.get('PAYTECH_API_KEY');
