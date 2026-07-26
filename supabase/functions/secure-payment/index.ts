@@ -10,6 +10,13 @@ const corsHeaders = {
 // Paydunya API configuration
 const PAYDUNYA_API_URL = 'https://app.paydunya.com/api/v1'
 
+// Authoritative, server-side consultation fee schedule (XOF)
+const FEE_SCHEDULE: Record<string, number> = {
+  consultation: 15000,
+  followup: 12000,
+  urgent: 20000,
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -48,10 +55,10 @@ serve(async (req) => {
       )
     }
 
-    const { amount, currency, description, customer, metadata, paymentMethod } = await req.json()
+    const { amount, currency, description, customer, metadata, paymentMethod, appointmentType } = await req.json()
 
     // Validate required fields
-    if (!amount || !currency || !description || !customer || !paymentMethod) {
+    if (!currency || !description || !customer || !paymentMethod) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { 
@@ -60,6 +67,23 @@ serve(async (req) => {
         }
       )
     }
+
+    // Authoritative server-side price — never trust the client-supplied amount
+    const expectedAmount = FEE_SCHEDULE[String(appointmentType ?? '').toLowerCase()]
+    if (!expectedAmount) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid consultation type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (amount !== undefined && Number(amount) !== expectedAmount) {
+      console.warn('Rejected payment with mismatched client amount for user:', user.id)
+      return new Response(
+        JSON.stringify({ error: 'Invalid amount for this consultation type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
 
     // Get payment API secrets from Supabase secrets
     const masterKey = Deno.env.get('AFRICA_PAYMENT_MASTER_KEY')
@@ -112,7 +136,7 @@ serve(async (req) => {
       // Step 1: Create invoice with Paydunya
       const invoicePayload = {
         invoice: {
-          total_amount: amount,
+          total_amount: expectedAmount,
           description: description,
         },
         store: {
