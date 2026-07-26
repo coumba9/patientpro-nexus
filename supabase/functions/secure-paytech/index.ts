@@ -132,7 +132,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         item_name,
-        item_price,
+        item_price: expectedPrice,
         currency,
         ref_command,
         command_name,
