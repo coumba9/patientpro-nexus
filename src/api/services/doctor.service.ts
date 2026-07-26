@@ -8,54 +8,35 @@ class DoctorService extends BaseService<Doctor> {
     super('doctors' as TableName);
   }
 
-  // Get average rating for a doctor from ratings table
+  // Get average rating for a doctor (aggregated server-side, no personal data exposed)
   async getDoctorRating(doctorId: string): Promise<number> {
-    const { data, error } = await supabase
-      .from('ratings')
-      .select('rating')
-      .eq('doctor_id', doctorId);
-    
-    if (error || !data || data.length === 0) {
-      return 0;
-    }
-    
-    const sum = data.reduce((acc, r) => acc + r.rating, 0);
-    return Math.round((sum / data.length) * 10) / 10;
+    const stats = await this.getDoctorsRatings([doctorId]);
+    return stats[doctorId]?.average ?? 0;
   }
 
-  // Get all ratings for multiple doctors at once (average + count)
+  // Get aggregated ratings for multiple doctors at once (average + count)
   async getDoctorsRatings(doctorIds: string[]): Promise<Record<string, { average: number; count: number }>> {
     if (doctorIds.length === 0) return {};
-    
-    const { data, error } = await supabase
-      .from('ratings')
-      .select('doctor_id, rating')
-      .in('doctor_id', doctorIds);
-    
+
+    const { data, error } = await (supabase.rpc as any)('get_doctor_rating_stats', {
+      doctor_ids: doctorIds,
+    });
+
     if (error || !data) {
       return {};
     }
-    
-    // Group ratings by doctor and calculate average
-    const ratingsMap: Record<string, number[]> = {};
-    data.forEach(r => {
-      if (!ratingsMap[r.doctor_id]) {
-        ratingsMap[r.doctor_id] = [];
-      }
-      ratingsMap[r.doctor_id].push(r.rating);
-    });
-    
+
     const results: Record<string, { average: number; count: number }> = {};
-    Object.entries(ratingsMap).forEach(([doctorId, ratings]) => {
-      const sum = ratings.reduce((acc, r) => acc + r, 0);
-      results[doctorId] = {
-        average: Math.round((sum / ratings.length) * 10) / 10,
-        count: ratings.length
+    (data as Array<{ doctor_id: string; average_rating: number | string; rating_count: number | string }>).forEach((row) => {
+      results[row.doctor_id] = {
+        average: Number(row.average_rating) || 0,
+        count: Number(row.rating_count) || 0,
       };
     });
-    
+
     return results;
   }
+
 
   async getDoctorsWithDetails(): Promise<Doctor[]> {
     const { data, error } = await supabase
