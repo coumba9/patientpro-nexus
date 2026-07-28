@@ -227,8 +227,35 @@ const AppointmentDetails = () => {
                   </p>
                 )}
               </div>
+
+              {appointment.payment_status === "refund_pending" && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 p-3 rounded-md space-y-2">
+                  <p className="text-sm font-medium text-amber-900">Remboursement en cours</p>
+                  <p className="text-sm text-amber-900">
+                    Votre paiement en ligne de {appointment.payment_amount ?? 0} FCFA vous sera remboursé
+                    sous 5 jours ouvrés. Vous pouvez également le reporter sur un nouveau rendez-vous, sans frais.
+                  </p>
+                  <Button size="sm" onClick={() => navigate(`/patient/book-appointment?doctor=${appointment.doctor_id}`)}>
+                    Reprendre rendez-vous sans frais
+                  </Button>
+                </div>
+              )}
+
+              {appointment.payment_status === "cancelled" && (
+                <div className="mt-3 bg-emerald-50 border border-emerald-200 p-3 rounded-md space-y-2">
+                  <p className="text-sm font-medium text-emerald-900">Aucun montant facturé</p>
+                  <p className="text-sm text-emerald-900">
+                    Le règlement était prévu sur place : rien ne vous sera facturé. Vous pouvez reprendre
+                    rendez-vous gratuitement.
+                  </p>
+                  <Button size="sm" onClick={() => navigate(`/patient/book-appointment?doctor=${appointment.doctor_id}`)}>
+                    Reprendre rendez-vous
+                  </Button>
+                </div>
+              )}
             </div>
           )}
+
 
           {appointment.status === "completed" && (
             <div className="border-t pt-4">
