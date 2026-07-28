@@ -235,7 +235,7 @@ const AppointmentDetails = () => {
                     Votre paiement en ligne de {appointment.payment_amount ?? 0} FCFA vous sera remboursé
                     sous 5 jours ouvrés. Vous pouvez également le reporter sur un nouveau rendez-vous, sans frais.
                   </p>
-                  <Button size="sm" onClick={() => navigate(`/patient/book-appointment?doctor=${appointment.doctor_id}`)}>
+                  <Button size="sm" onClick={() => navigate(`/book-appointment?doctor=${appointment.doctor_id}`)}>
                     Reprendre rendez-vous sans frais
                   </Button>
                 </div>
@@ -248,7 +248,7 @@ const AppointmentDetails = () => {
                     Le règlement était prévu sur place : rien ne vous sera facturé. Vous pouvez reprendre
                     rendez-vous gratuitement.
                   </p>
-                  <Button size="sm" onClick={() => navigate(`/patient/book-appointment?doctor=${appointment.doctor_id}`)}>
+                  <Button size="sm" onClick={() => navigate(`/book-appointment?doctor=${appointment.doctor_id}`)}>
                     Reprendre rendez-vous
                   </Button>
                 </div>
