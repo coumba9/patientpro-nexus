@@ -183,6 +183,34 @@ export const PaymentHistory = () => {
         </Badge>
       );
     }
+
+    if (paymentStatus === 'refund_pending') {
+      return (
+        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+          <Clock className="h-3 w-3 mr-1" />
+          Remboursement en cours
+        </Badge>
+      );
+    }
+
+    if (paymentStatus === 'refunded') {
+      return (
+        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Remboursé
+        </Badge>
+      );
+    }
+
+    if (paymentStatus === 'cancelled') {
+      return (
+        <Badge className="bg-slate-100 text-slate-800 hover:bg-slate-100">
+          Annulé - non facturé
+        </Badge>
+      );
+    }
+
+
     
     if (appointmentStatus === 'confirmed') {
       return (
