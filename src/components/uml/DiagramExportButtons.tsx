@@ -278,5 +278,7 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   );
+
 };
