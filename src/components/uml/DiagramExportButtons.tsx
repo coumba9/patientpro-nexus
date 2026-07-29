@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, Image } from "lucide-react";
+import { Download, ExternalLink, Image, FileDown } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,36 @@ const generateDrawioXML = (mermaidCode: string, diagramName: string) => {
 };
 
 export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }: DiagramExportButtonsProps) => {
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  // Retrouve le conteneur du diagramme auquel appartient CE bouton
+  const getSection = (): HTMLElement | null =>
+    anchorRef.current?.closest<HTMLElement>("div.border-t") ?? null;
+
+  const getDiagramContainer = (): HTMLElement | null =>
+    getSection()?.querySelector<HTMLElement>(".bg-muted\\/50") ?? null;
+
+  const captureCanvas = async (container: HTMLElement) => {
+    const { default: html2canvas } = await import("html2canvas");
+    const origMaxWidth = container.style.maxWidth;
+    const origOverflow = container.style.overflow;
+    container.style.maxWidth = "none";
+    container.style.overflow = "visible";
+    try {
+      return await html2canvas(container, {
+        scale: 3,
+        backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        windowWidth: Math.max(container.scrollWidth, 1600),
+      });
+    } finally {
+      container.style.maxWidth = origMaxWidth;
+      container.style.overflow = origOverflow;
+    }
+  };
+
   
   const handlePlantUML = () => {
     downloadFile(plantUMLCode, `${diagramName}.puml`);
@@ -100,8 +131,7 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
   };
 
   const exportSVG = () => {
-    const svgEl = document.querySelector(`[data-diagram="${diagramName}"] svg`) ||
-      document.querySelector(".mermaid svg");
+    const svgEl = getSection()?.querySelector("svg");
     if (svgEl) {
       const svgData = new XMLSerializer().serializeToString(svgEl);
       downloadFile(svgData, `${diagramName}.svg`, "image/svg+xml");
@@ -112,39 +142,81 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
   };
 
   const exportPNG = async () => {
+    const container = getDiagramContainer();
+    if (!container) {
+      toast.error("Diagramme introuvable");
+      return;
+    }
     try {
-      const { default: html2canvas } = await import("html2canvas");
-      const containers = document.querySelectorAll<HTMLElement>(".bg-muted\\/50");
-      let targetContainer: HTMLElement | null = null;
-      containers.forEach(c => {
-        if (c.querySelector(".mermaid") && !targetContainer) {
-          targetContainer = c;
-        }
-      });
-      
-      if (!targetContainer) {
-        toast.error("Diagramme introuvable");
-        return;
-      }
-
-      const canvas = await html2canvas(targetContainer, {
-        scale: 3,
-        backgroundColor: "#ffffff",
-        logging: false,
-        useCORS: true,
-      });
-      
+      const canvas = await captureCanvas(container);
       const link = document.createElement("a");
       link.download = `${diagramName}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
       toast.success("PNG exporté en haute résolution");
-    } catch (err) {
+    } catch {
       toast.error("Erreur lors de l'export PNG");
     }
   };
 
+  const exportPDF = async () => {
+    const section = getSection();
+    const container = getDiagramContainer();
+    if (!section || !container) {
+      toast.error("Diagramme introuvable");
+      return;
+    }
+    toast.info("Génération du PDF...");
+    try {
+      const [{ default: jsPDF }, canvas] = await Promise.all([
+        import("jspdf"),
+        captureCanvas(container),
+      ]);
+
+      const title = section.querySelector("h2")?.textContent || diagramName;
+      const desc = section.querySelector("p.text-muted-foreground")?.textContent || "";
+
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a3" });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 8;
+
+      doc.setFillColor(34, 197, 94);
+      doc.rect(0, 0, pageW, 16, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, margin, 11);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("JàmmSanté", pageW - margin, 11, { align: "right" });
+
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(9);
+      const descLines = doc.splitTextToSize(desc, pageW - margin * 2);
+      doc.text(descLines, margin, 22);
+      const descHeight = descLines.length * 4;
+
+      const imgRatio = canvas.width / canvas.height;
+      const availW = pageW - margin * 2;
+      const startY = 20 + descHeight + 4;
+      const availH = pageH - startY - margin;
+      let drawW = availW;
+      let drawH = drawW / imgRatio;
+      if (drawH > availH) {
+        drawH = availH;
+        drawW = drawH * imgRatio;
+      }
+      doc.addImage(canvas.toDataURL("image/png", 1.0), "PNG", margin + (availW - drawW) / 2, startY, drawW, drawH);
+      doc.save(`${diagramName}.pdf`);
+      toast.success("PDF exporté avec succès");
+    } catch {
+      toast.error("Erreur lors de l'export PDF");
+    }
+  };
+
   return (
+    <div ref={anchorRef}>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
@@ -154,8 +226,18 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+          Exporter ce diagramme
+        </div>
+        <DropdownMenuItem onClick={exportPDF}>
+          <FileDown className="h-4 w-4 mr-2" />
+          PDF (A3 haute résolution)
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
           Télécharger le code source
         </div>
+
         <DropdownMenuItem onClick={handlePlantUML}>
           <Download className="h-4 w-4 mr-2" />
           PlantUML (.puml) — Gratuit
@@ -196,5 +278,7 @@ export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }:
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </div>
   );
+
 };
