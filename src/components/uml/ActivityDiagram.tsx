@@ -201,7 +201,14 @@ const mermaidCode = `flowchart TD
   T --> AC{Excuse valide?}
   AC -->|Oui| AD[Reprogrammation gratuite]
   AC -->|Non| AE[Pénalité appliquée]
-  
+
+  N -.->|Médecin annule| CAN[Annulation par le médecin]
+  CAN --> CAN1{RDV déjà payé en ligne?}
+  CAN1 -->|Oui| CAN2[payment_status=refund_pending<br/>Facture=refunded]
+  CAN1 -->|Non / sur place| CAN3[payment_status=cancelled<br/>Facture=cancelled]
+  CAN2 & CAN3 --> CAN4[Notification patient avec motif + remboursement]
+  CAN4 --> CAN5[Reprise de RDV sans frais<br/>reschedule_count remis à zéro]
+
   Q --> AF{Rejoindre file?}
   AF -->|Oui| AG[Inscription file d'attente]
   AF -->|Non| B
@@ -215,7 +222,10 @@ const mermaidCode = `flowchart TD
   style Y fill:#c8e6c9
   style J fill:#ffcdd2
   style T fill:#ffcdd2
-  style AE fill:#fff3e0`;
+  style AE fill:#fff3e0
+  style CAN fill:#ffcdd2
+  style CAN5 fill:#c8e6c9`;
+
 
 export const ActivityDiagram = () => {
   const diagramRef = useRef<HTMLDivElement>(null);
