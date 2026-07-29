@@ -47,6 +47,36 @@ const generateDrawioXML = (mermaidCode: string, diagramName: string) => {
 };
 
 export const DiagramExportButtons = ({ plantUMLCode, mermaidCode, diagramName }: DiagramExportButtonsProps) => {
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  // Retrouve le conteneur du diagramme auquel appartient CE bouton
+  const getSection = (): HTMLElement | null =>
+    anchorRef.current?.closest<HTMLElement>("div.border-t") ?? null;
+
+  const getDiagramContainer = (): HTMLElement | null =>
+    getSection()?.querySelector<HTMLElement>(".bg-muted\\/50") ?? null;
+
+  const captureCanvas = async (container: HTMLElement) => {
+    const { default: html2canvas } = await import("html2canvas");
+    const origMaxWidth = container.style.maxWidth;
+    const origOverflow = container.style.overflow;
+    container.style.maxWidth = "none";
+    container.style.overflow = "visible";
+    try {
+      return await html2canvas(container, {
+        scale: 3,
+        backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        windowWidth: Math.max(container.scrollWidth, 1600),
+      });
+    } finally {
+      container.style.maxWidth = origMaxWidth;
+      container.style.overflow = origOverflow;
+    }
+  };
+
   
   const handlePlantUML = () => {
     downloadFile(plantUMLCode, `${diagramName}.puml`);
