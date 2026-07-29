@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, Image } from "lucide-react";
+import { Download, ExternalLink, Image, FileDown } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
