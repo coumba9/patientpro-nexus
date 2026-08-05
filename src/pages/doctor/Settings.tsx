@@ -12,6 +12,9 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { TeleconsultationSettings } from "@/components/settings/TeleconsultationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AvailabilitySettings } from "@/components/settings/AvailabilitySettings";
+import { PracticeLocationsSettings } from "@/components/settings/PracticeLocationsSettings";
+import { ConsultationReasonsSettings } from "@/components/settings/ConsultationReasonsSettings";
+import { AbsenceSettings } from "@/components/settings/AbsenceSettings";
 import { LocationSettings } from "@/components/doctor/LocationSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientRecord } from "@/components/doctor/PatientRecord";
