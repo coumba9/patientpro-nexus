@@ -705,7 +705,56 @@ export const ERDiagram = () => {
                 uuid appointment_id FK
                 int rating
                 text comment
+                text moderation_status
+                uuid moderated_by FK
+                timestamp moderated_at
+                text moderation_reason
               }
+
+              PRACTICE_LOCATIONS {
+                uuid id PK
+                uuid doctor_id FK
+                text name
+                text type
+                text address
+                text city
+                text phone_number
+                boolean is_primary
+                boolean is_active
+              }
+
+              CONSULTATION_REASONS {
+                uuid id PK
+                uuid doctor_id FK
+                text name
+                int duration_minutes
+                decimal price
+                boolean is_first_visit
+                boolean allows_teleconsultation
+                boolean is_active
+              }
+
+              DOCTOR_UNAVAILABILITY_PERIODS {
+                uuid id PK
+                uuid doctor_id FK
+                date start_date
+                date end_date
+                boolean is_full_day
+                time start_time
+                time end_time
+                text type
+                text reason
+              }
+
+              DOCTOR_AVAILABILITY_SLOTS {
+                uuid id PK
+                uuid doctor_id FK
+                uuid location_id FK
+                text day
+                time start_time
+                time end_time
+              }
+
 
               NOTIFICATIONS {
                 uuid id PK
