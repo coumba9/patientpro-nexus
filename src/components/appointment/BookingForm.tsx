@@ -164,6 +164,15 @@ export const BookingForm = ({
             onIsOnlineChange={setIsOnline}
           />
 
+          <LocationReasonSelector
+            form={form}
+            doctorId={doctorId}
+            isTeleconsultation={isOnline}
+            onReasonChange={(r) => form.setValue("durationMinutes", r?.duration)}
+          />
+
+
+
           <DateSelector
             form={form}
             doctorId={doctorId}
