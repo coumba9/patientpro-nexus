@@ -1,11 +1,12 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, Users, Lock } from "lucide-react";
+import { Shield, Users, Lock, Star } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { ReportsTab } from "@/components/admin/moderation/ReportsTab";
 import { UsersManagementTab } from "@/components/admin/moderation/UsersManagementTab";
 import { RolesPermissionsTab } from "@/components/admin/moderation/RolesPermissionsTab";
+import { RatingsModerationTab } from "@/components/admin/moderation/RatingsModerationTab";
 
 const ModerationPage = () => {
   return (
