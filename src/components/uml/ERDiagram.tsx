@@ -172,9 +172,6 @@ entity "invoices" as invoices {
 entity "ratings" as ratings {
   *id : UUID <<PK>>
   --
-entity "ratings" as ratings {
-  *id : UUID <<PK>>
-  --
   *patient_id : UUID <<FK>>
   *doctor_id : UUID <<FK>>
   *appointment_id : UUID <<FK>>
