@@ -476,6 +476,14 @@ Medecin "1" -- "*" Document : signe
 Medecin "1" -- "1" Specialite : appartient
 Medecin "1" -- "*" Evaluation : recoit
 Medecin "1" -- "*" Note : redige
+Medecin "1" -- "*" Cabinet : exerce dans
+Medecin "1" -- "*" MotifConsultation : propose
+Medecin "1" -- "*" Indisponibilite : declare
+Medecin "1" -- "*" Disponibilite : publie
+Cabinet "1" -- "*" Disponibilite : accueille
+Cabinet "1" -- "*" RendezVous : heberge
+MotifConsultation "1" -- "*" RendezVous : qualifie
+Administrateur "1" -- "*" Evaluation : modere
 
 ' Relations RendezVous
 RendezVous "1" -- "1" Facture : genere
