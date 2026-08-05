@@ -118,8 +118,11 @@ export const AppointmentHandler = ({
             status: "pending",
             payment_status: "on_site",
             payment_amount: fee,
+            location_id: data.locationId || null,
+            reason_id: data.reasonId || null,
+            duration_minutes: data.durationMinutes || 30,
             notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
-          });
+          } as any);
 
         if (insertError) {
           console.error("Appointment insert error:", insertError);
