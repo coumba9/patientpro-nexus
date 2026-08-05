@@ -642,8 +642,11 @@ export const ERDiagram = () => {
                 uuid id PK
                 uuid doctor_id FK
                 uuid patient_id FK
+                uuid location_id FK
+                uuid reason_id FK
                 date date
                 time time
+                int duration_minutes
                 text type
                 text mode
                 text status
