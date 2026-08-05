@@ -762,6 +762,53 @@ export const ClassDiagram = () => {
                 +UUID rendezVousId
                 +Number note
                 +String commentaire
+                +String statutModeration
+                +UUID modereePar
+                +String motifModeration
+              }
+
+              class Cabinet {
+                +String id
+                +UUID medecinId
+                +String nom
+                +String type
+                +String adresse
+                +String ville
+                +String telephone
+                +Boolean estPrincipal
+                +Boolean estActif
+              }
+
+              class MotifConsultation {
+                +String id
+                +UUID medecinId
+                +String nom
+                +Number dureeMinutes
+                +Number tarif
+                +Boolean premiereVisite
+                +Boolean autoriseTeleconsultation
+                +Boolean estActif
+              }
+
+              class Indisponibilite {
+                +String id
+                +UUID medecinId
+                +Date dateDebut
+                +Date dateFin
+                +Boolean journeeComplete
+                +String heureDebut
+                +String heureFin
+                +String type
+                +String motif
+              }
+
+              class Disponibilite {
+                +String id
+                +UUID medecinId
+                +UUID cabinetId
+                +String jour
+                +String heureDebut
+                +String heureFin
               }
 
               class JournalAudit {
