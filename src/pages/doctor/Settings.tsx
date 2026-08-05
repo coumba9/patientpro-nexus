@@ -12,6 +12,9 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { TeleconsultationSettings } from "@/components/settings/TeleconsultationSettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { AvailabilitySettings } from "@/components/settings/AvailabilitySettings";
+import { PracticeLocationsSettings } from "@/components/settings/PracticeLocationsSettings";
+import { ConsultationReasonsSettings } from "@/components/settings/ConsultationReasonsSettings";
+import { AbsenceSettings } from "@/components/settings/AbsenceSettings";
 import { LocationSettings } from "@/components/doctor/LocationSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientRecord } from "@/components/doctor/PatientRecord";
@@ -145,11 +148,25 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 flex-wrap h-auto">
           <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="locations">Lieux & motifs</TabsTrigger>
           <TabsTrigger value="availability">Disponibilités</TabsTrigger>
+          <TabsTrigger value="absences">Congés</TabsTrigger>
           <TabsTrigger value="patients">Dossiers patients</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="locations">
+          <div className="space-y-6">
+            <PracticeLocationsSettings />
+            <ConsultationReasonsSettings />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="absences">
+          <AbsenceSettings />
+        </TabsContent>
+
 
         <TabsContent value="general">
           <div className="space-y-6">

@@ -1,11 +1,12 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, Users, Lock } from "lucide-react";
+import { Shield, Users, Lock, Star } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { ReportsTab } from "@/components/admin/moderation/ReportsTab";
 import { UsersManagementTab } from "@/components/admin/moderation/UsersManagementTab";
 import { RolesPermissionsTab } from "@/components/admin/moderation/RolesPermissionsTab";
+import { RatingsModerationTab } from "@/components/admin/moderation/RatingsModerationTab";
 
 const ModerationPage = () => {
   return (
@@ -27,11 +28,20 @@ const ModerationPage = () => {
                       <Users className="mr-2 h-4 w-4" />
                       Utilisateurs
                     </TabsTrigger>
+                    <TabsTrigger value="ratings" className="flex items-center">
+                      <Star className="mr-2 h-4 w-4" />
+                      Avis
+                    </TabsTrigger>
                     <TabsTrigger value="roles" className="flex items-center">
                       <Lock className="mr-2 h-4 w-4" />
                       Rôles et Permissions
                     </TabsTrigger>
                   </TabsList>
+
+                  <TabsContent value="ratings">
+                    <RatingsModerationTab />
+                  </TabsContent>
+
 
                   <TabsContent value="reports">
                     <ReportsTab />

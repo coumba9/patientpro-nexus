@@ -209,10 +209,76 @@ package "Paiements" {
     +rendezVousId: UUID
     +note: Number
     +commentaire: String
+    +statutModeration: String
+    +modereePar: UUID
+    +dateModeration: DateTime
+    +motifModeration: String
+    +creer()
+    +modifier()
+    +approuver()
+    +rejeter()
+  }
+}
+
+package "Organisation du cabinet" {
+  class Cabinet {
+    +id: UUID
+    +medecinId: UUID
+    +nom: String
+    +type: String
+    +adresse: String
+    +ville: String
+    +codePostal: String
+    +telephone: String
+    +latitude: Decimal
+    +longitude: Decimal
+    +estPrincipal: Boolean
+    +estActif: Boolean
+    +creer()
+    +definirPrincipal()
+    +desactiver()
+  }
+
+  class MotifConsultation {
+    +id: UUID
+    +medecinId: UUID
+    +nom: String
+    +description: String
+    +dureeMinutes: Number
+    +tarif: Decimal
+    +premiereVisite: Boolean
+    +autoriseTeleconsultation: Boolean
+    +estActif: Boolean
+    +ordre: Number
     +creer()
     +modifier()
   }
+
+  class Indisponibilite {
+    +id: UUID
+    +medecinId: UUID
+    +dateDebut: Date
+    +dateFin: Date
+    +journeeComplete: Boolean
+    +heureDebut: Time
+    +heureFin: Time
+    +type: String
+    +motif: String
+    +declarer()
+    +detecterConflits()
+  }
+
+  class Disponibilite {
+    +id: UUID
+    +medecinId: UUID
+    +cabinetId: UUID
+    +jour: String
+    +heureDebut: Time
+    +heureFin: Time
+    +genererCreneaux()
+  }
 }
+
 
 package "Notifications" {
   class Notification {
@@ -410,6 +476,14 @@ Medecin "1" -- "*" Document : signe
 Medecin "1" -- "1" Specialite : appartient
 Medecin "1" -- "*" Evaluation : recoit
 Medecin "1" -- "*" Note : redige
+Medecin "1" -- "*" Cabinet : exerce dans
+Medecin "1" -- "*" MotifConsultation : propose
+Medecin "1" -- "*" Indisponibilite : declare
+Medecin "1" -- "*" Disponibilite : publie
+Cabinet "1" -- "*" Disponibilite : accueille
+Cabinet "1" -- "*" RendezVous : heberge
+MotifConsultation "1" -- "*" RendezVous : qualifie
+Administrateur "1" -- "*" Evaluation : modere
 
 ' Relations RendezVous
 RendezVous "1" -- "1" Facture : genere
@@ -688,6 +762,53 @@ export const ClassDiagram = () => {
                 +UUID rendezVousId
                 +Number note
                 +String commentaire
+                +String statutModeration
+                +UUID modereePar
+                +String motifModeration
+              }
+
+              class Cabinet {
+                +String id
+                +UUID medecinId
+                +String nom
+                +String type
+                +String adresse
+                +String ville
+                +String telephone
+                +Boolean estPrincipal
+                +Boolean estActif
+              }
+
+              class MotifConsultation {
+                +String id
+                +UUID medecinId
+                +String nom
+                +Number dureeMinutes
+                +Number tarif
+                +Boolean premiereVisite
+                +Boolean autoriseTeleconsultation
+                +Boolean estActif
+              }
+
+              class Indisponibilite {
+                +String id
+                +UUID medecinId
+                +Date dateDebut
+                +Date dateFin
+                +Boolean journeeComplete
+                +String heureDebut
+                +String heureFin
+                +String type
+                +String motif
+              }
+
+              class Disponibilite {
+                +String id
+                +UUID medecinId
+                +UUID cabinetId
+                +String jour
+                +String heureDebut
+                +String heureFin
               }
 
               class JournalAudit {
@@ -763,6 +884,14 @@ export const ClassDiagram = () => {
               Medecin "*" -- "1" Specialite
               Patient "1" -- "*" Evaluation
               Medecin "1" -- "*" Evaluation
+              Administrateur "1" -- "*" Evaluation
+              Medecin "1" -- "*" Cabinet
+              Medecin "1" -- "*" MotifConsultation
+              Medecin "1" -- "*" Indisponibilite
+              Medecin "1" -- "*" Disponibilite
+              Cabinet "1" -- "*" Disponibilite
+              Cabinet "1" -- "*" RendezVous
+              MotifConsultation "1" -- "*" RendezVous
               
               DemandeApplicationMedecin "*" -- "1" Specialite
               Administrateur "1" -- "*" DemandeApplicationMedecin

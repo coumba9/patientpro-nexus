@@ -102,6 +102,9 @@ entity "appointments" as appointments {
   mode : TEXT (cabinet|teleconsultation)
   status : TEXT
   location : TEXT
+  location_id : UUID <<FK>>
+  reason_id : UUID <<FK>>
+  duration_minutes : INTEGER
   notes : TEXT
   payment_amount : DECIMAL
   payment_status : TEXT
@@ -174,9 +177,76 @@ entity "ratings" as ratings {
   *appointment_id : UUID <<FK>>
   rating : INTEGER
   comment : TEXT
+  moderation_status : TEXT (pending|approved|rejected)
+  moderated_by : UUID <<FK>>
+  moderated_at : TIMESTAMP
+  moderation_reason : TEXT
   created_at : TIMESTAMP
   updated_at : TIMESTAMP
 }
+
+entity "practice_locations" as practice_locations {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  name : TEXT
+  type : TEXT (cabinet|clinique|hopital|centre_sante)
+  address : TEXT
+  city : TEXT
+  postal_code : TEXT
+  phone_number : TEXT
+  latitude : DECIMAL
+  longitude : DECIMAL
+  is_primary : BOOLEAN
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "consultation_reasons" as consultation_reasons {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  name : TEXT
+  description : TEXT
+  duration_minutes : INTEGER
+  price : DECIMAL
+  is_first_visit : BOOLEAN
+  allows_teleconsultation : BOOLEAN
+  is_active : BOOLEAN
+  sort_order : INTEGER
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "doctor_unavailability_periods" as unavailability {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  start_date : DATE
+  end_date : DATE
+  is_full_day : BOOLEAN
+  start_time : TIME
+  end_time : TIME
+  type : TEXT (conge|ferie|formation|ponctuelle)
+  reason : TEXT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "doctor_availability_slots" as availability {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  location_id : UUID <<FK>>
+  day : TEXT
+  start_time : TIME
+  end_time : TIME
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+
 
 entity "notifications" as notifications {
   *id : UUID <<PK>>
@@ -425,6 +495,14 @@ appointments ||--o| invoices : "genere"
 appointments ||--o{ reminders : "declenche"
 appointments ||--o{ notifications : "genere"
 appointments ||--o| ratings : "evalue"
+appointments }o--o| practice_locations : "se deroule a"
+appointments }o--o| consultation_reasons : "pour motif"
+doctors ||--o{ practice_locations : "exerce dans"
+doctors ||--o{ consultation_reasons : "propose"
+doctors ||--o{ unavailability : "declare"
+doctors ||--o{ availability : "publie"
+availability }o--o| practice_locations : "rattache a"
+profiles ||--o{ ratings : "modere"
 
 applications }o--|| specialties : "pour"
 
@@ -503,6 +581,14 @@ export const ERDiagram = () => {
               APPOINTMENTS ||--o{ REMINDERS : "declenche"
               APPOINTMENTS ||--o{ NOTIFICATIONS : "genere"
               APPOINTMENTS ||--o| RATINGS : "evalue"
+              APPOINTMENTS }o--o| PRACTICE_LOCATIONS : "se deroule a"
+              APPOINTMENTS }o--o| CONSULTATION_REASONS : "pour motif"
+              DOCTORS ||--o{ PRACTICE_LOCATIONS : "exerce dans"
+              DOCTORS ||--o{ CONSULTATION_REASONS : "propose"
+              DOCTORS ||--o{ DOCTOR_UNAVAILABILITY_PERIODS : "declare"
+              DOCTORS ||--o{ DOCTOR_AVAILABILITY_SLOTS : "publie"
+              DOCTOR_AVAILABILITY_SLOTS }o--o| PRACTICE_LOCATIONS : "rattache a"
+              PROFILES ||--o{ RATINGS : "modere"
               
               DOCTOR_APPLICATIONS }o--|| SPECIALTIES : "pour"
               
@@ -564,8 +650,11 @@ export const ERDiagram = () => {
                 uuid id PK
                 uuid doctor_id FK
                 uuid patient_id FK
+                uuid location_id FK
+                uuid reason_id FK
                 date date
                 time time
+                int duration_minutes
                 text type
                 text mode
                 text status
@@ -627,7 +716,56 @@ export const ERDiagram = () => {
                 uuid appointment_id FK
                 int rating
                 text comment
+                text moderation_status
+                uuid moderated_by FK
+                timestamp moderated_at
+                text moderation_reason
               }
+
+              PRACTICE_LOCATIONS {
+                uuid id PK
+                uuid doctor_id FK
+                text name
+                text type
+                text address
+                text city
+                text phone_number
+                boolean is_primary
+                boolean is_active
+              }
+
+              CONSULTATION_REASONS {
+                uuid id PK
+                uuid doctor_id FK
+                text name
+                int duration_minutes
+                decimal price
+                boolean is_first_visit
+                boolean allows_teleconsultation
+                boolean is_active
+              }
+
+              DOCTOR_UNAVAILABILITY_PERIODS {
+                uuid id PK
+                uuid doctor_id FK
+                date start_date
+                date end_date
+                boolean is_full_day
+                time start_time
+                time end_time
+                text type
+                text reason
+              }
+
+              DOCTOR_AVAILABILITY_SLOTS {
+                uuid id PK
+                uuid doctor_id FK
+                uuid location_id FK
+                text day
+                time start_time
+                time end_time
+              }
+
 
               NOTIFICATIONS {
                 uuid id PK

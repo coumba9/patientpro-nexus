@@ -8,6 +8,10 @@ export interface BookingFormValues {
   consultationType: "presentiel" | "teleconsultation";
   paymentMethod: string;
   medicalInfo?: MedicalInfoFormValues;
+  // Lieu d'exercice et motif de consultation (style Doctolib)
+  locationId?: string;
+  reasonId?: string;
+  durationMinutes?: number;
   // Informations patient pour les paiements
   firstName?: string;
   lastName?: string;

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { BookingFormProps, BookingFormValues } from "./types";
 import { ConsultationTypeSelector } from "./ConsultationTypeSelector";
 import { ConsultationModeSelector } from "./ConsultationModeSelector";
+import { LocationReasonSelector } from "./LocationReasonSelector";
 import { DateSelector } from "./DateSelector";
 import { TimeSelector } from "./TimeSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
@@ -28,6 +29,9 @@ const bookingFormSchema = z.object({
   }).min(1, "Veuillez sélectionner un horaire"),
   type: z.string(),
   consultationType: z.enum(["presentiel", "teleconsultation"]),
+  locationId: z.string().optional(),
+  reasonId: z.string().optional(),
+  durationMinutes: z.number().optional(),
   paymentMethod: z.string(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
@@ -160,6 +164,15 @@ export const BookingForm = ({
             form={form}
             onIsOnlineChange={setIsOnline}
           />
+
+          <LocationReasonSelector
+            form={form}
+            doctorId={doctorId}
+            isTeleconsultation={isOnline}
+            onReasonChange={(r) => form.setValue("durationMinutes", r?.duration)}
+          />
+
+
 
           <DateSelector
             form={form}
