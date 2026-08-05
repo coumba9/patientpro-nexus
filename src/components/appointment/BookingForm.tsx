@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { BookingFormProps, BookingFormValues } from "./types";
 import { ConsultationTypeSelector } from "./ConsultationTypeSelector";
 import { ConsultationModeSelector } from "./ConsultationModeSelector";
+import { LocationReasonSelector } from "./LocationReasonSelector";
 import { DateSelector } from "./DateSelector";
 import { TimeSelector } from "./TimeSelector";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
