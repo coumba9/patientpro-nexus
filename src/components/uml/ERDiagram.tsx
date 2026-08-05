@@ -102,6 +102,9 @@ entity "appointments" as appointments {
   mode : TEXT (cabinet|teleconsultation)
   status : TEXT
   location : TEXT
+  location_id : UUID <<FK>>
+  reason_id : UUID <<FK>>
+  duration_minutes : INTEGER
   notes : TEXT
   payment_amount : DECIMAL
   payment_status : TEXT
