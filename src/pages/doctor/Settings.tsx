@@ -145,11 +145,25 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
+        <TabsList className="mb-6 flex-wrap h-auto">
           <TabsTrigger value="general">Général</TabsTrigger>
+          <TabsTrigger value="locations">Lieux & motifs</TabsTrigger>
           <TabsTrigger value="availability">Disponibilités</TabsTrigger>
+          <TabsTrigger value="absences">Congés</TabsTrigger>
           <TabsTrigger value="patients">Dossiers patients</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="locations">
+          <div className="space-y-6">
+            <PracticeLocationsSettings />
+            <ConsultationReasonsSettings />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="absences">
+          <AbsenceSettings />
+        </TabsContent>
+
 
         <TabsContent value="general">
           <div className="space-y-6">
