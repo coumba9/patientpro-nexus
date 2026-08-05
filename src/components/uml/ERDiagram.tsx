@@ -172,14 +172,84 @@ entity "invoices" as invoices {
 entity "ratings" as ratings {
   *id : UUID <<PK>>
   --
+entity "ratings" as ratings {
+  *id : UUID <<PK>>
+  --
   *patient_id : UUID <<FK>>
   *doctor_id : UUID <<FK>>
   *appointment_id : UUID <<FK>>
   rating : INTEGER
   comment : TEXT
+  moderation_status : TEXT (pending|approved|rejected)
+  moderated_by : UUID <<FK>>
+  moderated_at : TIMESTAMP
+  moderation_reason : TEXT
   created_at : TIMESTAMP
   updated_at : TIMESTAMP
 }
+
+entity "practice_locations" as practice_locations {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  name : TEXT
+  type : TEXT (cabinet|clinique|hopital|centre_sante)
+  address : TEXT
+  city : TEXT
+  postal_code : TEXT
+  phone_number : TEXT
+  latitude : DECIMAL
+  longitude : DECIMAL
+  is_primary : BOOLEAN
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "consultation_reasons" as consultation_reasons {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  name : TEXT
+  description : TEXT
+  duration_minutes : INTEGER
+  price : DECIMAL
+  is_first_visit : BOOLEAN
+  allows_teleconsultation : BOOLEAN
+  is_active : BOOLEAN
+  sort_order : INTEGER
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "doctor_unavailability_periods" as unavailability {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  start_date : DATE
+  end_date : DATE
+  is_full_day : BOOLEAN
+  start_time : TIME
+  end_time : TIME
+  type : TEXT (conge|ferie|formation|ponctuelle)
+  reason : TEXT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "doctor_availability_slots" as availability {
+  *id : UUID <<PK>>
+  --
+  *doctor_id : UUID <<FK>>
+  location_id : UUID <<FK>>
+  day : TEXT
+  start_time : TIME
+  end_time : TIME
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+
 
 entity "notifications" as notifications {
   *id : UUID <<PK>>
