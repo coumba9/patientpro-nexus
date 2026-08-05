@@ -884,6 +884,14 @@ export const ClassDiagram = () => {
               Medecin "*" -- "1" Specialite
               Patient "1" -- "*" Evaluation
               Medecin "1" -- "*" Evaluation
+              Administrateur "1" -- "*" Evaluation
+              Medecin "1" -- "*" Cabinet
+              Medecin "1" -- "*" MotifConsultation
+              Medecin "1" -- "*" Indisponibilite
+              Medecin "1" -- "*" Disponibilite
+              Cabinet "1" -- "*" Disponibilite
+              Cabinet "1" -- "*" RendezVous
+              MotifConsultation "1" -- "*" RendezVous
               
               DemandeApplicationMedecin "*" -- "1" Specialite
               Administrateur "1" -- "*" DemandeApplicationMedecin
