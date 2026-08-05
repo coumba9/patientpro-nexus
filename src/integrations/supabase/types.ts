@@ -87,8 +87,10 @@ export type Database = {
           created_at: string
           date: string
           doctor_id: string
+          duration_minutes: number
           id: string
           location: string | null
+          location_id: string | null
           mode: string
           no_show_at: string | null
           notes: string | null
@@ -98,6 +100,7 @@ export type Database = {
           payment_status: string | null
           previous_date: string | null
           previous_time: string | null
+          reason_id: string | null
           reschedule_count: number | null
           reschedule_reason: string | null
           reschedule_requested_at: string | null
@@ -116,8 +119,10 @@ export type Database = {
           created_at?: string
           date: string
           doctor_id: string
+          duration_minutes?: number
           id?: string
           location?: string | null
+          location_id?: string | null
           mode?: string
           no_show_at?: string | null
           notes?: string | null
@@ -127,6 +132,7 @@ export type Database = {
           payment_status?: string | null
           previous_date?: string | null
           previous_time?: string | null
+          reason_id?: string | null
           reschedule_count?: number | null
           reschedule_reason?: string | null
           reschedule_requested_at?: string | null
@@ -145,8 +151,10 @@ export type Database = {
           created_at?: string
           date?: string
           doctor_id?: string
+          duration_minutes?: number
           id?: string
           location?: string | null
+          location_id?: string | null
           mode?: string
           no_show_at?: string | null
           notes?: string | null
@@ -156,6 +164,7 @@ export type Database = {
           payment_status?: string | null
           previous_date?: string | null
           previous_time?: string | null
+          reason_id?: string | null
           reschedule_count?: number | null
           reschedule_reason?: string | null
           reschedule_requested_at?: string | null
@@ -174,10 +183,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "appointments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "practice_locations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_reason_id_fkey"
+            columns: ["reason_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_reasons"
             referencedColumns: ["id"]
           },
         ]
@@ -205,6 +228,59 @@ export type Database = {
           user_type?: string
         }
         Relationships: []
+      }
+      consultation_reasons: {
+        Row: {
+          allows_teleconsultation: boolean
+          created_at: string
+          description: string | null
+          doctor_id: string
+          duration_minutes: number
+          id: string
+          is_active: boolean
+          is_first_visit: boolean
+          name: string
+          price: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          allows_teleconsultation?: boolean
+          created_at?: string
+          description?: string | null
+          doctor_id: string
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          is_first_visit?: boolean
+          name: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          allows_teleconsultation?: boolean
+          created_at?: string
+          description?: string | null
+          doctor_id?: string
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean
+          is_first_visit?: boolean
+          name?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_reasons_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_applications: {
         Row: {
@@ -278,6 +354,7 @@ export type Database = {
           doctor_id: string
           end_time: string
           id: string
+          location_id: string | null
           start_time: string
           updated_at: string
         }
@@ -287,6 +364,7 @@ export type Database = {
           doctor_id: string
           end_time: string
           id?: string
+          location_id?: string | null
           start_time: string
           updated_at?: string
         }
@@ -296,37 +374,58 @@ export type Database = {
           doctor_id?: string
           end_time?: string
           id?: string
+          location_id?: string | null
           start_time?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "doctor_availability_slots_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "practice_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_unavailability_periods: {
         Row: {
           created_at: string
           doctor_id: string
           end_date: string
+          end_time: string | null
           id: string
+          is_full_day: boolean
           reason: string
           start_date: string
+          start_time: string | null
+          type: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           doctor_id: string
           end_date: string
+          end_time?: string | null
           id?: string
+          is_full_day?: boolean
           reason: string
           start_date: string
+          start_time?: string | null
+          type?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           doctor_id?: string
           end_date?: string
+          end_time?: string | null
           id?: string
+          is_full_day?: boolean
           reason?: string
           start_date?: string
+          start_time?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: []
@@ -910,6 +1009,65 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_locations: {
+        Row: {
+          address: string
+          city: string | null
+          created_at: string
+          doctor_id: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          phone_number: string | null
+          postal_code: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          city?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          phone_number?: string | null
+          postal_code?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          city?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          phone_number?: string | null
+          postal_code?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_locations_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -992,6 +1150,10 @@ export type Database = {
           created_at: string
           doctor_id: string
           id: string
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
+          moderation_status: string
           patient_id: string
           rating: number
           updated_at: string
@@ -1002,6 +1164,10 @@ export type Database = {
           created_at?: string
           doctor_id: string
           id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
           patient_id: string
           rating: number
           updated_at?: string
@@ -1012,6 +1178,10 @@ export type Database = {
           created_at?: string
           doctor_id?: string
           id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
           patient_id?: string
           rating?: number
           updated_at?: string
