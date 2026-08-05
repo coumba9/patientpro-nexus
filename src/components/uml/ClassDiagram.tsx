@@ -209,10 +209,76 @@ package "Paiements" {
     +rendezVousId: UUID
     +note: Number
     +commentaire: String
+    +statutModeration: String
+    +modereePar: UUID
+    +dateModeration: DateTime
+    +motifModeration: String
+    +creer()
+    +modifier()
+    +approuver()
+    +rejeter()
+  }
+}
+
+package "Organisation du cabinet" {
+  class Cabinet {
+    +id: UUID
+    +medecinId: UUID
+    +nom: String
+    +type: String
+    +adresse: String
+    +ville: String
+    +codePostal: String
+    +telephone: String
+    +latitude: Decimal
+    +longitude: Decimal
+    +estPrincipal: Boolean
+    +estActif: Boolean
+    +creer()
+    +definirPrincipal()
+    +desactiver()
+  }
+
+  class MotifConsultation {
+    +id: UUID
+    +medecinId: UUID
+    +nom: String
+    +description: String
+    +dureeMinutes: Number
+    +tarif: Decimal
+    +premiereVisite: Boolean
+    +autoriseTeleconsultation: Boolean
+    +estActif: Boolean
+    +ordre: Number
     +creer()
     +modifier()
   }
+
+  class Indisponibilite {
+    +id: UUID
+    +medecinId: UUID
+    +dateDebut: Date
+    +dateFin: Date
+    +journeeComplete: Boolean
+    +heureDebut: Time
+    +heureFin: Time
+    +type: String
+    +motif: String
+    +declarer()
+    +detecterConflits()
+  }
+
+  class Disponibilite {
+    +id: UUID
+    +medecinId: UUID
+    +cabinetId: UUID
+    +jour: String
+    +heureDebut: Time
+    +heureFin: Time
+    +genererCreneaux()
+  }
 }
+
 
 package "Notifications" {
   class Notification {
