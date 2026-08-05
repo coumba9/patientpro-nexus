@@ -581,6 +581,14 @@ export const ERDiagram = () => {
               APPOINTMENTS ||--o{ REMINDERS : "declenche"
               APPOINTMENTS ||--o{ NOTIFICATIONS : "genere"
               APPOINTMENTS ||--o| RATINGS : "evalue"
+              APPOINTMENTS }o--o| PRACTICE_LOCATIONS : "se deroule a"
+              APPOINTMENTS }o--o| CONSULTATION_REASONS : "pour motif"
+              DOCTORS ||--o{ PRACTICE_LOCATIONS : "exerce dans"
+              DOCTORS ||--o{ CONSULTATION_REASONS : "propose"
+              DOCTORS ||--o{ DOCTOR_UNAVAILABILITY_PERIODS : "declare"
+              DOCTORS ||--o{ DOCTOR_AVAILABILITY_SLOTS : "publie"
+              DOCTOR_AVAILABILITY_SLOTS }o--o| PRACTICE_LOCATIONS : "rattache a"
+              PROFILES ||--o{ RATINGS : "modere"
               
               DOCTOR_APPLICATIONS }o--|| SPECIALTIES : "pour"
               
