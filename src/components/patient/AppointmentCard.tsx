@@ -274,10 +274,11 @@ export const AppointmentCard = ({
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={appointment.status === 'pending_reschedule'}
                       onClick={() => setIsRescheduleDialogOpen(true)}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
-                      Reporter
+                      {appointment.status === 'pending_reschedule' ? 'Report demandé' : 'Reporter'}
                     </Button>
 
                     <Button
@@ -301,6 +302,8 @@ export const AppointmentCard = ({
                     Confirmer
                   </Button>
                 )}
+
+
 
                 {isOnline && appointment.status === 'confirmed' && (
                   <Button
