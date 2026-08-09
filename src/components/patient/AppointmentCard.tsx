@@ -111,6 +111,8 @@ export const AppointmentCard = ({
     switch (status) {
       case "confirmed":
         return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Confirmé</Badge>;
+      case "pending_reschedule":
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">Report en attente</Badge>;
       case "awaiting_patient_confirmation":
         return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">En attente de votre confirmation</Badge>;
       case "completed":
@@ -123,6 +125,7 @@ export const AppointmentCard = ({
         return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">En attente</Badge>;
     }
   };
+
 
   const isOnline = appointment.type.toLowerCase().includes('télé');
 
