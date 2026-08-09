@@ -151,7 +151,7 @@ const AppointmentDetailCard = ({
               {/* Actions */}
               <div className="flex flex-col gap-2">
                 <div className="flex gap-1">
-                  {appointment.status === 'pending' && (
+                  {(appointment.status === 'pending' || appointment.status === 'awaiting_patient_confirmation') && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -162,14 +162,27 @@ const AppointmentDetailCard = ({
                       <CheckCircle className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onReschedule(appointment)}
-                    title="Reporter"
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
+                  {isPendingReschedule ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onValidateReschedule(appointment)}
+                      title="Valider le report demandé"
+                      className="text-yellow-700"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onReschedule(appointment)}
+                      title="Reporter"
+                    >
+                      <Calendar className="h-4 w-4" />
+                    </Button>
+                  )}
+
                   <Button
                     size="sm"
                     variant="outline"
