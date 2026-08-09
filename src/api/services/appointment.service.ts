@@ -80,12 +80,12 @@ class AppointmentService extends BaseService<Appointment> {
       throw new Error(slotCheck.error || 'Ce créneau n\'est pas disponible');
     }
 
-    // Create the appointment avec le statut fourni ou 'pending' par défaut
+    // Le créneau est libre → le rendez-vous est confirmé automatiquement
     const { data, error } = await supabase
       .from('appointments')
       .insert({
         ...appointmentData,
-        status: appointmentData.status || 'pending'
+        status: appointmentData.status || 'confirmed'
       })
       .select()
       .single();
@@ -98,13 +98,13 @@ class AppointmentService extends BaseService<Appointment> {
   }
 
   async confirmAppointment(id: string, doctorId: string): Promise<Appointment> {
-    // Médecin valide le rendez-vous : pending → awaiting_patient_confirmation
+    // Validation directe par le médecin (rendez-vous hérités en statut 'pending')
     const { data, error } = await supabase
       .from('appointments')
-      .update({ status: 'awaiting_patient_confirmation' })
+      .update({ status: 'confirmed' })
       .eq('id', id)
       .eq('doctor_id', doctorId)
-      .eq('status', 'pending') // Seulement si encore en attente
+      .in('status', ['pending', 'awaiting_patient_confirmation'])
       .select()
       .single();
 
@@ -116,13 +116,13 @@ class AppointmentService extends BaseService<Appointment> {
   }
 
   async patientConfirmAppointment(id: string, patientId: string): Promise<Appointment> {
-    // Patient confirme le rendez-vous : awaiting_patient_confirmation → confirmed
+    // Compatibilité : anciens rendez-vous en attente de confirmation patient
     const { data, error } = await supabase
       .from('appointments')
       .update({ status: 'confirmed' })
       .eq('id', id)
       .eq('patient_id', patientId)
-      .eq('status', 'awaiting_patient_confirmation') // Seulement si médecin a validé
+      .in('status', ['awaiting_patient_confirmation', 'pending'])
       .select()
       .single();
 
@@ -130,6 +130,57 @@ class AppointmentService extends BaseService<Appointment> {
       throw new Error(`Error confirming appointment: ${error.message}`);
     }
 
+    return data as any;
+  }
+
+  // Le médecin accepte la demande de report du patient
+  async acceptReschedule(appointmentId: string, doctorId: string): Promise<Appointment> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({
+        status: 'confirmed',
+        previous_date: null,
+        previous_time: null,
+        reschedule_reason: null,
+        reschedule_requested_by: null,
+        reschedule_requested_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', appointmentId)
+      .eq('doctor_id', doctorId)
+      .eq('status', 'pending_reschedule')
+      .select()
+      .single();
+
+    if (error) throw new Error(`Error accepting reschedule: ${error.message}`);
+    return data as any;
+  }
+
+  // Le médecin refuse le report : on rétablit la date/heure initiale
+  async rejectReschedule(appointmentId: string, doctorId: string, reason?: string): Promise<Appointment> {
+    const current = await this.getById(appointmentId);
+    if (!current) throw new Error("Rendez-vous non trouvé");
+
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({
+        status: 'confirmed',
+        date: (current as any).previous_date || current.date,
+        time: (current as any).previous_time || current.time,
+        previous_date: null,
+        previous_time: null,
+        reschedule_reason: reason ? `Report refusé : ${reason}` : 'Report refusé par le médecin',
+        reschedule_requested_by: null,
+        reschedule_requested_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', appointmentId)
+      .eq('doctor_id', doctorId)
+      .eq('status', 'pending_reschedule')
+      .select()
+      .single();
+
+    if (error) throw new Error(`Error rejecting reschedule: ${error.message}`);
     return data as any;
   }
 
