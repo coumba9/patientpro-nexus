@@ -305,7 +305,7 @@ export const RealtimeAppointmentsList = ({
   const handleConfirm = async (appointmentId: string) => {
     try {
       await appointmentService.confirmAppointment(appointmentId, doctorId);
-      toast.success("Rendez-vous validé. En attente de confirmation du patient.");
+      toast.success("Rendez-vous confirmé");
       
       const appointment = appointments.find(apt => apt.id === appointmentId);
       
