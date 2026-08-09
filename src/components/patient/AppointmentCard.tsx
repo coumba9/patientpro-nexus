@@ -189,6 +189,16 @@ export const AppointmentCard = ({
     <>
       <Card className="mb-4">
         <CardContent className="p-6">
+          {appointment.status === 'pending_reschedule' && (
+            <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-100">
+              Votre demande de report au{" "}
+              <span className="font-medium">
+                {new Date(appointment.date).toLocaleDateString('fr-FR')} à {appointment.time?.substring(0, 5)}
+              </span>{" "}
+              est en attente de validation par le médecin.
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
