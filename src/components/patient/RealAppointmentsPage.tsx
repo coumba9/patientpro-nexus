@@ -101,7 +101,7 @@ export const RealAppointmentsPage = () => {
       const now = new Date();
       if (activeFilter === "upcoming") {
         filtered = filtered.filter(apt => 
-          ["confirmed", "awaiting_patient_confirmation"].includes(apt.status) &&
+          ["confirmed", "pending_reschedule", "awaiting_patient_confirmation"].includes(apt.status) &&
           new Date(apt.date) >= now
         );
       } else if (activeFilter === "completed") {
@@ -109,9 +109,10 @@ export const RealAppointmentsPage = () => {
       } else if (activeFilter === "cancelled") {
         filtered = filtered.filter(apt => apt.status === "cancelled");
       } else if (activeFilter === "pending") {
-        filtered = filtered.filter(apt => apt.status === "pending");
+        filtered = filtered.filter(apt => ["pending", "pending_reschedule"].includes(apt.status));
       }
     }
+
 
     // Filtres avancés
     if (advancedFilters.dateFrom) {
