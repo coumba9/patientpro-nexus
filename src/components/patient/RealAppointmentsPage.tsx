@@ -149,14 +149,15 @@ export const RealAppointmentsPage = () => {
     return {
       all: appointments.length,
       upcoming: appointments.filter(apt => 
-        ["confirmed", "awaiting_patient_confirmation"].includes(apt.status) &&
+        ["confirmed", "pending_reschedule", "awaiting_patient_confirmation"].includes(apt.status) &&
         new Date(apt.date) >= now
       ).length,
       completed: appointments.filter(apt => apt.status === "completed").length,
       cancelled: appointments.filter(apt => apt.status === "cancelled").length,
-      pending: appointments.filter(apt => apt.status === "pending").length,
+      pending: appointments.filter(apt => ["pending", "pending_reschedule"].includes(apt.status)).length,
     };
   }, [appointments]);
+
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">Chargement de vos rendez-vous...</div>;
