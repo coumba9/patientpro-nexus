@@ -16,6 +16,7 @@ interface ValidateRescheduleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   appointmentId: string;
+  doctorId: string;
   patientName: string;
   oldDate: string;
   oldTime: string;
@@ -29,6 +30,7 @@ export const ValidateRescheduleDialog = ({
   isOpen,
   onClose,
   appointmentId,
+  doctorId,
   patientName,
   oldDate,
   oldTime,
@@ -42,9 +44,8 @@ export const ValidateRescheduleDialog = ({
   const handleAccept = async () => {
     setIsLoading(true);
     try {
-      // Accepter le report en mettant à jour le statut
-      await appointmentService.updateAppointmentStatus(appointmentId, 'confirmed');
-      toast.success("Report accepté avec succès");
+      await appointmentService.acceptReschedule(appointmentId, doctorId);
+      toast.success("Report accepté : le rendez-vous est confirmé à la nouvelle date");
       onValidate();
       onClose();
     } catch (error) {
@@ -58,14 +59,8 @@ export const ValidateRescheduleDialog = ({
   const handleReject = async () => {
     setIsLoading(true);
     try {
-      // Refuser le report en annulant le rendez-vous
-      await appointmentService.cancelAppointment({
-        appointment_id: appointmentId,
-        reason: "Report refusé par le médecin",
-        cancelled_by: "", // Will be set by the service
-        cancellation_type: 'doctor'
-      });
-      toast.success("Report refusé");
+      await appointmentService.rejectReschedule(appointmentId, doctorId);
+      toast.success("Report refusé : le rendez-vous initial est maintenu");
       onValidate();
       onClose();
     } catch (error) {
