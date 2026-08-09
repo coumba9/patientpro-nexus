@@ -77,8 +77,19 @@ const AppointmentDetailCard = ({
           <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800">
-              Le patient a demandé à reporter ce rendez-vous
+              Demande de report de {patientName}
             </p>
+            <p className="text-sm text-yellow-700">
+              {appointment.previous_date
+                ? `${new Date(appointment.previous_date).toLocaleDateString('fr-FR')} à ${String(appointment.previous_time || '').substring(0, 5)} → `
+                : ''}
+              <span className="font-medium">
+                {new Date(appointment.date).toLocaleDateString('fr-FR')} à {String(appointment.time || '').substring(0, 5)}
+              </span>
+            </p>
+            {appointment.reschedule_reason && (
+              <p className="text-xs text-yellow-700 mt-1">Motif : {appointment.reschedule_reason}</p>
+            )}
             <Button
               variant="link"
               className="h-auto p-0 text-sm text-primary"
@@ -89,6 +100,7 @@ const AppointmentDetailCard = ({
           </div>
         </div>
       )}
+
       
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="border rounded-lg overflow-hidden">
@@ -151,7 +163,7 @@ const AppointmentDetailCard = ({
               {/* Actions */}
               <div className="flex flex-col gap-2">
                 <div className="flex gap-1">
-                  {appointment.status === 'pending' && (
+                  {(appointment.status === 'pending' || appointment.status === 'awaiting_patient_confirmation') && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -162,14 +174,27 @@ const AppointmentDetailCard = ({
                       <CheckCircle className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onReschedule(appointment)}
-                    title="Reporter"
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
+                  {isPendingReschedule ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onValidateReschedule(appointment)}
+                      title="Valider le report demandé"
+                      className="text-yellow-700"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onReschedule(appointment)}
+                      title="Reporter"
+                    >
+                      <Calendar className="h-4 w-4" />
+                    </Button>
+                  )}
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -305,7 +330,7 @@ export const RealtimeAppointmentsList = ({
   const handleConfirm = async (appointmentId: string) => {
     try {
       await appointmentService.confirmAppointment(appointmentId, doctorId);
-      toast.success("Rendez-vous validé. En attente de confirmation du patient.");
+      toast.success("Rendez-vous confirmé");
       
       const appointment = appointments.find(apt => apt.id === appointmentId);
       
@@ -467,6 +492,7 @@ export const RealtimeAppointmentsList = ({
             isOpen={validateRescheduleDialogOpen}
             onClose={() => setValidateRescheduleDialogOpen(false)}
             appointmentId={selectedAppointment.id}
+            doctorId={doctorId}
             patientName={`${selectedAppointment.patient?.profile?.first_name} ${selectedAppointment.patient?.profile?.last_name}`}
             oldDate={selectedAppointment.previous_date || selectedAppointment.date}
             oldTime={selectedAppointment.previous_time || selectedAppointment.time}

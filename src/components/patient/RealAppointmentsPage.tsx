@@ -91,7 +91,7 @@ export const RealAppointmentsPage = () => {
       time: apt.time,
       location: apt.location || 'À définir',
       type: apt.type,
-      status: apt.status as "confirmed" | "pending" | "awaiting_patient_confirmation" | "completed" | "cancelled" | "no_show",
+      status: apt.status as "confirmed" | "pending" | "pending_reschedule" | "awaiting_patient_confirmation" | "completed" | "cancelled" | "no_show",
       doctorId: apt.doctor_id,
       mode: apt.mode,
     }));
@@ -101,7 +101,7 @@ export const RealAppointmentsPage = () => {
       const now = new Date();
       if (activeFilter === "upcoming") {
         filtered = filtered.filter(apt => 
-          ["confirmed", "awaiting_patient_confirmation"].includes(apt.status) &&
+          ["confirmed", "pending_reschedule", "awaiting_patient_confirmation"].includes(apt.status) &&
           new Date(apt.date) >= now
         );
       } else if (activeFilter === "completed") {
@@ -109,9 +109,10 @@ export const RealAppointmentsPage = () => {
       } else if (activeFilter === "cancelled") {
         filtered = filtered.filter(apt => apt.status === "cancelled");
       } else if (activeFilter === "pending") {
-        filtered = filtered.filter(apt => apt.status === "pending");
+        filtered = filtered.filter(apt => ["pending", "pending_reschedule"].includes(apt.status));
       }
     }
+
 
     // Filtres avancés
     if (advancedFilters.dateFrom) {
@@ -148,14 +149,15 @@ export const RealAppointmentsPage = () => {
     return {
       all: appointments.length,
       upcoming: appointments.filter(apt => 
-        ["confirmed", "awaiting_patient_confirmation"].includes(apt.status) &&
+        ["confirmed", "pending_reschedule", "awaiting_patient_confirmation"].includes(apt.status) &&
         new Date(apt.date) >= now
       ).length,
       completed: appointments.filter(apt => apt.status === "completed").length,
       cancelled: appointments.filter(apt => apt.status === "cancelled").length,
-      pending: appointments.filter(apt => apt.status === "pending").length,
+      pending: appointments.filter(apt => ["pending", "pending_reschedule"].includes(apt.status)).length,
     };
   }, [appointments]);
+
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">Chargement de vos rendez-vous...</div>;

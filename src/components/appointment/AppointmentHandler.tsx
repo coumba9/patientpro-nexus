@@ -115,7 +115,7 @@ export const AppointmentHandler = ({
             time: data.time,
             type: data.type,
             mode: data.consultationType === "teleconsultation" ? "teleconsultation" : "in_person",
-            status: "pending",
+            status: "confirmed",
             payment_status: "on_site",
             payment_amount: fee,
             location_id: data.locationId || null,
@@ -132,6 +132,7 @@ export const AppointmentHandler = ({
 
         localStorage.removeItem("pendingAppointment");
         toast.success("Rendez-vous confirmé ! Le paiement sera effectué sur place.");
+
         navigate("/patient");
       } catch (error) {
         console.error("On-site booking error:", error);

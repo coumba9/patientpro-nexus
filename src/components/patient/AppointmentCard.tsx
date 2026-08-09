@@ -111,6 +111,8 @@ export const AppointmentCard = ({
     switch (status) {
       case "confirmed":
         return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Confirmé</Badge>;
+      case "pending_reschedule":
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">Report en attente</Badge>;
       case "awaiting_patient_confirmation":
         return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">En attente de votre confirmation</Badge>;
       case "completed":
@@ -123,6 +125,7 @@ export const AppointmentCard = ({
         return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">En attente</Badge>;
     }
   };
+
 
   const isOnline = appointment.type.toLowerCase().includes('télé');
 
@@ -186,6 +189,16 @@ export const AppointmentCard = ({
     <>
       <Card className="mb-4">
         <CardContent className="p-6">
+          {appointment.status === 'pending_reschedule' && (
+            <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-100">
+              Votre demande de report au{" "}
+              <span className="font-medium">
+                {new Date(appointment.date).toLocaleDateString('fr-FR')} à {appointment.time?.substring(0, 5)}
+              </span>{" "}
+              est en attente de validation par le médecin.
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
@@ -271,10 +284,11 @@ export const AppointmentCard = ({
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={appointment.status === 'pending_reschedule'}
                       onClick={() => setIsRescheduleDialogOpen(true)}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
-                      Reporter
+                      {appointment.status === 'pending_reschedule' ? 'Report demandé' : 'Reporter'}
                     </Button>
 
                     <Button
@@ -298,6 +312,8 @@ export const AppointmentCard = ({
                     Confirmer
                   </Button>
                 )}
+
+
 
                 {isOnline && appointment.status === 'confirmed' && (
                   <Button
