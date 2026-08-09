@@ -467,6 +467,7 @@ export const RealtimeAppointmentsList = ({
             isOpen={validateRescheduleDialogOpen}
             onClose={() => setValidateRescheduleDialogOpen(false)}
             appointmentId={selectedAppointment.id}
+            doctorId={doctorId}
             patientName={`${selectedAppointment.patient?.profile?.first_name} ${selectedAppointment.patient?.profile?.last_name}`}
             oldDate={selectedAppointment.previous_date || selectedAppointment.date}
             oldTime={selectedAppointment.previous_time || selectedAppointment.time}
