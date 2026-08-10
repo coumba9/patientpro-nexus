@@ -356,6 +356,13 @@ class AppointmentService extends BaseService<Appointment> {
         throw new Error("Non autorisé à reporter ce rendez-vous");
       }
 
+      if (['cancelled', 'completed'].includes(appointment.status as string)) {
+        throw new Error("Ce rendez-vous ne peut plus être reporté");
+      }
+      if (appointment.status === ('pending_reschedule' as any) && userRole === 'patient') {
+        throw new Error("Une demande de report est déjà en attente de validation");
+      }
+
       // Check if the new slot is available
       const availableSlots = await this.getAvailableSlots(appointment.doctor_id, newDate);
       if (!availableSlots.includes(newTime)) {
