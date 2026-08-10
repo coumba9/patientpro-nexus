@@ -11,7 +11,7 @@ export const useRealtimeAppointments = (userId: string | null, userRole: 'doctor
     const updatesToMake = appointmentsList
       .filter(apt => {
         const dt = new Date(`${apt.date}T${apt.time}`);
-        return dt < now && ['pending', 'confirmed', 'awaiting_patient_confirmation'].includes(apt.status);
+        return dt < now && ['pending', 'confirmed', 'pending_reschedule', 'awaiting_patient_confirmation'].includes(apt.status);
       })
       .map(apt => apt.id);
 
