@@ -37,21 +37,7 @@ serve(async (req) => {
     // Get pending reminders that should be sent now
     const { data: reminders, error: remindersError } = await supabase
       .from('reminders')
-      .select(`
-        *,
-        appointment:appointment_id (
-          id,
-          date,
-          time,
-          patient_id,
-          doctor_id,
-          type,
-          mode,
-          doctor:doctor_id (
-            profile:id (first_name, last_name)
-          )
-        )
-      `)
+      .select('*')
       .eq('status', 'pending')
       .lte('scheduled_for', now.toISOString())
       .lt('attempts', 3);
@@ -62,9 +48,21 @@ serve(async (req) => {
 
     console.log(`Found ${reminders?.length || 0} reminders to process`);
 
+    // Load related appointments in one query (no FK relationship defined)
+    const appointmentIds = [...new Set((reminders || []).map((r: any) => r.appointment_id).filter(Boolean))];
+    const appointmentsById = new Map<string, any>();
+    if (appointmentIds.length > 0) {
+      const { data: appts } = await supabase
+        .from('appointments')
+        .select('id, date, time, patient_id, doctor_id, type, mode, status')
+        .in('id', appointmentIds);
+      for (const a of appts || []) appointmentsById.set(a.id, a);
+    }
+
     for (const reminder of reminders || []) {
       try {
-        const appointment = reminder.appointment;
+        const appointment = appointmentsById.get(reminder.appointment_id);
+
         
         // Validate reminder data
         if (!reminder.patient_id || !reminder.appointment_id || !appointment) {
