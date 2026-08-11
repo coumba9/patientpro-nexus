@@ -8,7 +8,8 @@ import { RealAppointmentsPage } from "@/components/patient/RealAppointmentsPage"
 import { RealtimeNotifications } from "@/components/patient/RealtimeNotifications";
 import { EnhancedDashboard } from "@/components/patient/EnhancedDashboard";
 import { PaymentHistory } from "@/components/patient/PaymentHistory";
-import { SupportTickets } from "@/components/patient/SupportTickets";
+import { PatientSupport } from "@/components/patient/PatientSupport";
+import FavoriteDoctors from "./FavoriteDoctors";
 import Messages from "./Messages";
 import Documents from "./Documents";
 import SettingsPage from "./Settings";
@@ -166,7 +167,8 @@ const PatientDashboard = () => {
               <Route path="/messages" element={<Messages />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/payments" element={<PaymentHistory />} />
-              <Route path="/support" element={<SupportTickets />} />
+              <Route path="/favorites" element={<FavoriteDoctors />} />
+              <Route path="/support" element={<PatientSupport />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </div>

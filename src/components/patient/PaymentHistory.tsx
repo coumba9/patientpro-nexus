@@ -382,25 +382,14 @@ export const PaymentHistory = () => {
                     <div className="flex flex-col gap-2 items-end">
                       {getStatusBadge(apt.payment_status, apt.status)}
                       {(apt.status === 'completed' || apt.payment_status === 'paid') && (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownloadInvoice(apt)}
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Facture
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownloadReceipt(apt)}
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Reçu
-                          </Button>
-                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownloadInvoice(apt)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Facture acquittée
+                        </Button>
                       )}
                     </div>
                   </div>
