@@ -225,7 +225,7 @@ const Prescriptions = () => {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : prescriptions.length === 0 ? (
+        ) : prescriptions.length === 0 && documents.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Aucune ordonnance</h3>
@@ -234,14 +234,50 @@ const Prescriptions = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {prescriptions.map((prescription) => (
-              <PrescriptionCard
-                key={prescription.id}
-                prescription={prescription}
-                onDownload={handleDownload}
-              />
-            ))}
+          <div className="space-y-8">
+            {prescriptions.length > 0 && (
+              <div className="space-y-4">
+                {prescriptions.map((prescription) => (
+                  <PrescriptionCard
+                    key={prescription.id}
+                    prescription={prescription}
+                    onDownload={handleDownload}
+                  />
+                ))}
+              </div>
+            )}
+
+            {documents.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">Ordonnances délivrées par votre médecin</h3>
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="bg-primary/10 p-2 rounded-lg">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{doc.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {doc.doctorName} · {new Date(doc.created_at).toLocaleDateString('fr-FR')}
+                          {doc.is_signed ? ' · Signée' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenDocument(doc)}
+                    >
+                      Consulter
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
