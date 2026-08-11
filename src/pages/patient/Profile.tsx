@@ -62,11 +62,6 @@ const Profile = () => {
     },
     beneficiaries: []
   });
-  const [resetEmail, setResetEmail] = useState("");
-  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -158,45 +153,6 @@ const Profile = () => {
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!resetEmail) {
-      toast.error("Veuillez saisir votre adresse email");
-      return;
-    }
-
-    try {
-      await authService.resetPassword(resetEmail);
-      toast.success("Instructions de réinitialisation envoyées par email");
-      setIsResetDialogOpen(false);
-      setResetEmail("");
-    } catch (error) {
-      console.error('Erreur lors de la réinitialisation:', error);
-      toast.error("Erreur lors de l'envoi des instructions");
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
-      return;
-    }
-
-    try {
-      await authService.updatePassword(newPassword);
-      toast.success("Mot de passe modifié avec succès");
-      setIsChangePasswordDialogOpen(false);
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error('Erreur lors du changement de mot de passe:', error);
-      toast.error("Erreur lors du changement de mot de passe");
-    }
-  };
 
   if (loading) {
     return (
@@ -342,87 +298,6 @@ const Profile = () => {
             </div>
           </div>
           <Button onClick={handleSaveProfile}>Sauvegarder les modifications</Button>
-        </CardContent>
-      </Card>
-
-      {/* Section Sécurité */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Sécurité
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Lock className="h-4 w-4 mr-2" />
-                  Changer le mot de passe
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Changer le mot de passe</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-                    <Input 
-                      id="newPassword"
-                      type="password" 
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                    <Input 
-                      id="confirmPassword"
-                      type="password" 
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                  </div>
-                  <Button onClick={handleChangePassword} className="w-full">
-                    Modifier le mot de passe
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" className="w-full sm:w-auto">
-                  Mot de passe oublié ?
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Saisissez votre adresse email pour recevoir les instructions de réinitialisation.
-                  </p>
-                  <div className="space-y-2">
-                    <Label htmlFor="resetEmail">Adresse email</Label>
-                    <Input 
-                      id="resetEmail"
-                      type="email" 
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      placeholder="votre.email@exemple.com"
-                    />
-                  </div>
-                  <Button onClick={handleResetPassword} className="w-full">
-                    Envoyer les instructions
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
         </CardContent>
       </Card>
     </div>

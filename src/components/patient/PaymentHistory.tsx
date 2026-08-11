@@ -8,7 +8,7 @@ import { Download, CreditCard, CheckCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
-import { generateInvoicePDF, generatePaymentReceiptPDF } from "@/lib/pdfGenerator";
+import { generateInvoicePDF } from "@/lib/pdfGenerator";
 
 interface AppointmentPayment {
   id: string;
@@ -127,43 +127,8 @@ export const PaymentHistory = () => {
     }
   };
 
-  const handleDownloadReceipt = async (apt: AppointmentPayment) => {
-    try {
-      const { data: patientProfile } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, email, phone_number')
-        .eq('id', user?.id)
-        .maybeSingle();
 
-      const patientName = patientProfile 
-        ? `${patientProfile.first_name || ''} ${patientProfile.last_name || ''}`.trim()
-        : 'Patient';
 
-      const doctorName = apt.doctorProfile 
-        ? `${apt.doctorProfile.first_name || ''} ${apt.doctorProfile.last_name || ''}`.trim()
-        : 'Médecin';
-
-      generatePaymentReceiptPDF({
-        invoiceNumber: `REC-${apt.id.substring(0, 8).toUpperCase()}`,
-        date: format(new Date(apt.date), 'dd/MM/yyyy'),
-        patientName,
-        patientEmail: patientProfile?.email || undefined,
-        patientPhone: patientProfile?.phone_number || undefined,
-        doctorName,
-        consultationType: getTypeLabel(apt.type),
-        consultationMode: apt.mode,
-        amount: getConsultationPrice(apt),
-        paymentStatus: 'paid',
-        paymentDate: format(new Date(apt.date), 'dd/MM/yyyy'),
-        transactionRef: apt.payment_id || undefined
-      });
-      
-      toast.success("Reçu de paiement téléchargé");
-    } catch (error) {
-      console.error('Error generating receipt:', error);
-      toast.error("Erreur lors de la génération du reçu");
-    }
-  };
 
   const getStatusBadge = (paymentStatus: string | null, appointmentStatus: string) => {
     if (appointmentStatus === 'completed') {
@@ -382,25 +347,14 @@ export const PaymentHistory = () => {
                     <div className="flex flex-col gap-2 items-end">
                       {getStatusBadge(apt.payment_status, apt.status)}
                       {(apt.status === 'completed' || apt.payment_status === 'paid') && (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownloadInvoice(apt)}
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Facture
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownloadReceipt(apt)}
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Reçu
-                          </Button>
-                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownloadInvoice(apt)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Facture acquittée
+                        </Button>
                       )}
                     </div>
                   </div>

@@ -7,10 +7,20 @@ import { PrescriptionCard } from "@/components/patient/PrescriptionCard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
+interface PrescriptionDocument {
+  id: string;
+  title: string;
+  created_at: string;
+  file_url: string | null;
+  is_signed: boolean;
+  doctorName: string;
+}
+
 const Prescriptions = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<PrescriptionDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +30,7 @@ const Prescriptions = () => {
       try {
         setLoading(true);
 
-        // Direct Supabase query instead of service with complex joins
+        // 1) Ordonnances issues des dossiers médicaux
         const { data: records, error } = await supabase
           .from('medical_records')
           .select('id, date, diagnosis, prescription, notes, doctor_id')
@@ -30,45 +40,61 @@ const Prescriptions = () => {
 
         if (error) throw error;
 
-        if (!records || records.length === 0) {
-          setPrescriptions([]);
-          return;
+        // 2) Ordonnances déposées comme documents par le médecin
+        const { data: docs, error: docsError } = await supabase
+          .from('documents')
+          .select('id, title, type, file_url, is_signed, created_at, doctor_id')
+          .eq('patient_id', user.id)
+          .or('type.ilike.%ordonnance%,type.ilike.%prescription%')
+          .order('created_at', { ascending: false });
+
+        if (docsError) throw docsError;
+
+        const doctorIds = [...new Set([
+          ...(records || []).map(r => r.doctor_id),
+          ...(docs || []).map((d: any) => d.doctor_id),
+        ].filter(Boolean))];
+
+        const profileMap = new Map<string, any>();
+        if (doctorIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .in('id', doctorIds);
+          (profiles || []).forEach((p: any) => profileMap.set(p.id, p));
         }
 
-        // Batch fetch doctor profiles
-        const doctorIds = [...new Set(records.map(r => r.doctor_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .in('id', doctorIds);
+        const doctorNameOf = (id: string) => {
+          const p = profileMap.get(id);
+          return p ? `Dr. ${p.first_name || ''} ${p.last_name || ''}`.trim() : 'Médecin';
+        };
 
-        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+        const transformed = (records || []).map((record, index) => ({
+          id: index + 1,
+          recordId: record.id,
+          date: record.date,
+          doctor: doctorNameOf(record.doctor_id),
+          medications: record.prescription ? [
+            { name: record.prescription, dosage: "Selon prescription", frequency: "Voir ordonnance" }
+          ] : [],
+          duration: "Voir ordonnance",
+          signed: true,
+          patientName: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim(),
+          patientAge: "N/A",
+          diagnosis: record.diagnosis,
+          doctorSpecialty: "Médecin",
+          doctorAddress: "Cabinet médical"
+        }));
 
-        const transformed = records.map((record, index) => {
-          const docProfile = profileMap.get(record.doctor_id);
-          const doctorName = docProfile
-            ? `Dr. ${docProfile.first_name || ''} ${docProfile.last_name || ''}`.trim()
-            : 'Médecin';
-
-          return {
-            id: index + 1,
-            recordId: record.id,
-            date: record.date,
-            doctor: doctorName,
-            medications: record.prescription ? [
-              { name: record.prescription, dosage: "Selon prescription", frequency: "Voir ordonnance" }
-            ] : [],
-            duration: "Voir ordonnance",
-            signed: true,
-            patientName: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim(),
-            patientAge: "N/A",
-            diagnosis: record.diagnosis,
-            doctorSpecialty: "Médecin",
-            doctorAddress: "Cabinet médical"
-          };
-        });
-        
         setPrescriptions(transformed);
+        setDocuments((docs || []).map((d: any) => ({
+          id: d.id,
+          title: d.title,
+          created_at: d.created_at,
+          file_url: d.file_url,
+          is_signed: d.is_signed,
+          doctorName: doctorNameOf(d.doctor_id),
+        })));
       } catch (error) {
         console.error("Erreur lors du chargement des ordonnances:", error);
         toast.error("Erreur lors du chargement des ordonnances");
@@ -177,6 +203,26 @@ const Prescriptions = () => {
     }
   };
 
+  const handleOpenDocument = (doc: PrescriptionDocument) => {
+    if (!doc.file_url) {
+      toast.error("Aucun fichier disponible pour cette ordonnance");
+      return;
+    }
+    if (/^https?:\/\//i.test(doc.file_url)) {
+      window.open(doc.file_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const blob = new Blob([doc.file_url], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${doc.title || "ordonnance"}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+
+
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-lg shadow-sm p-6">
@@ -199,7 +245,7 @@ const Prescriptions = () => {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : prescriptions.length === 0 ? (
+        ) : prescriptions.length === 0 && documents.length === 0 ? (
           <div className="text-center py-12">
             <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Aucune ordonnance</h3>
@@ -208,14 +254,50 @@ const Prescriptions = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {prescriptions.map((prescription) => (
-              <PrescriptionCard
-                key={prescription.id}
-                prescription={prescription}
-                onDownload={handleDownload}
-              />
-            ))}
+          <div className="space-y-8">
+            {prescriptions.length > 0 && (
+              <div className="space-y-4">
+                {prescriptions.map((prescription) => (
+                  <PrescriptionCard
+                    key={prescription.id}
+                    prescription={prescription}
+                    onDownload={handleDownload}
+                  />
+                ))}
+              </div>
+            )}
+
+            {documents.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">Ordonnances délivrées par votre médecin</h3>
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="bg-primary/10 p-2 rounded-lg">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{doc.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {doc.doctorName} · {new Date(doc.created_at).toLocaleDateString('fr-FR')}
+                          {doc.is_signed ? ' · Signée' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenDocument(doc)}
+                    >
+                      Consulter
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
