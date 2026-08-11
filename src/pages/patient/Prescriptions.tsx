@@ -203,6 +203,26 @@ const Prescriptions = () => {
     }
   };
 
+  const handleOpenDocument = (doc: PrescriptionDocument) => {
+    if (!doc.file_url) {
+      toast.error("Aucun fichier disponible pour cette ordonnance");
+      return;
+    }
+    if (/^https?:\/\//i.test(doc.file_url)) {
+      window.open(doc.file_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const blob = new Blob([doc.file_url], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${doc.title || "ordonnance"}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+
+
   return (
     <div className="space-y-6">
       <div className="bg-background rounded-lg shadow-sm p-6">
