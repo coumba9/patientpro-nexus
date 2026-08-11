@@ -30,7 +30,7 @@ const Prescriptions = () => {
       try {
         setLoading(true);
 
-        // Direct Supabase query instead of service with complex joins
+        // 1) Ordonnances issues des dossiers médicaux
         const { data: records, error } = await supabase
           .from('medical_records')
           .select('id, date, diagnosis, prescription, notes, doctor_id')
@@ -40,45 +40,61 @@ const Prescriptions = () => {
 
         if (error) throw error;
 
-        if (!records || records.length === 0) {
-          setPrescriptions([]);
-          return;
+        // 2) Ordonnances déposées comme documents par le médecin
+        const { data: docs, error: docsError } = await supabase
+          .from('documents')
+          .select('id, title, type, file_url, is_signed, created_at, doctor_id')
+          .eq('patient_id', user.id)
+          .or('type.ilike.%ordonnance%,type.ilike.%prescription%')
+          .order('created_at', { ascending: false });
+
+        if (docsError) throw docsError;
+
+        const doctorIds = [...new Set([
+          ...(records || []).map(r => r.doctor_id),
+          ...(docs || []).map((d: any) => d.doctor_id),
+        ].filter(Boolean))];
+
+        const profileMap = new Map<string, any>();
+        if (doctorIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .in('id', doctorIds);
+          (profiles || []).forEach((p: any) => profileMap.set(p.id, p));
         }
 
-        // Batch fetch doctor profiles
-        const doctorIds = [...new Set(records.map(r => r.doctor_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .in('id', doctorIds);
+        const doctorNameOf = (id: string) => {
+          const p = profileMap.get(id);
+          return p ? `Dr. ${p.first_name || ''} ${p.last_name || ''}`.trim() : 'Médecin';
+        };
 
-        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+        const transformed = (records || []).map((record, index) => ({
+          id: index + 1,
+          recordId: record.id,
+          date: record.date,
+          doctor: doctorNameOf(record.doctor_id),
+          medications: record.prescription ? [
+            { name: record.prescription, dosage: "Selon prescription", frequency: "Voir ordonnance" }
+          ] : [],
+          duration: "Voir ordonnance",
+          signed: true,
+          patientName: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim(),
+          patientAge: "N/A",
+          diagnosis: record.diagnosis,
+          doctorSpecialty: "Médecin",
+          doctorAddress: "Cabinet médical"
+        }));
 
-        const transformed = records.map((record, index) => {
-          const docProfile = profileMap.get(record.doctor_id);
-          const doctorName = docProfile
-            ? `Dr. ${docProfile.first_name || ''} ${docProfile.last_name || ''}`.trim()
-            : 'Médecin';
-
-          return {
-            id: index + 1,
-            recordId: record.id,
-            date: record.date,
-            doctor: doctorName,
-            medications: record.prescription ? [
-              { name: record.prescription, dosage: "Selon prescription", frequency: "Voir ordonnance" }
-            ] : [],
-            duration: "Voir ordonnance",
-            signed: true,
-            patientName: `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim(),
-            patientAge: "N/A",
-            diagnosis: record.diagnosis,
-            doctorSpecialty: "Médecin",
-            doctorAddress: "Cabinet médical"
-          };
-        });
-        
         setPrescriptions(transformed);
+        setDocuments((docs || []).map((d: any) => ({
+          id: d.id,
+          title: d.title,
+          created_at: d.created_at,
+          file_url: d.file_url,
+          is_signed: d.is_signed,
+          doctorName: doctorNameOf(d.doctor_id),
+        })));
       } catch (error) {
         console.error("Erreur lors du chargement des ordonnances:", error);
         toast.error("Erreur lors du chargement des ordonnances");
