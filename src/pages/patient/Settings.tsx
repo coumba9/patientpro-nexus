@@ -309,7 +309,7 @@ const Settings = () => {
             <Shield className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">Sécurité</h3>
           </div>
-          <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Dialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto">
@@ -331,6 +331,27 @@ const Settings = () => {
                     <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                   <Button onClick={handleChangePassword} className="w-full">Modifier le mot de passe</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" className="w-full sm:w-auto">Mot de passe oublié ?</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Saisissez votre adresse email pour recevoir les instructions de réinitialisation.
+                  </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="resetEmail">Adresse email</Label>
+                    <Input id="resetEmail" type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="votre.email@exemple.com" />
+                  </div>
+                  <Button onClick={handleResetPassword} className="w-full">Envoyer les instructions</Button>
                 </div>
               </DialogContent>
             </Dialog>

@@ -62,11 +62,6 @@ const Profile = () => {
     },
     beneficiaries: []
   });
-  const [resetEmail, setResetEmail] = useState("");
-  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -158,45 +153,6 @@ const Profile = () => {
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!resetEmail) {
-      toast.error("Veuillez saisir votre adresse email");
-      return;
-    }
-
-    try {
-      await authService.resetPassword(resetEmail);
-      toast.success("Instructions de réinitialisation envoyées par email");
-      setIsResetDialogOpen(false);
-      setResetEmail("");
-    } catch (error) {
-      console.error('Erreur lors de la réinitialisation:', error);
-      toast.error("Erreur lors de l'envoi des instructions");
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
-      return;
-    }
-
-    try {
-      await authService.updatePassword(newPassword);
-      toast.success("Mot de passe modifié avec succès");
-      setIsChangePasswordDialogOpen(false);
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error('Erreur lors du changement de mot de passe:', error);
-      toast.error("Erreur lors du changement de mot de passe");
-    }
-  };
 
   if (loading) {
     return (
