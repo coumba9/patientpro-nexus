@@ -7,10 +7,20 @@ import { PrescriptionCard } from "@/components/patient/PrescriptionCard";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
+interface PrescriptionDocument {
+  id: string;
+  title: string;
+  created_at: string;
+  file_url: string | null;
+  is_signed: boolean;
+  doctorName: string;
+}
+
 const Prescriptions = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<PrescriptionDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
