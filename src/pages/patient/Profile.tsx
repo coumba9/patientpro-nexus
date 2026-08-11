@@ -343,8 +343,8 @@ const Profile = () => {
           </div>
           <Button onClick={handleSaveProfile}>Sauvegarder les modifications</Button>
         </CardContent>
+      </Card>
     </div>
-
   );
 };
 
