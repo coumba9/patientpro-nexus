@@ -208,6 +208,24 @@ const Settings = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resetEmail) {
+      toast.error("Veuillez saisir votre adresse email");
+      return;
+    }
+    try {
+      await authService.resetPassword(resetEmail);
+      toast.success("Instructions de réinitialisation envoyées par email");
+      setIsResetDialogOpen(false);
+      setResetEmail("");
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast.error("Erreur lors de l'envoi des instructions");
+    }
+  };
+
+
+
   if (loading) {
     return (
       <div className="bg-card rounded-2xl shadow-card border border-border/50 p-6">
