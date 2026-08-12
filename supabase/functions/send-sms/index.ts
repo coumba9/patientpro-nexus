@@ -114,6 +114,9 @@ serve(async (req) => {
     // Send SMS using Dexchange API (v1)
     const endpoint = 'https://api.dexchange-sms.com/api/v1/sms/single';
 
+    const cleanKey = apiKey.trim();
+    console.log('Dexchange key meta:', { length: cleanKey.length, prefix: cleanKey.slice(0, 4) });
+
     const payloadVariants: Record<string, unknown>[] = [
       { number: formattedPhone, signature, content: message },
       { number: formattedPhone, signature, message },
@@ -121,34 +124,52 @@ serve(async (req) => {
       { phone: formattedPhone, signature, content: message },
     ];
 
+    const authVariants: Record<string, string>[] = [
+      { 'Authorization': `Bearer ${cleanKey}` },
+      { 'api-key': cleanKey },
+      { 'x-api-key': cleanKey },
+      { 'Authorization': cleanKey },
+      { 'Authorization': `Bearer ${cleanKey}`, 'x-api-key': cleanKey, 'api-key': cleanKey },
+    ];
+
     let dexchangeResponse!: Response;
     let responseData: any = null;
     let statusCode = 0;
+    let done = false;
 
-    for (const payload of payloadVariants) {
-      dexchangeResponse = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'x-api-key': apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
+    for (const authHeaders of authVariants) {
+      for (const payload of payloadVariants) {
+        dexchangeResponse = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            ...authHeaders,
+          },
+          body: JSON.stringify(payload),
+        });
 
-      statusCode = dexchangeResponse.status;
-      const contentType = dexchangeResponse.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await dexchangeResponse.json();
-      } else {
-        const textResponse = await dexchangeResponse.text();
-        responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
+        statusCode = dexchangeResponse.status;
+        const contentType = dexchangeResponse.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          responseData = await dexchangeResponse.json();
+        } else {
+          const textResponse = await dexchangeResponse.text();
+          responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
+        }
+
+        console.log('Dexchange attempt', JSON.stringify({
+          auth: Object.keys(authHeaders), payload: Object.keys(payload), statusCode, responseData,
+        }));
+
+        // Auth problem: no point trying other payload shapes with this header set
+        if (statusCode === 401 || statusCode === 403) break;
+
+        // Retry with another payload shape only on validation errors
+        if (statusCode !== 400 && statusCode !== 422) { done = true; break; }
       }
-
-      console.log('Dexchange attempt', JSON.stringify({ payload: Object.keys(payload), statusCode, responseData }));
-
-      // Retry with another payload shape only on validation errors
-      if (statusCode !== 400 && statusCode !== 422) break;
+      if (done) break;
+      if (statusCode !== 401 && statusCode !== 403) break;
     }
 
 
