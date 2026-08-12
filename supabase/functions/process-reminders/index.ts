@@ -75,7 +75,17 @@ serve(async (req) => {
           console.error(`Invalid appointment data for reminder: ${reminder.id}`);
           continue;
         }
-        
+
+        // Never remind for an appointment that is no longer active
+        if (['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
+          await supabase
+            .from('reminders')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('id', reminder.id);
+          console.log(`Reminder ${reminder.id} cancelled (appointment ${appointment.status})`);
+          continue;
+        }
+
         // Get patient profile with phone number
         const { data: patientProfile } = await supabase
           .from('profiles')
@@ -96,18 +106,21 @@ serve(async (req) => {
         // Create notification message
         const notificationMessage = `Rappel: Vous avez un rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}`;
         
-        // Create notification
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: reminder.patient_id,
-            type: 'reminder',
-            title: 'Rappel de rendez-vous',
-            message: notificationMessage,
-            appointment_id: reminder.appointment_id,
-            priority: 'high',
-            is_read: false
-          });
+        // Create the in-app notification only on the first attempt (avoid duplicates on retries)
+        if (reminder.attempts === 0) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: reminder.patient_id,
+              type: 'reminder',
+              title: 'Rappel de rendez-vous',
+              message: notificationMessage,
+              appointment_id: reminder.appointment_id,
+              priority: 'high',
+              is_read: false
+            });
+        }
+
 
         // Send SMS if method is SMS or both and phone number exists
         let smsOk = true;
