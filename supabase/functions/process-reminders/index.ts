@@ -75,7 +75,17 @@ serve(async (req) => {
           console.error(`Invalid appointment data for reminder: ${reminder.id}`);
           continue;
         }
-        
+
+        // Never remind for an appointment that is no longer active
+        if (['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
+          await supabase
+            .from('reminders')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('id', reminder.id);
+          console.log(`Reminder ${reminder.id} cancelled (appointment ${appointment.status})`);
+          continue;
+        }
+
         // Get patient profile with phone number
         const { data: patientProfile } = await supabase
           .from('profiles')
@@ -96,57 +106,75 @@ serve(async (req) => {
         // Create notification message
         const notificationMessage = `Rappel: Vous avez un rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}`;
         
-        // Create notification
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: reminder.patient_id,
-            type: 'reminder',
-            title: 'Rappel de rendez-vous',
-            message: notificationMessage,
-            appointment_id: reminder.appointment_id,
-            priority: 'high',
-            is_read: false
-          });
+        // Create the in-app notification only on the first attempt (avoid duplicates on retries)
+        if (reminder.attempts === 0) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: reminder.patient_id,
+              type: 'reminder',
+              title: 'Rappel de rendez-vous',
+              message: notificationMessage,
+              appointment_id: reminder.appointment_id,
+              priority: 'high',
+              is_read: false
+            });
+        }
+
 
         // Send SMS if method is SMS or both and phone number exists
-        if ((reminder.method === 'sms' || reminder.method === 'both') && phoneNumber) {
-          console.log(`Sending SMS to ${phoneNumber}`);
-          
-          const smsMessage = `Bonjour ${patientProfile?.first_name || ''}, rappel: rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}. JàmmSanté`;
-          
-          try {
-            // Call send-sms edge function
-            const { error: smsError } = await supabase.functions.invoke('send-sms', {
-              body: {
-                phoneNumber: phoneNumber,
-                message: smsMessage,
-                userId: appointment.patient_id,
-                signature: 'JàmmSanté'
-              }
-            });
+        let smsOk = true;
+        if (reminder.method === 'sms' || reminder.method === 'both') {
+          if (!phoneNumber) {
+            console.warn(`No phone number for patient ${appointment.patient_id}, skipping SMS`);
+            smsOk = false;
+          } else {
+            console.log(`Sending SMS to ${phoneNumber}`);
 
-            if (smsError) {
-              console.error('Error sending SMS:', smsError);
-            } else {
-              console.log('SMS sent successfully');
+            const smsMessage = `Bonjour ${patientProfile?.first_name || ''}, rappel: rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}. JàmmSanté`;
+
+            try {
+              // Call send-sms edge function
+              const { data: smsData, error: smsError } = await supabase.functions.invoke('send-sms', {
+                body: {
+                  phoneNumber: phoneNumber,
+                  message: smsMessage,
+                  userId: appointment.patient_id,
+                  signature: 'JàmmSanté'
+                }
+              });
+
+              // send-sms returns HTTP 200 with { success: false } when the provider fails,
+              // so the payload must be inspected — not only the transport error.
+              if (smsError || !smsData?.success) {
+                smsOk = false;
+                console.error('Error sending SMS:', smsError ?? smsData);
+              } else {
+                console.log('SMS sent successfully');
+              }
+            } catch (smsError) {
+              smsOk = false;
+              console.error('SMS sending failed:', smsError);
             }
-          } catch (smsError) {
-            console.error('SMS sending failed:', smsError);
           }
         }
 
-        // Update reminder status
+        // Update reminder status: keep it pending for a later retry when the SMS
+        // could not be delivered, and give up after 3 attempts.
+        const attempts = reminder.attempts + 1;
+        const nextStatus = smsOk ? 'sent' : (attempts >= 3 ? 'failed' : 'pending');
+
         await supabase
           .from('reminders')
           .update({
-            status: 'sent',
-            attempts: reminder.attempts + 1,
+            status: nextStatus,
+            attempts,
             updated_at: new Date().toISOString()
           })
           .eq('id', reminder.id);
 
-        console.log(`Reminder sent for appointment ${reminder.appointment_id}`);
+        console.log(`Reminder ${reminder.id} -> ${nextStatus} (attempt ${attempts}) for appointment ${reminder.appointment_id}`);
+
       } catch (error) {
         console.error(`Error processing reminder ${reminder.id}:`, error);
         
