@@ -22,6 +22,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ChatbotWidget } from "@/components/patient/ChatbotWidget";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Heart, X, Search, Home, Info, Phone } from "lucide-react";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 const PatientDashboard = () => {
   const navigate = useNavigate();
@@ -84,15 +85,16 @@ const PatientDashboard = () => {
           <div className="flex items-center gap-3">
             <RealtimeNotifications userId={user?.id || null} userRole="patient" />
             <ThemeToggle />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="hidden sm:flex items-center gap-2 rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden lg:inline">Déconnexion</span>
-            </Button>
+            <LogoutConfirmDialog onConfirm={handleLogout}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex items-center gap-2 rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden lg:inline">Déconnexion</span>
+              </Button>
+            </LogoutConfirmDialog>
           </div>
         </div>
       </header>
@@ -131,14 +133,15 @@ const PatientDashboard = () => {
             </nav>
 
             <div className="mt-8 pt-6 border-t border-border">
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                className="w-full justify-start rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
-              >
-                <LogOut className="mr-3 h-5 w-5" />
-                Déconnexion
-              </Button>
+              <LogoutConfirmDialog onConfirm={handleLogout}>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
+                >
+                  <LogOut className="mr-3 h-5 w-5" />
+                  Déconnexion
+                </Button>
+              </LogoutConfirmDialog>
             </div>
           </div>
         </div>

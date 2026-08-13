@@ -31,6 +31,7 @@ import { useRealDoctorApplications } from "@/hooks/useRealDoctorApplications";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -138,15 +139,16 @@ const AdminDashboard = () => {
               <span className="hidden sm:inline">Accueil</span>
             </Button>
             <ThemeToggle />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">Déconnexion</span>
-            </Button>
+            <LogoutConfirmDialog onConfirm={handleLogout}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Déconnexion</span>
+              </Button>
+            </LogoutConfirmDialog>
           </div>
         </div>
       </header>
