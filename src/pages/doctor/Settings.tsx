@@ -141,10 +141,12 @@ const Settings = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Paramètres</h2>
-        <Button variant="destructive" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" />
-          Déconnexion
-        </Button>
+        <LogoutConfirmDialog onConfirm={handleLogout}>
+          <Button variant="destructive">
+            <LogOut className="h-4 w-4 mr-2" />
+            Déconnexion
+          </Button>
+        </LogoutConfirmDialog>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
