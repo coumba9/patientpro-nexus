@@ -18,6 +18,7 @@ import { AbsenceSettings } from "@/components/settings/AbsenceSettings";
 import { LocationSettings } from "@/components/doctor/LocationSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientRecord } from "@/components/doctor/PatientRecord";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 interface DoctorSettings {
   firstName: string;
