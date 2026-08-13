@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { doctorService } from "@/api/services/doctor.service";
+import { matchesSearch } from "@/lib/searchUtils";
 
 export interface Doctor {
   id: string;
