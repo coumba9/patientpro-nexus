@@ -11,6 +11,7 @@ import { Home, UserCircle, ChevronDown, ChevronUp, Heart, LogOut, Stethoscope } 
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -73,15 +74,16 @@ const DoctorDashboard = () => {
               </Button>
             </Link>
             <ThemeToggle />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">Déconnexion</span>
-            </Button>
+            <LogoutConfirmDialog onConfirm={handleLogout}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-destructive border-destructive/30 hover:bg-destructive/10"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Déconnexion</span>
+              </Button>
+            </LogoutConfirmDialog>
           </div>
         </div>
       </header>

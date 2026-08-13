@@ -17,6 +17,7 @@ import { BookingFormValues } from "./types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { toLocalDateString, WEEKDAYS_FR, minutesToTime, timeToMinutes } from "@/lib/availability";
 
 interface TimeSelectorProps {
   form: UseFormReturn<BookingFormValues>;
@@ -27,81 +28,128 @@ interface TimeSelectorProps {
 export const TimeSelector = ({ form, doctorId, selectedDate }: TimeSelectorProps) => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [noSchedule, setNoSchedule] = useState(false);
+
+  const locationId = form.watch("locationId");
+  const durationMinutes = form.watch("durationMinutes") || 30;
 
   useEffect(() => {
-    if (!selectedDate) {
+    if (!selectedDate || !doctorId) {
       setAvailableSlots([]);
+      setNoSchedule(false);
       return;
     }
 
-    const dateStr = selectedDate.toISOString().split('T')[0];
-
-    if (!doctorId) {
-      // Fallback: show all slots if no doctorId
-      const allSlots: string[] = [];
-      for (let hour = 8; hour < 18; hour++) {
-        if (hour >= 12 && hour < 14) continue; // Pause déjeuner
-        allSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-        allSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-      }
-      setAvailableSlots(allSlots);
-      return;
-    }
+    const dateStr = toLocalDateString(selectedDate);
+    const dayName = WEEKDAYS_FR[selectedDate.getDay()];
 
     const fetchSlots = async () => {
       setLoading(true);
       try {
-        const { data: bookedAppointments, error } = await supabase
-          .from('appointments')
-          .select('time')
-          .eq('doctor_id', doctorId)
-          .eq('date', dateStr)
-          .neq('status', 'cancelled');
+        const [slotsRes, unavailRes, apptRes] = await Promise.all([
+          supabase
+            .from("doctor_availability_slots")
+            .select("start_time, end_time, location_id")
+            .eq("doctor_id", doctorId)
+            .eq("day", dayName),
+          supabase
+            .from("doctor_unavailability_periods")
+            .select("start_date, end_date, start_time, end_time, is_full_day")
+            .eq("doctor_id", doctorId)
+            .lte("start_date", dateStr)
+            .gte("end_date", dateStr),
+          supabase
+            .from("appointments")
+            .select("time, duration_minutes")
+            .eq("doctor_id", doctorId)
+            .eq("date", dateStr)
+            .neq("status", "cancelled"),
+        ]);
 
-        if (error) {
-          console.error('Error fetching slots:', error);
+        // Créneaux récurrents définis par le médecin (filtrés par lieu si choisi)
+        const ranges = (slotsRes.data || []).filter(
+          (s: any) => !locationId || !s.location_id || s.location_id === locationId
+        );
+
+        if (ranges.length === 0) {
+          setNoSchedule(true);
+          setAvailableSlots([]);
+          return;
+        }
+        setNoSchedule(false);
+
+        // Absences / congés du médecin ce jour-là
+        const unavailable = unavailRes.data || [];
+        if (unavailable.some((u: any) => u.is_full_day)) {
           setAvailableSlots([]);
           return;
         }
 
-        const bookedTimes = (bookedAppointments || []).map((apt: any) =>
-          apt.time?.substring(0, 5)
-        );
+        // Créneaux déjà réservés
+        const booked = (apptRes.data || []).map((apt: any) => ({
+          start: timeToMinutes(String(apt.time).substring(0, 5)),
+          end:
+            timeToMinutes(String(apt.time).substring(0, 5)) +
+            (apt.duration_minutes || 30),
+        }));
 
-        // Generate all possible slots (8h-18h, skip lunch 12-14)
-        const allSlots: string[] = [];
-        for (let hour = 8; hour < 18; hour++) {
-          if (hour >= 12 && hour < 14) continue;
-          allSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-          allSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-        }
-
-        // Filter out booked and past slots
         const now = new Date();
-        const today = now.toISOString().split('T')[0];
+        const isToday = dateStr === toLocalDateString(now);
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-        const available = allSlots.filter(slot => {
-          if (bookedTimes.includes(slot)) return false;
-          if (dateStr === today) {
-            const [h, m] = slot.split(':').map(Number);
-            const slotTime = new Date();
-            slotTime.setHours(h, m, 0, 0);
-            if (slotTime <= now) return false;
+        const slots: string[] = [];
+
+        ranges.forEach((range: any) => {
+          const start = timeToMinutes(String(range.start_time).substring(0, 5));
+          const end = timeToMinutes(String(range.end_time).substring(0, 5));
+
+          for (let t = start; t + durationMinutes <= end; t += durationMinutes) {
+            const slotStart = t;
+            const slotEnd = t + durationMinutes;
+
+            // Passé
+            if (isToday && slotStart <= nowMinutes) continue;
+
+            // Chevauchement avec une absence partielle
+            const inAbsence = unavailable.some((u: any) => {
+              if (u.is_full_day || !u.start_time || !u.end_time) return false;
+              const aStart = timeToMinutes(String(u.start_time).substring(0, 5));
+              const aEnd = timeToMinutes(String(u.end_time).substring(0, 5));
+              return slotStart < aEnd && slotEnd > aStart;
+            });
+            if (inAbsence) continue;
+
+            // Chevauchement avec un rendez-vous existant
+            const isBooked = booked.some(
+              (b) => slotStart < b.end && slotEnd > b.start
+            );
+            if (isBooked) continue;
+
+            const label = minutesToTime(slotStart);
+            if (!slots.includes(label)) slots.push(label);
           }
-          return true;
         });
 
-        setAvailableSlots(available);
+        slots.sort();
+        setAvailableSlots(slots);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSlots();
+    form.setValue("time", "");
+  }, [selectedDate, doctorId, locationId, durationMinutes]);
 
-    // Reset time when date changes
-    form.setValue('time', '');
-  }, [selectedDate, doctorId]);
+  const placeholder = !selectedDate
+    ? "Sélectionnez d'abord une date"
+    : loading
+    ? "Chargement..."
+    : noSchedule
+    ? "Le médecin ne consulte pas ce jour-là"
+    : availableSlots.length === 0
+    ? "Aucun créneau disponible"
+    : "Sélectionnez un horaire";
 
   return (
     <FormField
@@ -116,35 +164,29 @@ export const TimeSelector = ({ form, doctorId, selectedDate }: TimeSelectorProps
           <Select
             onValueChange={field.onChange}
             value={field.value}
-            disabled={!selectedDate || loading}
+            disabled={!selectedDate || loading || availableSlots.length === 0}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder={
-                  !selectedDate
-                    ? "Sélectionnez d'abord une date"
-                    : loading
-                    ? "Chargement..."
-                    : availableSlots.length === 0
-                    ? "Aucun créneau disponible"
-                    : "Sélectionnez un horaire"
-                } />
+                <SelectValue placeholder={placeholder} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {availableSlots.length === 0 && !loading ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">
-                  Aucun créneau disponible pour cette date
-                </div>
-              ) : (
-                availableSlots.map((time) => (
-                  <SelectItem key={time} value={time}>
-                    {time}
-                  </SelectItem>
-                ))
-              )}
+              {availableSlots.map((time) => (
+                <SelectItem key={time} value={time}>
+                  {time}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          {!loading && selectedDate && availableSlots.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Créneaux de {durationMinutes} min issus des horaires définis par le médecin.
+            </p>
+          )}
+          {!loading && selectedDate && availableSlots.length === 0 && (
+            <p className="text-xs text-muted-foreground">{placeholder}</p>
+          )}
           <FormMessage />
         </FormItem>
       )}

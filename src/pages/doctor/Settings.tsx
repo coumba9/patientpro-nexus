@@ -18,6 +18,7 @@ import { AbsenceSettings } from "@/components/settings/AbsenceSettings";
 import { LocationSettings } from "@/components/doctor/LocationSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PatientRecord } from "@/components/doctor/PatientRecord";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 interface DoctorSettings {
   firstName: string;
@@ -141,10 +142,12 @@ const Settings = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Paramètres</h2>
-        <Button variant="destructive" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" />
-          Déconnexion
-        </Button>
+        <LogoutConfirmDialog onConfirm={handleLogout}>
+          <Button variant="destructive">
+            <LogOut className="h-4 w-4 mr-2" />
+            Déconnexion
+          </Button>
+        </LogoutConfirmDialog>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

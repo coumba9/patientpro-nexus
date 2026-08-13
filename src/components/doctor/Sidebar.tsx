@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Stethoscope,
 } from "lucide-react";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 export const DoctorSidebar = () => {
   const navigate = useNavigate();
@@ -104,15 +105,16 @@ export const DoctorSidebar = () => {
       </nav>
 
       <div className="pt-4 mt-4 border-t border-border/50">
-        <Button
-          variant="ghost"
-          className="w-full justify-start rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
-          size="lg"
-          onClick={handleLogout}
-        >
-          <LogOut className="mr-3 h-5 w-5" />
-          Déconnexion
-        </Button>
+        <LogoutConfirmDialog onConfirm={handleLogout}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all"
+            size="lg"
+          >
+            <LogOut className="mr-3 h-5 w-5" />
+            Déconnexion
+          </Button>
+        </LogoutConfirmDialog>
       </div>
     </div>
   );

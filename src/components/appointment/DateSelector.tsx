@@ -10,6 +10,7 @@ import { UseFormReturn } from "react-hook-form";
 import { BookingFormValues } from "./types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toLocalDateString, WEEKDAYS_FR } from "@/lib/availability";
 
 interface DateSelectorProps {
   form: UseFormReturn<BookingFormValues>;
@@ -18,61 +19,75 @@ interface DateSelectorProps {
   selectedDate: Date | undefined;
 }
 
-const ALL_SLOTS_COUNT = 20; // 8h-18h, 30min intervals = 20 slots
-
 export const DateSelector = ({
   form,
   doctorId,
   onDateChange,
   selectedDate,
 }: DateSelectorProps) => {
-  const [fullyBookedDates, setFullyBookedDates] = useState<Set<string>>(new Set());
+  const [workingDays, setWorkingDays] = useState<Set<string> | null>(null);
+  const [blockedDates, setBlockedDates] = useState<Set<string>>(new Set());
 
-  // Load booked slots for the next 3 months to identify fully booked dates
   useEffect(() => {
-    if (!doctorId) return;
+    if (!doctorId) {
+      setWorkingDays(null);
+      setBlockedDates(new Set());
+      return;
+    }
 
-    const loadBookedDates = async () => {
+    const load = async () => {
       const today = new Date();
       const threeMonthsLater = new Date();
       threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
 
-      const startDate = today.toISOString().split('T')[0];
-      const endDate = threeMonthsLater.toISOString().split('T')[0];
+      const startDate = toLocalDateString(today);
+      const endDate = toLocalDateString(threeMonthsLater);
 
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('date, time')
-        .eq('doctor_id', doctorId)
-        .neq('status', 'cancelled')
-        .gte('date', startDate)
-        .lte('date', endDate);
+      const [slotsRes, unavailRes] = await Promise.all([
+        supabase
+          .from("doctor_availability_slots")
+          .select("day")
+          .eq("doctor_id", doctorId),
+        supabase
+          .from("doctor_unavailability_periods")
+          .select("start_date, end_date, is_full_day")
+          .eq("doctor_id", doctorId)
+          .gte("end_date", startDate)
+          .lte("start_date", endDate),
+      ]);
 
-      if (!error && data) {
-        const slotMap: Record<string, number> = {};
-        data.forEach((apt: any) => {
-          slotMap[apt.date] = (slotMap[apt.date] || 0) + 1;
+      setWorkingDays(new Set((slotsRes.data || []).map((s: any) => s.day)));
+
+      // Jours entièrement bloqués (congés / absences)
+      const blocked = new Set<string>();
+      (unavailRes.data || [])
+        .filter((u: any) => u.is_full_day)
+        .forEach((u: any) => {
+          const cursor = new Date(`${u.start_date}T00:00:00`);
+          const end = new Date(`${u.end_date}T00:00:00`);
+          while (cursor <= end) {
+            blocked.add(toLocalDateString(cursor));
+            cursor.setDate(cursor.getDate() + 1);
+          }
         });
-
-        const fullDates = new Set<string>();
-        Object.entries(slotMap).forEach(([date, count]) => {
-          if (count >= ALL_SLOTS_COUNT) fullDates.add(date);
-        });
-        setFullyBookedDates(fullDates);
-      }
+      setBlockedDates(blocked);
     };
 
-    loadBookedDates();
+    load();
   }, [doctorId]);
 
   const isDateDisabled = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (date < today) return true;
-    if (date.getDay() === 0) return true; // Dimanche
-    
-    const dateStr = date.toISOString().split('T')[0];
-    if (fullyBookedDates.has(dateStr)) return true;
+
+    const dateStr = toLocalDateString(date);
+    if (blockedDates.has(dateStr)) return true;
+
+    // Jours où le médecin n'a défini aucun horaire
+    if (workingDays && workingDays.size > 0 && !workingDays.has(WEEKDAYS_FR[date.getDay()])) {
+      return true;
+    }
 
     return false;
   };
@@ -94,6 +109,11 @@ export const DateSelector = ({
             locale={fr}
             disabled={isDateDisabled}
           />
+          {workingDays && workingDays.size === 0 && (
+            <p className="text-xs text-muted-foreground">
+              Ce médecin n'a pas encore publié ses horaires de consultation.
+            </p>
+          )}
           <FormMessage />
         </FormItem>
       )}
