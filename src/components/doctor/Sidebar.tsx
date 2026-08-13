@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import {
-import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
   Calendar,
   Users,
   MessageCircle,
@@ -15,6 +14,7 @@ import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
   ArrowLeft,
   Stethoscope,
 } from "lucide-react";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 export const DoctorSidebar = () => {
   const navigate = useNavigate();

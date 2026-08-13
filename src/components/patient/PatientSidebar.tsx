@@ -3,7 +3,6 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import {
-import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
   Calendar,
   MessageCircle,
   FileText,
@@ -17,6 +16,7 @@ import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
   CreditCard,
   HelpCircle,
 } from "lucide-react";
+import { LogoutConfirmDialog } from "@/components/auth/LogoutConfirmDialog";
 
 export const PatientSidebar = () => {
   const navigate = useNavigate();
