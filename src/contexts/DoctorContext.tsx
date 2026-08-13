@@ -150,37 +150,42 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     fetchDoctors();
   }, []);
 
-  // Apply all filters (search, location, proximity)
-  const applyAllFilters = (doctorsToFilter = doctors) => {
-    const filtered = doctorsToFilter.filter(
-      (doctor) =>
-        (searchTerm === "" ||
-          doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (location === "" ||
-          doctor.location.toLowerCase().includes(location.toLowerCase()))
-    );
+  // Recherche automatique (au fil de la frappe) avec un léger debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const base = userLocation
+        ? filterDoctorsByProximity(doctors, selectedRadius)
+        : doctors;
 
-    setFilteredDoctors(filtered);
-  };
+      const filtered = base.filter(
+        (doctor) =>
+          matchesSearch(searchTerm, doctor.name, doctor.specialty, doctor.specialty_name) &&
+          matchesSearch(location, doctor.location)
+      );
 
-  // Handle search action
+      setFilteredDoctors(filtered);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, location, doctors, userLocation, selectedRadius]);
+
+  // Le bouton "Rechercher" ne fait que forcer la géolocalisation déjà appliquée
   const handleSearch = () => {
-    if (userLocation) {
-      const doctorsInRadius = filterDoctorsByProximity(doctors, selectedRadius);
-      applyAllFilters(doctorsInRadius);
-    } else {
-      applyAllFilters();
-    }
+    const base = userLocation
+      ? filterDoctorsByProximity(doctors, selectedRadius)
+      : doctors;
+
+    setFilteredDoctors(
+      base.filter(
+        (doctor) =>
+          matchesSearch(searchTerm, doctor.name, doctor.specialty, doctor.specialty_name) &&
+          matchesSearch(location, doctor.location)
+      )
+    );
   };
 
-  // Update filtered doctors when radius changes
   const handleRadiusChange = (newRadius: number) => {
     setSelectedRadius(newRadius);
-    if (userLocation) {
-      const doctorsInRadius = filterDoctorsByProximity(doctors, newRadius);
-      applyAllFilters(doctorsInRadius);
-    }
   };
 
   return (
