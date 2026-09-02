@@ -32,6 +32,7 @@ const bookingFormSchema = z.object({
   locationId: z.string().optional(),
   reasonId: z.string().optional(),
   durationMinutes: z.number().optional(),
+  timeZone: z.string().optional(),
   paymentMethod: z.string(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
@@ -60,6 +61,7 @@ export const BookingForm = ({
       type: "consultation",
       consultationType: "presentiel",
       paymentMethod: "on-site",
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       firstName: "",
       lastName: "",
       phone: "",
@@ -80,9 +82,13 @@ export const BookingForm = ({
 
           form.setValue("type", appointmentData.type);
           form.setValue("consultationType", appointmentData.consultationType);
-          form.setValue("date", new Date(appointmentData.date));
+          form.setValue("date", new Date(`${appointmentData.date}T00:00:00`));
           form.setValue("time", appointmentData.time);
           form.setValue("paymentMethod", appointmentData.paymentMethod);
+          form.setValue("locationId", appointmentData.locationId);
+          form.setValue("reasonId", appointmentData.reasonId);
+          form.setValue("durationMinutes", appointmentData.durationMinutes);
+          form.setValue("timeZone", appointmentData.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone);
 
           setConsultationType(appointmentData.type);
           setIsOnline(appointmentData.consultationType === "teleconsultation");
@@ -169,10 +175,11 @@ export const BookingForm = ({
             form={form}
             doctorId={doctorId}
             isTeleconsultation={isOnline}
-            onReasonChange={(r) => form.setValue("durationMinutes", r?.duration)}
+            onReasonChange={(r) => {
+              form.setValue("reasonId", r?.id);
+              form.setValue("durationMinutes", r?.duration);
+            }}
           />
-
-
 
           <DateSelector
             form={form}
