@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { checkPaymentStatus } from "@/services/paytech";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { appointmentService } from "@/api";
+import { toLocalDateString } from "@/lib/availability";
 import { z } from "zod";
 
 // Validation schemas for security

@@ -17,7 +17,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Appointment } from "./types";
-import { parseLocalDateString, toLocalDateString } from "@/lib/availability";
+import { toLocalDateString } from "@/lib/availability";
 
 interface RescheduleDialogProps {
   isOpen: boolean;

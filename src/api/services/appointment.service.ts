@@ -18,7 +18,7 @@ class AppointmentService extends BaseService<Appointment> {
     duration_minutes?: number;
     location_id?: string | null;
     timeZone?: string;
-  }, options?: { skipTimeValidation?: boolean }): Promise<{ available: boolean; error?: string }> {
+  }): Promise<{ available: boolean; error?: string }> {
     const selectedDate = parseLocalDateString(appointmentData.date);
     const dayName = WEEKDAYS_FR[selectedDate.getDay()];
     const [slotsRes, unavailRes, apptRes] = await Promise.all([
