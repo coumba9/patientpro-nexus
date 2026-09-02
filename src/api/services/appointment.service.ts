@@ -339,7 +339,7 @@ class AppointmentService extends BaseService<Appointment> {
         .gte("end_date", targetDate),
       supabase
         .from("appointments")
-        .select("time, duration_minutes")
+        .select("id, time, duration_minutes")
         .eq("doctor_id", doctorId)
         .eq("date", targetDate)
         .neq("status", "cancelled"),
