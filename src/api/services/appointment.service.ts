@@ -107,15 +107,18 @@ class AppointmentService extends BaseService<Appointment> {
     }
 
     // SMS de confirmation automatique (non bloquant)
-    this.sendBookingConfirmationSMS(data as any).catch((e) =>
+    this.sendAppointmentConfirmationSMS(data as any).catch((e) =>
       console.error('SMS de confirmation non envoyé:', e)
     );
 
     return data as any;
   }
 
-  // Construit et envoie le SMS de confirmation avec créneau et motif
-  private async sendBookingConfirmationSMS(appointment: any): Promise<void> {
+  // Construit et envoie le SMS de confirmation avec créneau et motif.
+  async sendAppointmentConfirmationSMS(
+    appointment: any,
+    overrides?: { phoneNumber?: string | null; doctorName?: string | null }
+  ): Promise<void> {
     if (!appointment?.patient_id || appointment.status !== 'confirmed') return;
 
     const [profileRes, patientRes, doctorRes, reasonRes, locationRes] = await Promise.all([
@@ -130,16 +133,18 @@ class AppointmentService extends BaseService<Appointment> {
         : Promise.resolve({ data: null } as any),
     ]);
 
-    const phoneNumber = profileRes.data?.phone_number || patientRes.data?.phone_number;
+    const phoneNumber = overrides?.phoneNumber || profileRes.data?.phone_number || patientRes.data?.phone_number;
     if (!phoneNumber) return;
 
     const doctor = Array.isArray(doctorRes.data) ? doctorRes.data[0] : doctorRes.data;
-    const doctorName = doctor ? `${doctor.first_name ?? ''} ${doctor.last_name ?? ''}`.trim() : 'votre médecin';
+    const doctorName = overrides?.doctorName || (doctor
+      ? `${doctor.first_name ?? ''} ${doctor.last_name ?? ''}`.trim()
+      : 'votre médecin');
     const reason = reasonRes.data?.name || appointment.type || null;
     const location = locationRes.data?.name || appointment.location || null;
 
     const { smsService } = await import('./sms.service');
-    await smsService.sendAppointmentConfirmation(
+    const result = await smsService.sendAppointmentConfirmation(
       appointment.patient_id,
       phoneNumber,
       appointment.date,
@@ -147,7 +152,12 @@ class AppointmentService extends BaseService<Appointment> {
       doctorName,
       { reason, location, durationMinutes: appointment.duration_minutes }
     );
+
+    if (!result.success) {
+      console.error('Échec du SMS de confirmation:', result.error);
+    }
   }
+
 
 
   async confirmAppointment(id: string, doctorId: string): Promise<Appointment> {
