@@ -142,7 +142,7 @@ serve(async (req) => {
                   phoneNumber: phoneNumber,
                   message: smsMessage,
                   userId: appointment.patient_id,
-                  signature: 'DEXCHANGE'
+                  signature: 'DSMS SN'
                 }
               });
 

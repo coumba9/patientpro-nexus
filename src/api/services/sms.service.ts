@@ -119,7 +119,7 @@ class SMSService {
       phoneNumber,
       message,
       userId: patientId,
-      signature: 'DEXCHANGE'
+      signature: 'DSMS SN'
     });
   }
 
@@ -139,7 +139,7 @@ class SMSService {
       phoneNumber,
       message,
       userId: patientId,
-      signature: 'DEXCHANGE'
+      signature: 'DSMS SN'
     });
   }
 
@@ -159,7 +159,7 @@ class SMSService {
       phoneNumber,
       message,
       userId: patientId,
-      signature: 'DEXCHANGE'
+      signature: 'DSMS SN'
     });
   }
 }
