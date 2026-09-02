@@ -17,7 +17,7 @@ import { BookingFormValues } from "./types";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { toLocalDateString, WEEKDAYS_FR, minutesToTime, timeToMinutes } from "@/lib/availability";
+import { toLocalDateString, WEEKDAYS_FR, computeAvailableSlots } from "@/lib/availability";
 
 interface TimeSelectorProps {
   form: UseFormReturn<BookingFormValues>;
