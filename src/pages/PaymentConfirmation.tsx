@@ -202,29 +202,43 @@ const PaymentConfirmation = () => {
           throw new Error("Doctor ID is required to create appointment");
         }
 
-        try {
-          console.log("Creating appointment directly in Supabase (post-payment, skip slot check)...");
+          try {
+            const dateStr = typeof data.date === 'string'
+              ? data.date.substring(0, 10)
+              : toLocalDateString(data.date);
 
-          const dateStr = typeof data.date === 'string' 
-            ? new Date(data.date).toISOString().split('T')[0] 
-            : data.date.toISOString().split('T')[0];
-
-          // Direct insert — slot was validated BEFORE payment, no need to re-check
-          const { data: appointment, error: insertError } = await supabase
-            .from('appointments')
-            .insert({
+            const slotCheck = await appointmentService.checkSlotAvailability({
               doctor_id: data.doctorId,
-              patient_id: user.id,
               date: dateStr,
               time: data.time,
-              type: data.type || 'consultation',
-              mode: data.consultationType || 'presentiel',
-              status: 'confirmed',
-              location: (data.consultationType === 'presentiel' || data.consultationType === 'in_person') ? 'Cabinet médical' : 'Téléconsultation',
-              notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
-            })
-            .select()
-            .single();
+              duration_minutes: data.durationMinutes || 30,
+              location_id: data.locationId || null,
+              timeZone: data.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+            });
+            if (!slotCheck.available) {
+              throw new Error(slotCheck.error || "Ce créneau n'est plus disponible après le paiement");
+            }
+
+            const { data: appointment, error: insertError } = await supabase
+              .from('appointments')
+              .insert({
+                doctor_id: data.doctorId,
+                patient_id: user.id,
+                date: dateStr,
+                time: data.time,
+                type: data.type || 'consultation',
+                mode: data.consultationType || 'presentiel',
+                status: 'confirmed',
+                location: (data.consultationType === 'presentiel' || data.consultationType === 'in_person') ? 'Cabinet médical' : 'Téléconsultation',
+                location_id: data.locationId || null,
+                reason_id: data.reasonId || null,
+                duration_minutes: data.durationMinutes || 30,
+                payment_status: 'completed',
+                payment_amount: Number(safeLocalStorageGet("paytech_last_amount") || 0),
+                notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
+              })
+              .select()
+              .single();
 
           if (insertError) {
             throw new Error(insertError.message);
