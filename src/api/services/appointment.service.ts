@@ -316,7 +316,12 @@ class AppointmentService extends BaseService<Appointment> {
   async getAvailableSlots(
     doctorId: string,
     targetDate: string,
-    options?: { durationMinutes?: number; locationId?: string | null; timeZone?: string }
+    options?: {
+      durationMinutes?: number;
+      locationId?: string | null;
+      timeZone?: string;
+      excludeAppointmentId?: string;
+    }
   ): Promise<string[]> {
     const selectedDate = parseLocalDateString(targetDate);
     const dayName = WEEKDAYS_FR[selectedDate.getDay()];
