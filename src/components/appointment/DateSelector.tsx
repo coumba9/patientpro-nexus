@@ -120,7 +120,7 @@ export const DateSelector = ({
     return () => {
       active = false;
     };
-  }, [doctorId, locationId, durationMinutes]);
+  }, [doctorId, locationId, durationMinutes, form]);
 
   const isDateDisabled = (date: Date) => {
     const today = new Date();

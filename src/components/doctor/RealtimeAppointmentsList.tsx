@@ -482,7 +482,7 @@ export const RealtimeAppointmentsList = ({
             onClose={() => setRescheduleDialogOpen(false)}
             appointmentId={selectedAppointment.id}
             patientName={`${selectedAppointment.patient?.profile?.first_name} ${selectedAppointment.patient?.profile?.last_name}`}
-            currentDate={new Date(selectedAppointment.date).toLocaleDateString('fr-FR')}
+            currentDate={new Date(`${selectedAppointment.date}T00:00:00`).toLocaleDateString('fr-FR')}
             currentTime={selectedAppointment.time}
             doctorId={doctorId}
             onReschedule={handleRescheduleSuccess}

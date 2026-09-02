@@ -393,10 +393,12 @@ class AppointmentService extends BaseService<Appointment> {
       }
 
       // Check if the new slot is available
-      const availableSlots = await this.getAvailableSlots(appointment.doctor_id, newDate, {
-        durationMinutes: (appointment as any).duration_minutes || 30,
-        locationId: (appointment as any).location_id,
-      });
+       const availableSlots = await this.getAvailableSlots(appointment.doctor_id, newDate, {
+         durationMinutes: (appointment as any).duration_minutes || 30,
+         locationId: (appointment as any).location_id,
+         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+         excludeAppointmentId: appointmentId,
+       });
       if (!availableSlots.includes(newTime)) {
         throw new Error("Ce créneau n'est pas disponible");
       }

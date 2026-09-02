@@ -100,7 +100,7 @@ export const TimeSelector = ({ form, doctorId, selectedDate }: TimeSelectorProps
 
     fetchSlots();
     form.setValue("time", "");
-  }, [selectedDate, doctorId, locationId, durationMinutes]);
+  }, [selectedDate, doctorId, locationId, durationMinutes, timeZone]);
 
   const placeholder = !selectedDate
     ? "Sélectionnez d'abord une date"
