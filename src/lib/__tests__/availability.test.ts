@@ -50,7 +50,7 @@ describe("computeAvailableSlots", () => {
         selectedDate: day,
         now: past,
       })
-    ).toEqual(["09:00", "10:45".slice(0, 5) === "10:45" ? "10:45" : "10:45"].slice(0, 1));
+    ).toEqual(["09:00"]);
   });
 
   it("ne propose que les créneaux futurs le jour même (heure locale, sans décalage UTC)", () => {
