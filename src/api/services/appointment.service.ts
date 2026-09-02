@@ -347,10 +347,14 @@ class AppointmentService extends BaseService<Appointment> {
     const firstError = slotsRes.error || unavailRes.error || apptRes.error;
     if (firstError) throw new Error(`Error fetching slots: ${firstError.message}`);
 
+    const booked = ((apptRes.data || []) as any[]).filter(
+      (appointment) => appointment.id !== options?.excludeAppointmentId
+    );
+
     return computeAvailableSlots({
       ranges: (slotsRes.data || []) as any,
       unavailability: (unavailRes.data || []) as any,
-      booked: (apptRes.data || []) as any,
+      booked,
       durationMinutes: options?.durationMinutes || 30,
       selectedDate,
       locationId: options?.locationId,
