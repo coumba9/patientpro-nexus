@@ -132,9 +132,10 @@ export const computeAvailableSlots = ({
     return { start, end: start + (apt.duration_minutes || 30) };
   });
 
-  // Comparaison en date locale : toLocalDateString évite le décalage UTC.
-  const isToday = toLocalDateString(selectedDate) === toLocalDateString(now);
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  // Le jour et l'heure sont comparés dans le fuseau du médecin, jamais via UTC.
+  const zonedNow = getZonedNow(now, timeZone);
+  const isToday = toLocalDateString(selectedDate) === zonedNow.date;
+  const nowMinutes = zonedNow.minutes;
 
   const slots: string[] = [];
 
