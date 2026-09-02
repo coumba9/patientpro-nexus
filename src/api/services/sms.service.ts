@@ -131,9 +131,18 @@ class SMSService {
     phoneNumber: string,
     appointmentDate: string,
     appointmentTime: string,
-    doctorName: string
+    doctorName: string,
+    options?: { reason?: string | null; location?: string | null; durationMinutes?: number | null }
   ): Promise<SendSMSResponse> {
-    const message = `Votre rendez-vous avec Dr ${doctorName} a été confirmé pour le ${new Date(appointmentDate).toLocaleDateString('fr-FR')} à ${appointmentTime}. JàmmSanté`;
+    const dateLabel = new Date(appointmentDate).toLocaleDateString('fr-FR');
+    const timeLabel = appointmentTime.substring(0, 5);
+    const parts = [
+      `RDV confirme avec Dr ${doctorName} le ${dateLabel} a ${timeLabel}`,
+    ];
+    if (options?.durationMinutes) parts.push(`(${options.durationMinutes} min)`);
+    if (options?.reason) parts.push(`- Motif: ${options.reason}`);
+    if (options?.location) parts.push(`- Lieu: ${options.location}`);
+    const message = `${parts.join(' ')}. JammSante`;
 
     return this.sendSMS({
       phoneNumber,
@@ -142,6 +151,7 @@ class SMSService {
       signature: 'DSMS SN'
     });
   }
+
 
   /**
    * Send appointment cancellation SMS

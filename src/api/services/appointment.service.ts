@@ -92,10 +92,11 @@ class AppointmentService extends BaseService<Appointment> {
     }
 
     // Le créneau est libre → le rendez-vous est confirmé automatiquement
+    const { timeZone: _tz, ...insertData } = appointmentData;
     const { data, error } = await supabase
       .from('appointments')
       .insert({
-        ...appointmentData,
+        ...insertData,
         status: appointmentData.status || 'confirmed'
       })
       .select()
@@ -105,8 +106,59 @@ class AppointmentService extends BaseService<Appointment> {
       throw new Error(`Error creating appointment: ${error.message}`);
     }
 
+    // SMS de confirmation automatique (non bloquant)
+    this.sendAppointmentConfirmationSMS(data as any).catch((e) =>
+      console.error('SMS de confirmation non envoyé:', e)
+    );
+
     return data as any;
   }
+
+  // Construit et envoie le SMS de confirmation avec créneau et motif.
+  async sendAppointmentConfirmationSMS(
+    appointment: any,
+    overrides?: { phoneNumber?: string | null; doctorName?: string | null }
+  ): Promise<void> {
+    if (!appointment?.patient_id || appointment.status !== 'confirmed') return;
+
+    const [profileRes, patientRes, doctorRes, reasonRes, locationRes] = await Promise.all([
+      supabase.from('profiles').select('phone_number, first_name').eq('id', appointment.patient_id).maybeSingle(),
+      supabase.from('patients').select('phone_number').eq('id', appointment.patient_id).maybeSingle(),
+      supabase.rpc('get_doctor_brief', { doctor_id: appointment.doctor_id }),
+      appointment.reason_id
+        ? supabase.from('consultation_reasons').select('name').eq('id', appointment.reason_id).maybeSingle()
+        : Promise.resolve({ data: null } as any),
+      appointment.location_id
+        ? supabase.from('practice_locations').select('name, address').eq('id', appointment.location_id).maybeSingle()
+        : Promise.resolve({ data: null } as any),
+    ]);
+
+    const phoneNumber = overrides?.phoneNumber || profileRes.data?.phone_number || patientRes.data?.phone_number;
+    if (!phoneNumber) return;
+
+    const doctor = Array.isArray(doctorRes.data) ? doctorRes.data[0] : doctorRes.data;
+    const doctorName = overrides?.doctorName || (doctor
+      ? `${doctor.first_name ?? ''} ${doctor.last_name ?? ''}`.trim()
+      : 'votre médecin');
+    const reason = reasonRes.data?.name || appointment.type || null;
+    const location = locationRes.data?.name || appointment.location || null;
+
+    const { smsService } = await import('./sms.service');
+    const result = await smsService.sendAppointmentConfirmation(
+      appointment.patient_id,
+      phoneNumber,
+      appointment.date,
+      appointment.time,
+      doctorName,
+      { reason, location, durationMinutes: appointment.duration_minutes }
+    );
+
+    if (!result.success) {
+      console.error('Échec du SMS de confirmation:', result.error);
+    }
+  }
+
+
 
   async confirmAppointment(id: string, doctorId: string): Promise<Appointment> {
     // Validation directe par le médecin (rendez-vous hérités en statut 'pending')

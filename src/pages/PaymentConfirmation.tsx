@@ -244,22 +244,31 @@ const PaymentConfirmation = () => {
             throw new Error(insertError.message);
           }
 
-          console.log("Appointment created successfully");
+           console.log("Appointment created successfully");
 
-          // Mettre à jour le numéro de téléphone du patient s'il a été fourni
-          if (data.phone) {
-            console.log("Updating patient phone number:", data.phone);
-            const { error: updateError } = await supabase
-              .from('patients')
-              .update({ phone_number: data.phone })
-              .eq('id', user.id);
+           // Mettre à jour le numéro avant l'envoi du SMS de confirmation.
+           if (data.phone) {
+             console.log("Updating patient phone number:", data.phone);
+             const { error: updateError } = await supabase
+               .from('patients')
+               .update({ phone_number: data.phone })
+               .eq('id', user.id);
 
-            if (updateError) {
-              console.error("Error updating patient phone:", updateError);
-            } else {
-              console.log("Patient phone number updated successfully");
-            }
-          }
+             if (updateError) {
+               console.error("Error updating patient phone:", updateError);
+             } else {
+               console.log("Patient phone number updated successfully");
+             }
+           }
+
+           // Confirmation SMS après paiement validé, sans bloquer le rendez-vous.
+           appointmentService.sendAppointmentConfirmationSMS(appointment, {
+             phoneNumber: data.phone || null,
+             doctorName: data.doctorName || null,
+           }).catch((smsError) => {
+             console.error('Erreur SMS de confirmation après paiement:', smsError);
+           });
+
 
           // Idempotency flag for this token
           if (idempotencyKey) {
