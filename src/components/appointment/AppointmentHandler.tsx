@@ -6,6 +6,8 @@ import { DoctorInfo } from "./doctorTypes";
 import { initiatePayTechPayment } from "@/services/paytech";
 import { getSupportedPaymentMethods } from "@/services/africaPayment";
 import { useAuth } from "@/hooks/useAuth";
+import { toLocalDateString } from "@/lib/availability";
+import { appointmentService } from "@/api";
 
 // Libellés exacts acceptés par PayTech pour target_payment
 const PAYTECH_TARGETS: Record<string, string> = {
@@ -62,14 +64,17 @@ export const AppointmentHandler = ({
       console.warn("Patient record check failed:", e);
     }
 
-    // Vérifier la disponibilité du créneau AVANT le paiement
+    // Vérifier la disponibilité réelle du créneau AVANT le paiement.
     if (doctorId && data.date && data.time) {
       try {
         const { appointmentService } = await import("@/api");
         const slotCheck = await appointmentService.checkSlotAvailability({
           doctor_id: doctorId,
-          date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-          time: data.time
+          date: toLocalDateString(data.date),
+          time: data.time,
+          duration_minutes: data.durationMinutes || 30,
+          location_id: data.locationId || null,
+          timeZone: data.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
 
         if (!slotCheck.available) {
@@ -100,43 +105,32 @@ export const AppointmentHandler = ({
     // === Paiement sur place : créer le rendez-vous directement ===
     if (data.paymentMethod === "on-site") {
       try {
-        const { supabase } = await import("@/integrations/supabase/client");
         const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
-        const dateStr = data.date instanceof Date
-          ? data.date.toISOString().split('T')[0]
-          : new Date(data.date).toISOString().split('T')[0];
+        const dateStr = toLocalDateString(data.date);
 
-        const { error: insertError } = await supabase
-          .from("appointments")
-          .insert({
-            patient_id: user.id,
-            doctor_id: doctorId || user.id,
-            date: dateStr,
-            time: data.time,
-            type: data.type,
-            mode: data.consultationType === "teleconsultation" ? "teleconsultation" : "in_person",
-            status: "confirmed",
-            payment_status: "on_site",
-            payment_amount: fee,
-            location_id: data.locationId || null,
-            reason_id: data.reasonId || null,
-            duration_minutes: data.durationMinutes || 30,
-            notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : null,
-          } as any);
-
-        if (insertError) {
-          console.error("Appointment insert error:", insertError);
-          toast.error("Erreur lors de la création du rendez-vous");
-          return;
-        }
+        await appointmentService.createAppointment({
+          patient_id: user.id,
+          doctor_id: doctorId || user.id,
+          date: dateStr,
+          time: data.time,
+          type: data.type,
+          mode: data.consultationType === "teleconsultation" ? "teleconsultation" : "in_person",
+          status: "confirmed",
+          payment_status: "on_site",
+          payment_amount: fee,
+          location_id: data.locationId || null,
+          reason_id: data.reasonId || null,
+          duration_minutes: data.durationMinutes || 30,
+          timeZone: data.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          notes: data.medicalInfo ? JSON.stringify(data.medicalInfo) : undefined,
+        } as any);
 
         localStorage.removeItem("pendingAppointment");
         toast.success("Rendez-vous confirmé ! Le paiement sera effectué sur place.");
-
         navigate("/patient");
       } catch (error) {
         console.error("On-site booking error:", error);
-        toast.error("Erreur lors de la création du rendez-vous");
+        toast.error(error instanceof Error ? error.message : "Erreur lors de la création du rendez-vous");
       }
       return;
     }

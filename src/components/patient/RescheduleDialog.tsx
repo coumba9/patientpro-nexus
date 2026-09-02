@@ -17,6 +17,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Appointment } from "./types";
+import { toLocalDateString } from "@/lib/availability";
 
 interface RescheduleDialogProps {
   isOpen: boolean;
@@ -39,17 +40,22 @@ export const RescheduleDialog = ({
 
   useEffect(() => {
     if (selectedDate && appointment.doctorId) {
-      loadAvailableSlots();
+      void loadAvailableSlots();
     }
-  }, [selectedDate, appointment.doctorId]);
+  }, [selectedDate, appointment.doctorId, appointment.durationMinutes, appointment.locationId]);
 
   const loadAvailableSlots = async () => {
     if (!selectedDate || !appointment.doctorId) return;
-    
+
     setIsLoading(true);
     try {
-      const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const slots = await appointmentService.getAvailableSlots(appointment.doctorId, dateStr);
+      const dateStr = toLocalDateString(selectedDate);
+      const slots = await appointmentService.getAvailableSlots(appointment.doctorId, dateStr, {
+        durationMinutes: appointment.durationMinutes || 30,
+        locationId: appointment.locationId,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        excludeAppointmentId: appointment.id,
+      });
       setAvailableSlots(slots);
       setSelectedTime("");
     } catch (error) {
@@ -95,7 +101,11 @@ export const RescheduleDialog = ({
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              disabled={(date) => date < new Date() || date.getDay() === 0}
+               disabled={(date) => {
+                 const today = new Date();
+                 today.setHours(0, 0, 0, 0);
+                 return date < today || date.getDay() === 0;
+               }}
               locale={fr}
               className="rounded-md border"
             />
