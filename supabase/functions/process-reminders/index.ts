@@ -134,13 +134,15 @@ serve(async (req) => {
             const smsMessage = `Bonjour ${patientProfile?.first_name || ''}, rappel: rendez-vous ${appointment.type} le ${new Date(appointment.date).toLocaleDateString('fr-FR')} à ${appointment.time}. JàmmSanté`;
 
             try {
-              // Call send-sms edge function
+              // Call send-sms edge function.
+              // Signature defaults to DEXCHANGE inside send-sms (no NINEA needed);
+              // a custom Sender ID would require Dexchange dashboard validation.
               const { data: smsData, error: smsError } = await supabase.functions.invoke('send-sms', {
                 body: {
                   phoneNumber: phoneNumber,
                   message: smsMessage,
                   userId: appointment.patient_id,
-                  signature: 'JàmmSanté'
+                  signature: 'DEXCHANGE'
                 }
               });
 

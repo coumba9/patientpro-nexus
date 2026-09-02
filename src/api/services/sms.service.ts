@@ -119,7 +119,7 @@ class SMSService {
       phoneNumber,
       message,
       userId: patientId,
-      signature: 'JàmmSanté'
+      signature: 'DEXCHANGE'
     });
   }
 
@@ -139,7 +139,7 @@ class SMSService {
       phoneNumber,
       message,
       userId: patientId,
-      signature: 'JàmmSanté'
+      signature: 'DEXCHANGE'
     });
   }
 
@@ -159,7 +159,7 @@ class SMSService {
       phoneNumber,
       message,
       userId: patientId,
-      signature: 'JàmmSanté'
+      signature: 'DEXCHANGE'
     });
   }
 }
