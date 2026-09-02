@@ -70,13 +70,18 @@ class AppointmentService extends BaseService<Appointment> {
     mode: string;
     location?: string;
     notes?: string;
-    status?: string; // Optionnel pour forcer un statut
+    status?: string;
+    duration_minutes?: number;
+    location_id?: string | null;
+    timeZone?: string;
   }): Promise<Appointment> {
-    // Vérifier uniquement les conflits (pas les contraintes temporelles, déjà validées avant paiement)
     const slotCheck = await this.checkSlotAvailability({
       doctor_id: appointmentData.doctor_id,
       date: appointmentData.date,
-      time: appointmentData.time
+      time: appointmentData.time,
+      duration_minutes: appointmentData.duration_minutes,
+      location_id: appointmentData.location_id,
+      timeZone: appointmentData.timeZone,
     }, { skipTimeValidation: true });
 
     if (!slotCheck.available) {
