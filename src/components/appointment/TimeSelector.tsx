@@ -89,6 +89,7 @@ export const TimeSelector = ({ form, doctorId, selectedDate }: TimeSelectorProps
             durationMinutes,
             selectedDate,
             locationId,
+            timeZone,
           })
         );
 
