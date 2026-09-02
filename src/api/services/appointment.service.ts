@@ -2,7 +2,7 @@
 import { BaseService, TableName } from "../base/base.service";
 import { Appointment, CancellationRequest } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
-import { validateAppointmentScheduling, hasAppointmentConflict, calculateConsultationFees } from "@/lib/businessLogic";
+import { calculateConsultationFees } from "@/lib/businessLogic";
 import { computeAvailableSlots, parseLocalDateString, WEEKDAYS_FR } from "@/lib/availability";
 
 class AppointmentService extends BaseService<Appointment> {
@@ -56,20 +56,6 @@ class AppointmentService extends BaseService<Appointment> {
     const normalizedTime = appointmentData.time.substring(0, 5);
     if (!availableSlots.includes(normalizedTime)) {
       return { available: false, error: "Ce créneau n'est plus disponible ou ne respecte pas la durée choisie" };
-    }
-
-    if (!options?.skipTimeValidation) {
-      const validation = validateAppointmentScheduling(
-        {
-          ...appointmentData,
-          doctorId: appointmentData.doctor_id,
-          patientId: "temp",
-          type: "consultation",
-          mode: "presentiel",
-        },
-        (apptRes.data as any[]) || []
-      );
-      if (!validation.valid) return { available: false, error: validation.errors.join(", ") };
     }
 
     return { available: true };
