@@ -137,40 +137,73 @@ serve(async (req) => {
     //   POST https://api.dexchange-sms.com/api/v1/send/sms
     //   Authorization: Bearer <key>
     //   body: { signature, content, number: ["221..."] }
-    const endpoint = 'https://api.dexchange-sms.com/api/v1/send/sms';
 
     const cleanKey = apiKey.trim();
     console.log('Dexchange key meta:', { length: cleanKey.length, prefix: cleanKey.slice(0, 4) });
 
-    const payload = {
-      signature: resolvedSignature,
-      content: message,
-      number: [formattedPhone],
-    };
+    // Dexchange rejects any Sender ID that is not approved for the account with
+    // HTTP 400 "Signature non vérifiée ou invalide". The default signatures
+    // (DEXCHANGE, DSMS SN, DSMS) need no NINEA/RCCM validation, but only the one
+    // actually assigned to the account will be accepted. Try the requested
+    // signature first, then fall back through the other defaults.
+    const signatureCandidates = [
+      resolvedSignature,
+      ...validDefaults.filter((s) => s !== resolvedSignature),
+    ];
 
-    const dexchangeResponse = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${cleanKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const endpoint = 'https://api.dexchange-sms.com/api/v1/send/sms';
 
-    const statusCode = dexchangeResponse.status;
-    const contentType = dexchangeResponse.headers.get('content-type');
+    let dexchangeResponse!: Response;
     let responseData: any = null;
-    if (contentType && contentType.includes('application/json')) {
-      responseData = await dexchangeResponse.json();
-    } else {
-      const textResponse = await dexchangeResponse.text();
-      responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
+    let statusCode = 0;
+    let success = false;
+    let usedSignature = resolvedSignature;
+
+    for (const sig of signatureCandidates) {
+      const payload = {
+        signature: sig,
+        content: message,
+        number: [formattedPhone],
+      };
+
+      dexchangeResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${cleanKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      statusCode = dexchangeResponse.status;
+      const contentType = dexchangeResponse.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await dexchangeResponse.json();
+      } else {
+        const textResponse = await dexchangeResponse.text();
+        responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
+      }
+
+      console.log('Dexchange attempt:', { signature: sig, statusCode, responseData });
+
+      success = dexchangeResponse.ok;
+      if (success) {
+        usedSignature = sig;
+        break;
+      }
+
+      // Signature not approved for this account -> try the next candidate.
+      // Anything else (insufficient balance, auth, etc.) is not a signature
+      // problem, so stop retrying.
+      const sigRejected =
+        statusCode === 400 &&
+        typeof responseData?.message === 'string' &&
+        /signature/i.test(responseData.message);
+      if (!sigRejected) break;
     }
 
-    console.log('Dexchange response:', { statusCode, responseData });
-
-    const success = dexchangeResponse.ok;
+    console.log('Dexchange final:', { success, usedSignature, statusCode, responseData });
 
     // Log SMS attempt in database
     const logStatus = success ? 'sent' : (statusCode === 521 ? 'provider_down' : 'failed');
