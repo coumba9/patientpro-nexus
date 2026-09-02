@@ -109,6 +109,7 @@ export const DateSelector = ({
           durationMinutes,
           selectedDate: cursor,
           locationId,
+          timeZone: form.getValues("timeZone"),
         });
         if (slots.length === 0) noSlotDates.add(dateStr);
       }
