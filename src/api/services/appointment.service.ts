@@ -67,13 +67,16 @@ class AppointmentService extends BaseService<Appointment> {
     date: string;
     time: string;
     type: string;
-    mode: string;
-    location?: string;
-    notes?: string;
-    status?: string;
-    duration_minutes?: number;
-    location_id?: string | null;
-    timeZone?: string;
+     mode: string;
+     location?: string;
+     notes?: string;
+     status?: string;
+     duration_minutes?: number;
+     location_id?: string | null;
+     reason_id?: string | null;
+     payment_status?: string;
+     payment_amount?: number;
+     timeZone?: string;
   }): Promise<Appointment> {
     const slotCheck = await this.checkSlotAvailability({
       doctor_id: appointmentData.doctor_id,

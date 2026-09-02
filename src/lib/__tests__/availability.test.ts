@@ -68,6 +68,18 @@ describe("computeAvailableSlots", () => {
     expect(toLocalDateString(new Date(2026, 8, 10, 23, 30))).toBe("2026-09-10");
   });
 
+  it("interprète l'heure actuelle dans le fuseau du médecin", () => {
+    expect(
+      computeAvailableSlots({
+        ranges: [{ start_time: "13:00", end_time: "15:00" }],
+        durationMinutes: 30,
+        selectedDate: new Date(2026, 8, 10),
+        timeZone: "Africa/Dakar",
+        now: new Date("2026-09-10T13:00:00.000Z"),
+      })
+    ).toEqual(["13:30", "14:00", "14:30"]);
+  });
+
   it("filtre les plages par lieu d'exercice", () => {
     const ranges = [
       { start_time: "09:00", end_time: "10:00", location_id: "cabinet" },
