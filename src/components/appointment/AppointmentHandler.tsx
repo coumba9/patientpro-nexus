@@ -6,6 +6,7 @@ import { DoctorInfo } from "./doctorTypes";
 import { initiatePayTechPayment } from "@/services/paytech";
 import { getSupportedPaymentMethods } from "@/services/africaPayment";
 import { useAuth } from "@/hooks/useAuth";
+import { toLocalDateString } from "@/lib/availability";
 
 // Libellés exacts acceptés par PayTech pour target_payment
 const PAYTECH_TARGETS: Record<string, string> = {
@@ -62,14 +63,17 @@ export const AppointmentHandler = ({
       console.warn("Patient record check failed:", e);
     }
 
-    // Vérifier la disponibilité du créneau AVANT le paiement
+    // Vérifier la disponibilité réelle du créneau AVANT le paiement.
     if (doctorId && data.date && data.time) {
       try {
         const { appointmentService } = await import("@/api");
         const slotCheck = await appointmentService.checkSlotAvailability({
           doctor_id: doctorId,
-          date: data.date.toISOString ? data.date.toISOString().split('T')[0] : new Date(data.date).toISOString().split('T')[0],
-          time: data.time
+          date: toLocalDateString(data.date),
+          time: data.time,
+          duration_minutes: data.durationMinutes || 30,
+          location_id: data.locationId || null,
+          timeZone: data.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
 
         if (!slotCheck.available) {
@@ -102,9 +106,7 @@ export const AppointmentHandler = ({
       try {
         const { supabase } = await import("@/integrations/supabase/client");
         const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
-        const dateStr = data.date instanceof Date
-          ? data.date.toISOString().split('T')[0]
-          : new Date(data.date).toISOString().split('T')[0];
+        const dateStr = toLocalDateString(data.date);
 
         const { error: insertError } = await supabase
           .from("appointments")

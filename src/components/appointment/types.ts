@@ -12,6 +12,8 @@ export interface BookingFormValues {
   locationId?: string;
   reasonId?: string;
   durationMinutes?: number;
+  // Fuseau utilisé pour interpréter les horaires du calendrier
+  timeZone?: string;
   // Informations patient pour les paiements
   firstName?: string;
   lastName?: string;
