@@ -1,3 +1,5 @@
+// ============= Full file contents =============
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
@@ -11,8 +13,17 @@ interface SMSRequest {
   phoneNumber?: string;
   message: string;
   userId?: string;
+  // Signature (Sender ID) shown on the recipient's phone. Custom signatures
+  // must be validated on the Dexchange dashboard (requires NINEA/RCCM). The
+  // default signatures — DEXCHANGE, DSMS SN, DSMS — need no validation, so we
+  // fall back to DEXCHANGE when none is provided.
   signature?: string;
 }
+
+// Default sender ID that requires NO NINEA/RCCM validation on Dexchange.
+// Allow override via DEXCHANGE_SENDER_ID for when a custom signature is later
+// approved on the dashboard.
+const DEFAULT_SIGNATURE = Deno.env.get('DEXCHANGE_SENDER_ID')?.trim() || 'DEXCHANGE';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -54,13 +65,22 @@ serve(async (req) => {
       }
     }
 
-    const { phoneNumber, message, userId: bodyUserId, signature = 'JàmmSanté' }: SMSRequest = await req.json();
+    const { phoneNumber, message, userId: bodyUserId, signature }: SMSRequest = await req.json();
 
     // For end-user calls, force userId to the verified identity (never trust the body).
     // For internal service calls, the body userId is trusted.
     const userId = isServiceCall ? bodyUserId : authenticatedUserId;
 
-    console.log('SMS Request:', { phoneNumber, message, userId, signature, isServiceCall });
+    // Resolve signature: use provided value only if it is a known-valid default
+    // signature; otherwise fall back to DEFAULT_SIGNATURE so we never send an
+    // unvalidated custom Sender ID (which Dexchange rejects with 400/403).
+    const validDefaults = ['DEXCHANGE', 'DSMS SN', 'DSMS'];
+    const resolvedSignature =
+      signature && validDefaults.includes(signature.trim())
+        ? signature.trim()
+        : DEFAULT_SIGNATURE;
+
+    console.log('SMS Request:', { phoneNumber, message, userId, signature: resolvedSignature, isServiceCall });
 
     if (!message || !userId) {
       throw new Error('Missing required fields: message or userId');
@@ -102,76 +122,53 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: 'No phone number found for user' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Format phone number (ensure it starts with country code)
+    // Format phone number to international format without the leading "+".
+    // Dexchange requires e.g. "221771234567".
     let formattedPhone = phoneToUse.replace(/\s/g, '');
-    if (!formattedPhone.startsWith('221') && !formattedPhone.startsWith('+221')) {
-      formattedPhone = '221' + formattedPhone;
+    formattedPhone = formattedPhone.replace(/\+/g, '');
+    if (!formattedPhone.startsWith('221')) {
+      // Strip a leading 0 (local Senegal format) then prepend the country code.
+      formattedPhone = '221' + formattedPhone.replace(/^0/, '');
     }
-    formattedPhone = formattedPhone.replace('+', '');
 
     console.log('Formatted phone:', formattedPhone);
 
-    // Send SMS using Dexchange API (v1)
-    const endpoint = 'https://api.dexchange-sms.com/api/v1/sms/single';
+    // Send SMS using the Dexchange API (v1) — documented endpoint.
+    //   POST https://api.dexchange-sms.com/api/v1/send/sms
+    //   Authorization: Bearer <key>
+    //   body: { signature, content, number: ["221..."] }
+    const endpoint = 'https://api.dexchange-sms.com/api/v1/send/sms';
 
     const cleanKey = apiKey.trim();
     console.log('Dexchange key meta:', { length: cleanKey.length, prefix: cleanKey.slice(0, 4) });
 
-    const payloadVariants: Record<string, unknown>[] = [
-      { number: formattedPhone, signature, content: message },
-      { number: formattedPhone, signature, message },
-      { to: formattedPhone, signature, content: message },
-      { phone: formattedPhone, signature, content: message },
-    ];
+    const payload = {
+      signature: resolvedSignature,
+      content: message,
+      number: [formattedPhone],
+    };
 
-    const authVariants: Record<string, string>[] = [
-      { 'Authorization': `Bearer ${cleanKey}` },
-      { 'api-key': cleanKey },
-      { 'x-api-key': cleanKey },
-      { 'Authorization': cleanKey },
-      { 'Authorization': `Bearer ${cleanKey}`, 'x-api-key': cleanKey, 'api-key': cleanKey },
-    ];
+    const dexchangeResponse = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${cleanKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-    let dexchangeResponse!: Response;
+    const statusCode = dexchangeResponse.status;
+    const contentType = dexchangeResponse.headers.get('content-type');
     let responseData: any = null;
-    let statusCode = 0;
-    let done = false;
-
-    for (const authHeaders of authVariants) {
-      for (const payload of payloadVariants) {
-        dexchangeResponse = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            ...authHeaders,
-          },
-          body: JSON.stringify(payload),
-        });
-
-        statusCode = dexchangeResponse.status;
-        const contentType = dexchangeResponse.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          responseData = await dexchangeResponse.json();
-        } else {
-          const textResponse = await dexchangeResponse.text();
-          responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
-        }
-
-        console.log('Dexchange attempt', JSON.stringify({
-          auth: Object.keys(authHeaders), payload: Object.keys(payload), statusCode, responseData,
-        }));
-
-        // Auth problem: no point trying other payload shapes with this header set
-        if (statusCode === 401 || statusCode === 403) break;
-
-        // Retry with another payload shape only on validation errors
-        if (statusCode !== 400 && statusCode !== 422) { done = true; break; }
-      }
-      if (done) break;
-      if (statusCode !== 401 && statusCode !== 403) break;
+    if (contentType && contentType.includes('application/json')) {
+      responseData = await dexchangeResponse.json();
+    } else {
+      const textResponse = await dexchangeResponse.text();
+      responseData = { error: 'Invalid API response', details: textResponse.substring(0, 200) };
     }
 
+    console.log('Dexchange response:', { statusCode, responseData });
 
     const success = dexchangeResponse.ok;
 
