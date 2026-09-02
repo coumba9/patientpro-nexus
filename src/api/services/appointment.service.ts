@@ -3,56 +3,73 @@ import { BaseService, TableName } from "../base/base.service";
 import { Appointment, CancellationRequest } from "../interfaces";
 import { supabase } from "@/integrations/supabase/client";
 import { validateAppointmentScheduling, hasAppointmentConflict, calculateConsultationFees } from "@/lib/businessLogic";
+import { computeAvailableSlots, parseLocalDateString, WEEKDAYS_FR } from "@/lib/availability";
 
 class AppointmentService extends BaseService<Appointment> {
   constructor() {
     super('appointments' as TableName);
   }
 
-  // Vérifier la disponibilité d'un créneau
+  // Vérifier la disponibilité réelle selon les horaires, la durée et les exceptions.
   async checkSlotAvailability(appointmentData: {
     doctor_id: string;
     date: string;
     time: string;
+    duration_minutes?: number;
+    location_id?: string | null;
+    timeZone?: string;
   }, options?: { skipTimeValidation?: boolean }): Promise<{ available: boolean; error?: string }> {
-    const { data: existingAppointments, error: fetchError } = await supabase
-      .from('appointments')
-      .select('*')
-      .eq('doctor_id', appointmentData.doctor_id)
-      .eq('date', appointmentData.date)
-      .neq('status', 'cancelled');
+    const selectedDate = parseLocalDateString(appointmentData.date);
+    const dayName = WEEKDAYS_FR[selectedDate.getDay()];
+    const [slotsRes, unavailRes, apptRes] = await Promise.all([
+      supabase
+        .from("doctor_availability_slots")
+        .select("start_time, end_time, location_id")
+        .eq("doctor_id", appointmentData.doctor_id)
+        .eq("day", dayName),
+      supabase
+        .from("doctor_unavailability_periods")
+        .select("start_date, end_date, start_time, end_time, is_full_day")
+        .eq("doctor_id", appointmentData.doctor_id)
+        .lte("start_date", appointmentData.date)
+        .gte("end_date", appointmentData.date),
+      supabase
+        .from("appointments")
+        .select("time, duration_minutes")
+        .eq("doctor_id", appointmentData.doctor_id)
+        .eq("date", appointmentData.date)
+        .neq("status", "cancelled"),
+    ]);
 
-    if (fetchError) {
-      return { available: false, error: `Erreur lors de la vérification: ${fetchError.message}` };
-    }
+    const firstError = slotsRes.error || unavailRes.error || apptRes.error;
+    if (firstError) return { available: false, error: `Erreur lors de la vérification: ${firstError.message}` };
 
-    // Check for direct time conflict only
-    const normalizedTime = appointmentData.time.substring(0, 5);
-    const hasConflict = (existingAppointments || []).some((apt: any) => {
-      const existingTime = apt.time?.substring(0, 5);
-      return existingTime === normalizedTime;
+    const availableSlots = computeAvailableSlots({
+      ranges: (slotsRes.data || []) as any,
+      unavailability: (unavailRes.data || []) as any,
+      booked: (apptRes.data || []) as any,
+      durationMinutes: appointmentData.duration_minutes || 30,
+      selectedDate,
+      locationId: appointmentData.location_id,
+      timeZone: appointmentData.timeZone,
     });
-
-    if (hasConflict) {
-      return { available: false, error: 'Ce créneau est déjà occupé' };
+    const normalizedTime = appointmentData.time.substring(0, 5);
+    if (!availableSlots.includes(normalizedTime)) {
+      return { available: false, error: "Ce créneau n'est plus disponible ou ne respecte pas la durée choisie" };
     }
 
-    // Only run full scheduling validation (future date, business hours, etc.) when not skipping
     if (!options?.skipTimeValidation) {
       const validation = validateAppointmentScheduling(
         {
           ...appointmentData,
           doctorId: appointmentData.doctor_id,
-          patientId: 'temp',
-          type: 'consultation',
-          mode: 'presentiel'
+          patientId: "temp",
+          type: "consultation",
+          mode: "presentiel",
         },
-        (existingAppointments as any[]) || []
+        (apptRes.data as any[]) || []
       );
-
-      if (!validation.valid) {
-        return { available: false, error: validation.errors.join(', ') };
-      }
+      if (!validation.valid) return { available: false, error: validation.errors.join(", ") };
     }
 
     return { available: true };
@@ -305,32 +322,44 @@ class AppointmentService extends BaseService<Appointment> {
     return (data as any[]) || [];
   }
 
-  async getAvailableSlots(doctorId: string, targetDate: string): Promise<string[]> {
-    // Récupérer les rendez-vous du médecin pour cette date
-    const { data: existingAppointments, error } = await supabase
-      .from('appointments')
-      .select('time')
-      .eq('doctor_id', doctorId)
-      .eq('date', targetDate)
-      .neq('status', 'cancelled');
+  async getAvailableSlots(
+    doctorId: string,
+    targetDate: string,
+    options?: { durationMinutes?: number; locationId?: string | null; timeZone?: string }
+  ): Promise<string[]> {
+    const selectedDate = parseLocalDateString(targetDate);
+    const dayName = WEEKDAYS_FR[selectedDate.getDay()];
+    const [slotsRes, unavailRes, apptRes] = await Promise.all([
+      supabase
+        .from("doctor_availability_slots")
+        .select("start_time, end_time, location_id")
+        .eq("doctor_id", doctorId)
+        .eq("day", dayName),
+      supabase
+        .from("doctor_unavailability_periods")
+        .select("start_date, end_date, start_time, end_time, is_full_day")
+        .eq("doctor_id", doctorId)
+        .lte("start_date", targetDate)
+        .gte("end_date", targetDate),
+      supabase
+        .from("appointments")
+        .select("time, duration_minutes")
+        .eq("doctor_id", doctorId)
+        .eq("date", targetDate)
+        .neq("status", "cancelled"),
+    ]);
+    const firstError = slotsRes.error || unavailRes.error || apptRes.error;
+    if (firstError) throw new Error(`Error fetching slots: ${firstError.message}`);
 
-    if (error) {
-      throw new Error(`Error fetching slots: ${error.message}`);
-    }
-
-    // Horaires de travail: 8h-18h, créneaux de 30 min
-    const allSlots = [];
-    for (let hour = 8; hour < 18; hour++) {
-      allSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-      allSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-
-    // Filtrer les créneaux déjà pris - normaliser le format
-    const bookedTimes = (existingAppointments || []).map((apt: any) => {
-      // Normaliser le format HH:MM:SS vers HH:MM
-      return apt.time?.substring(0, 5) || apt.time;
+    return computeAvailableSlots({
+      ranges: (slotsRes.data || []) as any,
+      unavailability: (unavailRes.data || []) as any,
+      booked: (apptRes.data || []) as any,
+      durationMinutes: options?.durationMinutes || 30,
+      selectedDate,
+      locationId: options?.locationId,
+      timeZone: options?.timeZone,
     });
-    return allSlots.filter(slot => !bookedTimes.includes(slot));
   }
 
   async rescheduleAppointment(
@@ -364,7 +393,10 @@ class AppointmentService extends BaseService<Appointment> {
       }
 
       // Check if the new slot is available
-      const availableSlots = await this.getAvailableSlots(appointment.doctor_id, newDate);
+      const availableSlots = await this.getAvailableSlots(appointment.doctor_id, newDate, {
+        durationMinutes: (appointment as any).duration_minutes || 30,
+        locationId: (appointment as any).location_id,
+      });
       if (!availableSlots.includes(newTime)) {
         throw new Error("Ce créneau n'est pas disponible");
       }
