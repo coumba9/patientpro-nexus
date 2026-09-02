@@ -32,6 +32,7 @@ export const TimeSelector = ({ form, doctorId, selectedDate }: TimeSelectorProps
 
   const locationId = form.watch("locationId");
   const durationMinutes = form.watch("durationMinutes") || 30;
+  const timeZone = form.watch("timeZone");
 
   useEffect(() => {
     if (!selectedDate || !doctorId) {
