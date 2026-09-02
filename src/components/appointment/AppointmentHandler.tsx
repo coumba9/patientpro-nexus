@@ -7,6 +7,7 @@ import { initiatePayTechPayment } from "@/services/paytech";
 import { getSupportedPaymentMethods } from "@/services/africaPayment";
 import { useAuth } from "@/hooks/useAuth";
 import { toLocalDateString } from "@/lib/availability";
+import { appointmentService } from "@/api";
 
 // Libellés exacts acceptés par PayTech pour target_payment
 const PAYTECH_TARGETS: Record<string, string> = {
