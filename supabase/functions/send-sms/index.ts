@@ -137,7 +137,6 @@ serve(async (req) => {
     //   POST https://api.dexchange-sms.com/api/v1/send/sms
     //   Authorization: Bearer <key>
     //   body: { signature, content, number: ["221..."] }
-    const endpoint = 'https://api.dexchange-sms.com/api/v1/send/sms';
 
     const cleanKey = apiKey.trim();
     console.log('Dexchange key meta:', { length: cleanKey.length, prefix: cleanKey.slice(0, 4) });
