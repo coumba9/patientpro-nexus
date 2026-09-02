@@ -19,6 +19,37 @@ export const toLocalDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+/** Reconstruit une date de calendrier sans interprétation UTC de YYYY-MM-DD. */
+export const parseLocalDateString = (value: string): Date => {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  return new Date(year, (month || 1) - 1, day || 1);
+};
+
+const getZonedNow = (date: Date, timeZone?: string) => {
+  if (!timeZone) {
+    return { date: toLocalDateString(date), minutes: date.getHours() * 60 + date.getMinutes() };
+  }
+
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return {
+      date: `${values.year}-${values.month}-${values.day}`,
+      minutes: Number(values.hour) * 60 + Number(values.minute),
+    };
+  } catch {
+    return { date: toLocalDateString(date), minutes: date.getHours() * 60 + date.getMinutes() };
+  }
+};
+
 /** "09:30" -> 570 */
 export const timeToMinutes = (time: string): number => {
   const [h, m] = time.split(":").map(Number);
