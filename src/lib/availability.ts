@@ -114,6 +114,7 @@ export const computeAvailableSlots = ({
   durationMinutes,
   selectedDate,
   locationId,
+  timeZone,
   now = new Date(),
 }: ComputeSlotsInput): string[] => {
   if (!durationMinutes || durationMinutes <= 0) return [];
