@@ -82,7 +82,7 @@ class AppointmentService extends BaseService<Appointment> {
       duration_minutes: appointmentData.duration_minutes,
       location_id: appointmentData.location_id,
       timeZone: appointmentData.timeZone,
-    }, { skipTimeValidation: true });
+    });
 
     if (!slotCheck.available) {
       throw new Error(slotCheck.error || 'Ce créneau n\'est pas disponible');
