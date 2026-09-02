@@ -45,17 +45,23 @@ export const RescheduleAppointmentDialog = ({
 
   useEffect(() => {
     if (selectedDate && doctorId) {
-      loadAvailableSlots();
+      void loadAvailableSlots();
     }
-  }, [selectedDate, doctorId]);
+  }, [selectedDate, doctorId, appointmentId]);
 
   const loadAvailableSlots = async () => {
     if (!selectedDate) return;
-    
+
     setIsLoading(true);
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const slots = await appointmentService.getAvailableSlots(doctorId, dateStr);
+      const appointment = await appointmentService.getById(appointmentId);
+      const slots = await appointmentService.getAvailableSlots(doctorId, dateStr, {
+        durationMinutes: (appointment as any)?.duration_minutes || 30,
+        locationId: (appointment as any)?.location_id,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        excludeAppointmentId: appointmentId,
+      });
       setAvailableSlots(slots);
       setSelectedTime("");
     } catch (error) {
@@ -118,7 +124,11 @@ export const RescheduleAppointmentDialog = ({
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              disabled={(date) => date < new Date() || date.getDay() === 0}
+               disabled={(date) => {
+                 const today = new Date();
+                 today.setHours(0, 0, 0, 0);
+                 return date < today || date.getDay() === 0;
+               }}
               locale={fr}
               className="rounded-md border"
             />
