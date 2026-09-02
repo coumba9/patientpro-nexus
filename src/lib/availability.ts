@@ -93,7 +93,9 @@ export interface ComputeSlotsInput {
   selectedDate: Date;
   /** Lieu d'exercice choisi (optionnel). */
   locationId?: string | null;
-  /** Horodatage courant, en heure locale du navigateur. */
+  /** Fuseau IANA dans lequel les horaires du médecin sont exprimés. */
+  timeZone?: string;
+  /** Horodatage courant, interprété dans le fuseau choisi. */
   now?: Date;
 }
 
