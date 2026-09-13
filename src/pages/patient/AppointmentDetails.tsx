@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { appointmentService } from "@/api";
-import { Loader2, ArrowLeft, Calendar, Clock, User, MapPin, FileText, Star } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Clock, User, MapPin, FileText, Star, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { RatingDialog } from "@/components/appointment/RatingDialog";
 import { LocationMap } from "@/components/appointment/LocationMap";
+import { CancelAppointmentDialog } from "@/components/patient/CancelAppointmentDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 const AppointmentDetails = () => {
@@ -19,6 +20,12 @@ const AppointmentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [hasRating, setHasRating] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     const fetchAppointment = async () => {
@@ -257,6 +264,22 @@ const AppointmentDetails = () => {
           )}
 
 
+          {["pending", "confirmed", "pending_reschedule"].includes(appointment.status) && currentUserId && (
+            <div className="border-t pt-4">
+              <Button
+                variant="destructive"
+                className="w-full gap-2"
+                onClick={() => setCancelDialogOpen(true)}
+              >
+                <XCircle className="h-4 w-4" />
+                Annuler ce rendez-vous
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Le créneau sera libéré et un SMS de confirmation vous sera envoyé.
+              </p>
+            </div>
+          )}
+
           {appointment.status === "completed" && (
             <div className="border-t pt-4">
               <Button
@@ -272,6 +295,28 @@ const AppointmentDetails = () => {
           )}
         </CardContent>
       </Card>
+
+      {appointment && currentUserId && (
+        <CancelAppointmentDialog
+          isOpen={cancelDialogOpen}
+          onClose={() => setCancelDialogOpen(false)}
+          appointmentId={appointment.id}
+          doctorName={doctorName}
+          appointmentTime={appointment.time?.substring(0, 5) || ""}
+          appointmentDate={
+            appointment.date
+              ? format(new Date(appointment.date), "dd/MM/yyyy", { locale: fr })
+              : ""
+          }
+          userId={currentUserId}
+          onCancel={() => {
+            setCancelDialogOpen(false);
+            toast.success("Un SMS de confirmation d'annulation vous a été envoyé");
+            // Recharger les données
+            appointmentService.getById(id!).then((data) => setAppointment(data));
+          }}
+        />
+      )}
 
       {appointment && (
         <RatingDialog
