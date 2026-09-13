@@ -273,6 +273,9 @@ class AppointmentService extends BaseService<Appointment> {
 
   // Le médecin accepte la demande de report du patient
   async acceptReschedule(appointmentId: string, doctorId: string): Promise<Appointment> {
+    // On capture l'ancienne date avant d'effacer previous_date/previous_time
+    const before = await this.getById(appointmentId).catch(() => null);
+
     const { data, error } = await supabase
       .from('appointments')
       .update({
