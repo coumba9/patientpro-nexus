@@ -12,7 +12,7 @@ import { useAdminUsers, AdminUser } from "@/hooks/useAdminUsers";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const UsersManagementTab = () => {
-  const { users, loading, updateRole, updateStatus, updateProfile, deleteUser } = useAdminUsers();
+  const { users, loading, updateRole, updateStatus, updateProfile, deleteUser, createUser } = useAdminUsers();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -160,7 +160,7 @@ export const UsersManagementTab = () => {
         onDelete={deleteUser}
       />
 
-      <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <CreateUserDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} onCreate={createUser} />
     </>
   );
 };
