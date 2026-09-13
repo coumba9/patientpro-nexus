@@ -264,6 +264,22 @@ const AppointmentDetails = () => {
           )}
 
 
+          {["pending", "confirmed", "pending_reschedule"].includes(appointment.status) && currentUserId && (
+            <div className="border-t pt-4">
+              <Button
+                variant="destructive"
+                className="w-full gap-2"
+                onClick={() => setCancelDialogOpen(true)}
+              >
+                <XCircle className="h-4 w-4" />
+                Annuler ce rendez-vous
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Le créneau sera libéré et un SMS de confirmation vous sera envoyé.
+              </p>
+            </div>
+          )}
+
           {appointment.status === "completed" && (
             <div className="border-t pt-4">
               <Button
@@ -279,6 +295,28 @@ const AppointmentDetails = () => {
           )}
         </CardContent>
       </Card>
+
+      {appointment && currentUserId && (
+        <CancelAppointmentDialog
+          isOpen={cancelDialogOpen}
+          onClose={() => setCancelDialogOpen(false)}
+          appointmentId={appointment.id}
+          doctorName={doctorName}
+          appointmentTime={appointment.time?.substring(0, 5) || ""}
+          appointmentDate={
+            appointment.date
+              ? format(new Date(appointment.date), "dd/MM/yyyy", { locale: fr })
+              : ""
+          }
+          userId={currentUserId}
+          onCancel={() => {
+            setCancelDialogOpen(false);
+            toast.success("Un SMS de confirmation d'annulation vous a été envoyé");
+            // Recharger les données
+            appointmentService.getById(id!).then((data) => setAppointment(data));
+          }}
+        />
+      )}
 
       {appointment && (
         <RatingDialog
