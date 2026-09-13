@@ -82,7 +82,10 @@ export const BookingForm = ({
 
           form.setValue("type", appointmentData.type);
           form.setValue("consultationType", appointmentData.consultationType);
-          form.setValue("date", new Date(`${appointmentData.date}T00:00:00`));
+          // appointmentData.date may be a full ISO string (Date serialized via JSON.stringify)
+          // or a date-only string ("YYYY-MM-DD"); handle both to avoid an Invalid Date.
+          const restoredDate = new Date(appointmentData.date);
+          form.setValue("date", isNaN(restoredDate.getTime()) ? new Date(`${appointmentData.date}T00:00:00`) : restoredDate);
           form.setValue("time", appointmentData.time);
           form.setValue("paymentMethod", appointmentData.paymentMethod);
           form.setValue("locationId", appointmentData.locationId);
