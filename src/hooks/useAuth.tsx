@@ -109,6 +109,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { email, password, first_name, last_name, role, specialty_id, license_number, years_of_experience } = userData;
 
+      // Les inscriptions peuvent être fermées depuis les réglages d'administration
+      try {
+        const { settingsService } = await import("@/api/services/settings.service");
+        const publicSettings = await settingsService.getPublicSettings();
+        if (!publicSettings.registrationEnabled) {
+          throw new Error("Les inscriptions sont temporairement fermées. Merci de réessayer plus tard.");
+        }
+      } catch (settingsError: any) {
+        if (settingsError?.message?.includes("inscriptions sont temporairement")) {
+          throw settingsError;
+        }
+        console.warn("Impossible de vérifier l'état des inscriptions:", settingsError);
+      }
+
       const redirectUrl = `${window.location.origin}/`;
       
       const { data, error } = await supabase.auth.signUp({

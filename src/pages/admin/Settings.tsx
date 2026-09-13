@@ -1,51 +1,27 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, Lock, Globe } from "lucide-react";
+import { Bell, Lock, Globe, Loader2, RefreshCw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-
-const SETTINGS_KEY = "admin_system_settings";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 const AdminSettings = () => {
-  const [settings, setSettings] = useState({
-    emailNotifications: false,
-    pushNotifications: false,
-    twoFactor: false,
-    activityLog: true,
-    maintenanceMode: false,
-    registrationEnabled: true,
-  });
-
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    const savedSettings = localStorage.getItem(SETTINGS_KEY);
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      }
-    }
-  }, []);
+  const { settings, updateSetting, save, reload, isLoading, isSaving } = useSystemSettings();
 
   const handleSaveSettings = async () => {
-    try {
-      setIsSaving(true);
-      
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+    const ok = await save();
+    if (ok) {
       toast.success("Paramètres sauvegardés avec succès");
-    } catch (error) {
-      console.error("Error saving settings:", error);
+    } else {
       toast.error("Erreur lors de la sauvegarde des paramètres");
-    } finally {
-      setIsSaving(false);
     }
+  };
+
+  const setSettings = (next: typeof settings) => {
+    (Object.keys(next) as Array<keyof typeof next>).forEach((key) => {
+      if (next[key] !== settings[key]) updateSetting(key, next[key]);
+    });
   };
 
   return (
@@ -56,8 +32,20 @@ const AdminSettings = () => {
       
       <div className="flex-1 p-8">
         <div className="bg-card rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold mb-6">Paramètres du système</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Paramètres du système</h2>
+            <Button variant="outline" size="sm" onClick={reload} disabled={isLoading || isSaving}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Actualiser
+            </Button>
+          </div>
 
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              Chargement des paramètres...
+            </div>
+          ) : (
           <div className="space-y-6">
             {/* Notifications */}
             <div className="border-b pb-6">
@@ -179,6 +167,7 @@ const AdminSettings = () => {
               </Button>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
