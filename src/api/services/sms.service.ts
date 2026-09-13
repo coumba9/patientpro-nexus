@@ -172,6 +172,38 @@ class SMSService {
       signature: 'DSMS SN'
     });
   }
+
+  /**
+   * Send appointment reschedule SMS (new slot + reason)
+   */
+  async sendAppointmentReschedule(
+    patientId: string,
+    phoneNumber: string,
+    oldDate: string,
+    oldTime: string,
+    newDate: string,
+    newTime: string,
+    options?: { reason?: string | null; motif?: string | null; pendingValidation?: boolean }
+  ): Promise<SendSMSResponse> {
+    const oldLabel = `${new Date(oldDate).toLocaleDateString('fr-FR')} a ${oldTime.substring(0, 5)}`;
+    const newLabel = `${new Date(newDate).toLocaleDateString('fr-FR')} a ${newTime.substring(0, 5)}`;
+    const status = options?.pendingValidation
+      ? 'Demande de report en cours de validation'
+      : 'RDV reporte';
+    const parts = [
+      `${status}: du ${oldLabel} au ${newLabel}`,
+    ];
+    if (options?.motif) parts.push(`- Motif: ${options.motif}`);
+    if (options?.reason) parts.push(`- Raison: ${options.reason}`);
+    const message = `${parts.join(' ')}. JammSante`;
+
+    return this.sendSMS({
+      phoneNumber,
+      message,
+      userId: patientId,
+      signature: 'DSMS SN'
+    });
+  }
 }
 
 export const smsService = new SMSService();
