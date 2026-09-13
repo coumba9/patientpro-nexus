@@ -32,8 +32,20 @@ const AdminSettings = () => {
       
       <div className="flex-1 p-8">
         <div className="bg-card rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold mb-6">Paramètres du système</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Paramètres du système</h2>
+            <Button variant="outline" size="sm" onClick={reload} disabled={isLoading || isSaving}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Actualiser
+            </Button>
+          </div>
 
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              Chargement des paramètres...
+            </div>
+          ) : (
           <div className="space-y-6">
             {/* Notifications */}
             <div className="border-b pb-6">
