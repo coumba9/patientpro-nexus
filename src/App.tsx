@@ -77,6 +77,7 @@ const App = () => {
             <TooltipProvider>
               <Sonner />
               <BrowserRouter>
+                <MaintenanceBanner />
                 <AuthGuard>
                   <Suspense fallback={<LoadingFallback />}>
                     <Routes>
