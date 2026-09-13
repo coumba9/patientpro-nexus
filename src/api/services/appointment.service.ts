@@ -296,11 +296,10 @@ class AppointmentService extends BaseService<Appointment> {
     if (error) throw new Error(`Error accepting reschedule: ${error.message}`);
 
     // SMS de confirmation du report validé par le médecin (non bloquant)
-    const previous = await this.getById(appointmentId).catch(() => null);
     this.sendAppointmentRescheduleSMS(
       data as any,
-      (previous as any)?.previous_date || data.date,
-      (previous as any)?.previous_time || data.time,
+      (before as any)?.previous_date || data.date,
+      (before as any)?.previous_time || data.time,
       { pendingValidation: false }
     ).catch((e) => console.error('SMS de report non envoyé:', e));
 
