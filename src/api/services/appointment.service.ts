@@ -158,6 +158,81 @@ class AppointmentService extends BaseService<Appointment> {
     }
   }
 
+  // Récupère le contexte commun (téléphone, médecin, motif) pour les SMS
+  private async getSmsContext(appointment: any) {
+    const [profileRes, patientRes, doctorRes, reasonRes] = await Promise.all([
+      supabase.from('profiles').select('phone_number, first_name').eq('id', appointment.patient_id).maybeSingle(),
+      supabase.from('patients').select('phone_number').eq('id', appointment.patient_id).maybeSingle(),
+      supabase.rpc('get_doctor_brief', { doctor_id: appointment.doctor_id }),
+      appointment.reason_id
+        ? supabase.from('consultation_reasons').select('name').eq('id', appointment.reason_id).maybeSingle()
+        : Promise.resolve({ data: null } as any),
+    ]);
+
+    const phoneNumber = profileRes.data?.phone_number || patientRes.data?.phone_number;
+    const doctor = Array.isArray(doctorRes.data) ? doctorRes.data[0] : doctorRes.data;
+    const doctorName = doctor
+      ? `${doctor.first_name ?? ''} ${doctor.last_name ?? ''}`.trim()
+      : null;
+    const motif = reasonRes.data?.name || appointment.type || null;
+
+    return { phoneNumber, doctorName, motif };
+  }
+
+  // Envoie le SMS d'annulation avec motif (non bloquant, à appeler après annulation)
+  async sendAppointmentCancellationSMS(appointment: any, cancellationReason?: string | null): Promise<void> {
+    try {
+      if (!appointment?.patient_id) return;
+      const { phoneNumber, doctorName, motif } = await this.getSmsContext(appointment);
+      if (!phoneNumber) return;
+
+      const { smsService } = await import('./sms.service');
+      const result = await smsService.sendAppointmentCancellation(
+        appointment.patient_id,
+        phoneNumber,
+        appointment.date,
+        appointment.time,
+        cancellationReason || undefined,
+        { motif, doctorName }
+      );
+      if (!result.success) {
+        console.error('Échec du SMS d\'annulation:', result.error);
+      }
+    } catch (e) {
+      console.error('SMS d\'annulation non envoyé:', e);
+    }
+  }
+
+  // Envoie le SMS de report avec motif (non bloquant)
+  async sendAppointmentRescheduleSMS(
+    appointment: any,
+    oldDate: string,
+    oldTime: string,
+    options?: { reason?: string | null; pendingValidation?: boolean }
+  ): Promise<void> {
+    try {
+      if (!appointment?.patient_id) return;
+      const { phoneNumber, motif } = await this.getSmsContext(appointment);
+      if (!phoneNumber) return;
+
+      const { smsService } = await import('./sms.service');
+      const result = await smsService.sendAppointmentReschedule(
+        appointment.patient_id,
+        phoneNumber,
+        oldDate,
+        oldTime,
+        appointment.date,
+        appointment.time,
+        { motif, reason: options?.reason, pendingValidation: options?.pendingValidation }
+      );
+      if (!result.success) {
+        console.error('Échec du SMS de report:', result.error);
+      }
+    } catch (e) {
+      console.error('SMS de report non envoyé:', e);
+    }
+  }
+
 
 
   async confirmAppointment(id: string, doctorId: string): Promise<Appointment> {
@@ -198,6 +273,9 @@ class AppointmentService extends BaseService<Appointment> {
 
   // Le médecin accepte la demande de report du patient
   async acceptReschedule(appointmentId: string, doctorId: string): Promise<Appointment> {
+    // On capture l'ancienne date avant d'effacer previous_date/previous_time
+    const before = await this.getById(appointmentId).catch(() => null);
+
     const { data, error } = await supabase
       .from('appointments')
       .update({
@@ -216,6 +294,15 @@ class AppointmentService extends BaseService<Appointment> {
       .single();
 
     if (error) throw new Error(`Error accepting reschedule: ${error.message}`);
+
+    // SMS de confirmation du report validé par le médecin (non bloquant)
+    this.sendAppointmentRescheduleSMS(
+      data as any,
+      (before as any)?.previous_date || data.date,
+      (before as any)?.previous_time || data.time,
+      { pendingValidation: false }
+    ).catch((e) => console.error('SMS de report non envoyé:', e));
+
     return data as any;
   }
 
@@ -314,7 +401,12 @@ class AppointmentService extends BaseService<Appointment> {
       console.error('Error cancelling appointment:', error);
       throw error;
     }
-    
+
+    // SMS d'annulation automatique (non bloquant)
+    this.sendAppointmentCancellationSMS(data as any, cancellationRequest.reason).catch((e) =>
+      console.error('SMS d\'annulation non envoyé:', e)
+    );
+
     return data as any;
   }
 
@@ -488,6 +580,12 @@ class AppointmentService extends BaseService<Appointment> {
         .single();
 
       if (error) throw error;
+
+      // SMS de report automatique (non bloquant)
+      this.sendAppointmentRescheduleSMS(data as any, appointment.date, appointment.time, {
+        reason: reason || null,
+        pendingValidation: userRole === 'patient',
+      }).catch((e) => console.error('SMS de report non envoyé:', e));
 
       return data as Appointment;
     } catch (error) {
