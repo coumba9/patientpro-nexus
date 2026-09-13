@@ -389,7 +389,12 @@ class AppointmentService extends BaseService<Appointment> {
       console.error('Error cancelling appointment:', error);
       throw error;
     }
-    
+
+    // SMS d'annulation automatique (non bloquant)
+    this.sendAppointmentCancellationSMS(data as any, cancellationRequest.reason).catch((e) =>
+      console.error('SMS d\'annulation non envoyé:', e)
+    );
+
     return data as any;
   }
 
@@ -563,6 +568,12 @@ class AppointmentService extends BaseService<Appointment> {
         .single();
 
       if (error) throw error;
+
+      // SMS de report automatique (non bloquant)
+      this.sendAppointmentRescheduleSMS(data as any, appointment.date, appointment.time, {
+        reason: reason || null,
+        pendingValidation: userRole === 'patient',
+      }).catch((e) => console.error('SMS de report non envoyé:', e));
 
       return data as Appointment;
     } catch (error) {
