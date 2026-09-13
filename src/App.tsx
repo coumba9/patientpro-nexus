@@ -49,6 +49,7 @@ const Specialties = lazy(() => import("./pages/admin/Specialties"));
 const PaymentManagement = lazy(() => import("./pages/admin/PaymentManagement"));
 const ContentManagement = lazy(() => import("./pages/admin/ContentManagement"));
 const NotificationManagement = lazy(() => import("./pages/admin/NotificationManagement"));
+const SMSManagement = lazy(() => import("./pages/admin/SMSManagement"));
 const PaymentConfirmation = lazy(() => import("./pages/PaymentConfirmation"));
 const DoctorAppointmentDetails = lazy(() => import("./pages/doctor/AppointmentDetails"));
 const PatientAppointmentDetails = lazy(() => import("./pages/patient/AppointmentDetails"));
@@ -195,6 +196,11 @@ const App = () => {
                       <Route path="/admin/notifications" element={
                         <ProtectedRoute requiredRole={['admin']}>
                           <NotificationManagement />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="/admin/sms" element={
+                        <ProtectedRoute requiredRole={['admin']}>
+                          <SMSManagement />
                         </ProtectedRoute>
                       } />
                       <Route path="/admin/payments" element={

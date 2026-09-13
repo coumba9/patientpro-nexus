@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   FileText,
   Bell,
+  MessageSquare,
   CreditCard,
   ChevronRight,
 } from "lucide-react";
@@ -54,6 +55,7 @@ export const AdminSidebar = () => {
       items: [
         { to: "/admin/analytics", icon: BarChart, label: "Statistiques" },
         { to: "/admin/notifications", icon: Bell, label: "Notifications" },
+        { to: "/admin/sms", icon: MessageSquare, label: "Historique SMS" },
         { to: "/admin/payments", icon: CreditCard, label: "Paiements" },
         { to: "/admin/settings", icon: Settings, label: "Paramètres" },
       ],
