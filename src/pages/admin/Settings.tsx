@@ -1,51 +1,27 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Bell, Lock, Globe } from "lucide-react";
+import { Bell, Lock, Globe, Loader2, RefreshCw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-
-const SETTINGS_KEY = "admin_system_settings";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
 
 const AdminSettings = () => {
-  const [settings, setSettings] = useState({
-    emailNotifications: false,
-    pushNotifications: false,
-    twoFactor: false,
-    activityLog: true,
-    maintenanceMode: false,
-    registrationEnabled: true,
-  });
-
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    const savedSettings = localStorage.getItem(SETTINGS_KEY);
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      }
-    }
-  }, []);
+  const { settings, updateSetting, save, reload, isLoading, isSaving } = useSystemSettings();
 
   const handleSaveSettings = async () => {
-    try {
-      setIsSaving(true);
-      
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+    const ok = await save();
+    if (ok) {
       toast.success("Paramètres sauvegardés avec succès");
-    } catch (error) {
-      console.error("Error saving settings:", error);
+    } else {
       toast.error("Erreur lors de la sauvegarde des paramètres");
-    } finally {
-      setIsSaving(false);
     }
+  };
+
+  const setSettings = (next: typeof settings) => {
+    (Object.keys(next) as Array<keyof typeof next>).forEach((key) => {
+      if (next[key] !== settings[key]) updateSetting(key, next[key]);
+    });
   };
 
   return (
