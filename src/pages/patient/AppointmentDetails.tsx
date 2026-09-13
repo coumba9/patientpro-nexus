@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { appointmentService } from "@/api";
-import { Loader2, ArrowLeft, Calendar, Clock, User, MapPin, FileText, Star } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Clock, User, MapPin, FileText, Star, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { RatingDialog } from "@/components/appointment/RatingDialog";
 import { LocationMap } from "@/components/appointment/LocationMap";
+import { CancelAppointmentDialog } from "@/components/patient/CancelAppointmentDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 const AppointmentDetails = () => {
@@ -19,6 +20,12 @@ const AppointmentDetails = () => {
   const [loading, setLoading] = useState(true);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [hasRating, setHasRating] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
 
   useEffect(() => {
     const fetchAppointment = async () => {
