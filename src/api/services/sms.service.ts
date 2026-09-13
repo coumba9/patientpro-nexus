@@ -161,9 +161,17 @@ class SMSService {
     phoneNumber: string,
     appointmentDate: string,
     appointmentTime: string,
-    reason?: string
+    reason?: string,
+    options?: { motif?: string | null; doctorName?: string | null }
   ): Promise<SendSMSResponse> {
-    const message = `Votre rendez-vous du ${new Date(appointmentDate).toLocaleDateString('fr-FR')} à ${appointmentTime} a été annulé${reason ? ': ' + reason : ''}. JàmmSanté`;
+    const dateLabel = new Date(appointmentDate).toLocaleDateString('fr-FR');
+    const timeLabel = appointmentTime.substring(0, 5);
+    const parts = [
+      `RDV annule${options?.doctorName ? ` avec Dr ${options.doctorName}` : ''} du ${dateLabel} a ${timeLabel}`,
+    ];
+    if (options?.motif) parts.push(`- Motif: ${options.motif}`);
+    if (reason) parts.push(`- Raison: ${reason}`);
+    const message = `${parts.join(' ')}. JammSante`;
 
     return this.sendSMS({
       phoneNumber,
