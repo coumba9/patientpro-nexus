@@ -8,6 +8,18 @@ const corsHeaders = {
 
 const ActionSchema = z.discriminatedUnion("action", [
   z.object({
+    action: z.literal("list_users"),
+  }),
+  z.object({
+    action: z.literal("create_user"),
+    email: z.string().email(),
+    first_name: z.string().min(1).max(80),
+    last_name: z.string().min(1).max(80),
+    role: z.enum(["admin", "doctor", "patient"]),
+    password: z.string().min(8).max(72).optional(),
+    phone_number: z.string().max(30).optional(),
+  }),
+  z.object({
     action: z.literal("update_role"),
     user_id: z.string().uuid(),
     new_role: z.enum(["admin", "doctor", "patient"]),
@@ -72,6 +84,79 @@ Deno.serve(async (req) => {
     let result: any = { success: true };
 
     switch (parsed.action) {
+      case "list_users": {
+        const authUsers: Array<Record<string, unknown>> = [];
+        let page = 1;
+        while (page <= 20) {
+          const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+          if (error) throw error;
+          const batch = data?.users ?? [];
+          for (const u of batch) {
+            authUsers.push({
+              id: u.id,
+              email: u.email ?? null,
+              last_sign_in_at: u.last_sign_in_at ?? null,
+              banned_until: (u as any).banned_until ?? null,
+              email_confirmed_at: u.email_confirmed_at ?? null,
+              created_at: u.created_at ?? null,
+            });
+          }
+          if (batch.length < 1000) break;
+          page++;
+        }
+        result.users = authUsers;
+        break;
+      }
+
+      case "create_user": {
+        const password = parsed.password && parsed.password.length >= 8
+          ? parsed.password
+          : crypto.randomUUID() + "Aa1!";
+
+        const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+          email: parsed.email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            first_name: parsed.first_name,
+            last_name: parsed.last_name,
+            role: parsed.role,
+          },
+        });
+        if (createError) throw createError;
+        const newId = created.user!.id;
+
+        await adminClient.from("profiles").upsert({
+          id: newId,
+          first_name: parsed.first_name,
+          last_name: parsed.last_name,
+          email: parsed.email,
+          phone_number: parsed.phone_number ?? null,
+        }, { onConflict: "id" });
+
+        await adminClient.from("user_roles").delete().eq("user_id", newId);
+        await adminClient.from("user_roles").insert({ user_id: newId, role: parsed.role });
+
+        if (parsed.role === "doctor") {
+          await adminClient
+            .from("doctors")
+            .upsert({ id: newId, license_number: "", is_verified: false }, { onConflict: "id" });
+        }
+
+        await adminClient.from("admin_audit_logs").insert({
+          admin_id: caller.id,
+          action_type: "create_user",
+          table_name: "profiles",
+          record_id: newId,
+          details: { role: parsed.role },
+        });
+
+        result.message = "User created";
+        result.user_id = newId;
+        result.generated_password = parsed.password ? undefined : password;
+        break;
+      }
+
       case "update_role": {
         // Delete existing role and insert new one
         const { error: delError } = await adminClient
