@@ -53,24 +53,42 @@ export const useAdminUsers = () => {
         .select('id, is_verified');
       const doctorsMap = new Map(doctorsData?.map(d => [d.id, d.is_verified]) || []);
 
+      // Données d'authentification (blocage, dernière connexion) via edge function admin
+      const authMap = new Map<string, { banned: boolean; last_sign_in_at: string | null; email: string | null }>();
+      try {
+        const authResult = await invokeAdmin({ action: 'list_users' });
+        for (const u of (authResult?.users || [])) {
+          const bannedUntil = u.banned_until ? new Date(u.banned_until).getTime() : 0;
+          authMap.set(u.id, {
+            banned: bannedUntil > Date.now(),
+            last_sign_in_at: u.last_sign_in_at || null,
+            email: u.email || null,
+          });
+        }
+      } catch (e) {
+        console.warn('Donnees auth indisponibles:', e);
+      }
+
       const usersWithRoles: AdminUser[] = (profilesData || []).map((profile: any) => {
         const role = rolesMap.get(profile.id) || 'patient';
         const isDoctor = role === 'doctor';
         const isDoctorVerified = isDoctor ? doctorsMap.get(profile.id) : true;
 
+        const authInfo = authMap.get(profile.id);
         let status: 'active' | 'blocked' | 'pending' = 'active';
-        if (isDoctor && !isDoctorVerified) status = 'pending';
+        if (authInfo?.banned) status = 'blocked';
+        else if (isDoctor && !isDoctorVerified) status = 'pending';
 
         return {
           id: profile.id,
           first_name: profile.first_name,
           last_name: profile.last_name,
-          email: profile.email,
+          email: profile.email || authInfo?.email || null,
           phone_number: profile.phone_number,
           created_at: profile.created_at,
           role: role as 'admin' | 'doctor' | 'patient',
           status,
-          last_login: null,
+          last_login: authInfo?.last_sign_in_at || null,
         };
       });
 
@@ -111,11 +129,25 @@ export const useAdminUsers = () => {
     await fetchUsers();
   };
 
+  const createUser = async (payload: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: 'admin' | 'doctor' | 'patient';
+    password?: string;
+    phone_number?: string;
+  }) => {
+    const res = await invokeAdmin({ action: 'create_user', ...payload });
+    toast.success('Utilisateur créé');
+    await fetchUsers();
+    return res as { user_id: string; generated_password?: string };
+  };
+
   const deleteUser = async (userId: string) => {
     await invokeAdmin({ action: 'delete_user', user_id: userId });
     toast.success('Utilisateur supprimé');
     await fetchUsers();
   };
 
-  return { users, loading, stats, refetch: fetchUsers, updateRole, updateStatus, updateProfile, deleteUser };
+  return { users, loading, stats, refetch: fetchUsers, updateRole, updateStatus, updateProfile, deleteUser, createUser };
 };
