@@ -28,6 +28,7 @@ interface Doctor {
   years_of_experience?: number;
   is_verified?: boolean;
   nextAvailableSlots?: string[];
+  teleconsultation?: boolean;
 }
 
 interface DoctorCardProps {
@@ -39,8 +40,7 @@ interface DoctorCardProps {
 
 const DoctorCard: React.FC<DoctorCardProps> = ({ doctor, onBooking, isFavorite, onToggleFavorite }) => {
   const [showCalendar, setShowCalendar] = useState(false);
-  // Mock next available slots - in real app, this would come from the doctor's schedule
-  const nextSlots = doctor.nextAvailableSlots || ['10:00', '10:30', '11:00', '14:00', '15:30'];
+  const nextSlots = doctor.nextAvailableSlots || [];
   
   const getAvailabilityColor = (availability: string) => {
     if (availability.toLowerCase().includes("aujourd'hui")) {

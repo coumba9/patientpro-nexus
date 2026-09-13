@@ -1500,6 +1500,18 @@ export type Database = {
           phone_number: string
         }[]
       }
+      get_search_availability: {
+        Args: { p_doctor_ids: string[]; p_end: string; p_start: string }
+        Returns: {
+          doctor_id: string
+          duration_minutes: number
+          location_id: string
+          reason_id: string
+          slot_date: string
+          slot_time: string
+          teleconsultation: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

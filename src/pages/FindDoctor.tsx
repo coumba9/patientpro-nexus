@@ -11,6 +11,7 @@ import DoctorSearchForm from "@/components/doctor/DoctorSearchForm";
 import DoctorFilters, { FilterState } from "@/components/doctor/DoctorFilters";
 import { DoctorProvider, useDoctorContext, Doctor } from "@/contexts/DoctorContext";
 import { useAuth } from "@/hooks/useAuth";
+import { matchesAvailability, slotLabel } from '@/api/services/searchAvailability.service';
 import { usePageSEO } from "@/hooks/usePageSEO";
 
 const defaultFilters: FilterState = {
@@ -37,6 +38,7 @@ const FindDoctorContent = () => {
   const isLoggedIn = !!user;
   
   const { 
+    loading, error, refresh,
     filteredDoctors, 
     selectedRadius,
     userLocation,
@@ -69,23 +71,14 @@ const FindDoctorContent = () => {
         return false;
       }
       
-      // Availability filter (mock logic - in real app, check actual schedule)
-      if (filters.availability !== 'all') {
-        const availLower = doctor.availability.toLowerCase();
-        switch (filters.availability) {
-          case 'today':
-            if (!availLower.includes("aujourd'hui")) return false;
-            break;
-          case 'tomorrow':
-            if (!availLower.includes('demain')) return false;
-            break;
-          case 'this_week':
-            if (!availLower.includes('semaine') && !availLower.includes("aujourd'hui") && !availLower.includes('demain')) return false;
-            break;
-        }
+      if (filters.teleconsultation || filters.availability !== 'all') {
+        if (!doctor.slots?.some(slot => matchesAvailability(slot.slot_date, filters.availability) && (!filters.teleconsultation || slot.teleconsultation))) return false;
       }
       
       return true;
+    }).map(doctor => {
+      const slots = doctor.slots?.filter(slot => matchesAvailability(slot.slot_date, filters.availability) && (!filters.teleconsultation || slot.teleconsultation)) || [];
+      return { ...doctor, slots, nextAvailableSlots: [...new Set(slots.map(slotLabel))], availability: slots.length ? `Prochain créneau : ${slotLabel(slots[0])}` : doctor.availability };
     });
   }, [filteredDoctors, filters]);
 
@@ -125,6 +118,7 @@ const FindDoctorContent = () => {
   // Reset filters
   const resetFilters = () => {
     setFilters(defaultFilters);
+    setSelectedRadius(defaultFilters.radius);
   };
 
   // Update filters with radius sync
@@ -153,7 +147,7 @@ const FindDoctorContent = () => {
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Trouver un médecin</h1>
                 <p className="text-sm text-muted-foreground">
-                  {advancedFilteredDoctors.length} praticien{advancedFilteredDoctors.length !== 1 ? 's' : ''} disponible{advancedFilteredDoctors.length !== 1 ? 's' : ''}
+                  {advancedFilteredDoctors.length} praticien{advancedFilteredDoctors.length !== 1 ? 's' : ''} trouvé{advancedFilteredDoctors.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
@@ -216,7 +210,7 @@ const FindDoctorContent = () => {
           transition={{ delay: 0.2 }}
           className="mt-6"
         >
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "map")}>
+          {loading ? <p role="status">Chargement des disponibilités…</p> : error ? <div role="alert"><p>{error}</p><Button variant="outline" onClick={refresh}>Réessayer</Button></div> : <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "map")}>
             <TabsContent value="list" className="m-0">
               <DoctorList 
                 doctors={advancedFilteredDoctors} 
@@ -237,7 +231,7 @@ const FindDoctorContent = () => {
                 {advancedFilteredDoctors.length} médecin{advancedFilteredDoctors.length !== 1 ? 's' : ''} trouvé{advancedFilteredDoctors.length !== 1 ? 's' : ''}. Cliquez sur un marqueur pour voir les détails.
               </p>
             </TabsContent>
-          </Tabs>
+          </Tabs>}
         </motion.div>
       </div>
     </div>

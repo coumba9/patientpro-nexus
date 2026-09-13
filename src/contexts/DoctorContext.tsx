@@ -2,6 +2,10 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { doctorService } from "@/api/services/doctor.service";
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { getSearchAvailability, SearchSlot, slotLabel } from '@/api/services/searchAvailability.service';
 import { matchesSearch } from "@/lib/searchUtils";
 
 export interface Doctor {
@@ -24,73 +28,15 @@ export interface Doctor {
   years_of_experience?: number;
   is_verified?: boolean;
   average_rating?: number;
+  slots?: SearchSlot[];
+  nextAvailableSlots?: string[];
+  teleconsultation?: boolean;
 }
 
-// Mock doctors data
-const mockDoctors: Doctor[] = [
-  {
-    id: "1",
-    name: "Dr. Fatou Sarr",
-    specialty: "Cardiologue",
-    location: "Dakar",
-    availability: "Disponible aujourd'hui",
-    rating: 4.8,
-    latitude: 48.8566,
-    longitude: 2.3522
-  },
-  {
-    id: "2",
-    name: "Dr. Amadou Sarre",
-    specialty: "Dermatologue",
-    location: "Saint-Louis",
-    availability: "Disponible demain",
-    rating: 4.9,
-    latitude: 45.7640,
-    longitude: 4.8357
-  },
-  {
-    id: "3",
-    name: "Dr. Khadija Deme",
-    specialty: "Pédiatre",
-    location: "Thies",
-    availability: "Disponible cette semaine",
-    rating: 4.7,
-    latitude: 43.2965,
-    longitude: 5.3698
-  },
-  {
-    id: "4",
-    name: "Dr. Ahmadou Fall",
-    specialty: "Généraliste",
-    location: "Podor",
-    availability: "Disponible aujourd'hui",
-    rating: 4.5,
-    latitude: 43.6047,
-    longitude: 1.4437
-  },
-  {
-    id: "5",
-    name: "Dr. Aissatou Ndiaye",
-    specialty: "Ophtalmologue",
-    location: "Matam",
-    availability: "Disponible cette semaine",
-    rating: 4.6,
-    latitude: 43.7102,
-    longitude: 7.2620
-  },
-  {
-    id: "6",
-    name: "Dr. Kalidou Diop",
-    specialty: "Psychiatre",
-    location: "Keur Massar",
-    availability: "Disponible demain",
-    rating: 4.9,
-    latitude: 44.8378,
-    longitude: -0.5792
-  },
-];
-
 interface DoctorContextType {
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
   doctors: Doctor[];
   filteredDoctors: Doctor[];
   searchTerm: string;
@@ -112,44 +58,46 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [selectedRadius, setSelectedRadius] = useState(15);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const { userLocation, getUserLocation, filterDoctorsByProximity } = useUserLocation();
-
-  // Fetch real doctors from database
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const realDoctors = await doctorService.getDoctorsWithDetails();
-        const transformedDoctors: Doctor[] = realDoctors.map((doctor: any) => ({
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['doctor-search', user?.id],
+    refetchInterval: 60000,
+    staleTime: 30000,
+    queryFn: async () => {
+      const realDoctors = await doctorService.getDoctorsWithDetails();
+      const ids = realDoctors.map(d => d.id);
+      const [slots, locationsResult] = await Promise.all([
+        user ? getSearchAvailability(ids) : Promise.resolve([]),
+        user ? supabase.from('practice_locations').select('doctor_id,address,city,latitude,longitude,is_primary').eq('is_active', true) : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (locationsResult.error) throw locationsResult.error;
+      return realDoctors.map((doctor): Doctor => {
+        const places = (locationsResult.data || []).filter(l => l.doctor_id === doctor.id);
+        const place = places.find(l => l.is_primary) || places[0];
+        const available = slots.filter(s => s.doctor_id === doctor.id);
+        return {
           id: doctor.id,
           name: `Dr. ${doctor.profile?.first_name || ''} ${doctor.profile?.last_name || ''}`.trim(),
-          specialty: doctor.specialty?.name || 'Généraliste',
+          specialty: doctor.specialty?.name || 'Spécialité non renseignée',
           specialty_id: doctor.specialty_id,
-          location: 'Dakar',
-          availability: 'Disponible',
+          location: places.map(l => [l.address, l.city].filter(Boolean).join(', ')).join(' · ') || 'Adresse non renseignée',
+          latitude: place?.latitude ?? undefined,
+          longitude: place?.longitude ?? undefined,
+          availability: !user ? 'Connectez-vous pour voir les disponibilités' : available.length ? `Prochain créneau : ${slotLabel(available[0])}` : 'Aucun créneau dans les 30 prochains jours',
+          slots: available,
+          nextAvailableSlots: [...new Set(available.map(slotLabel))],
+          teleconsultation: available.some(s => s.teleconsultation),
           rating: doctor.average_rating || 0,
           rating_count: doctor.rating_count || 0,
-          profile: doctor.profile,
-          specialty_name: doctor.specialty?.name,
           years_of_experience: doctor.years_of_experience,
           is_verified: doctor.is_verified,
-          average_rating: doctor.average_rating || 0
-        }));
-        
-        setDoctors(transformedDoctors);
-        setFilteredDoctors(transformedDoctors);
-      } catch (error) {
-        console.error('Error fetching doctors:', error);
-        // Fallback to mock data if database fails
-        setDoctors(mockDoctors);
-        setFilteredDoctors(mockDoctors);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDoctors();
-  }, []);
+        };
+      });
+    },
+  });
+  const error = queryError ? 'Impossible de charger les disponibilités. Veuillez réessayer.' : null;
+  useEffect(() => { setDoctors(data || []); }, [data]);
 
   // Recherche automatique (au fil de la frappe) avec un léger debounce
   useEffect(() => {
@@ -192,6 +140,9 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   return (
     <DoctorContext.Provider
       value={{
+        loading,
+        error,
+        refresh: () => { void refetch(); },
         doctors,
         filteredDoctors,
         searchTerm,
