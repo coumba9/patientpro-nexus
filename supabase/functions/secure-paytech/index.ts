@@ -18,6 +18,8 @@ interface PayTechPaymentConfig {
   item_name: string;
   item_price?: number; // client value is display-only and re-verified server-side
   appointment_type?: string;
+  doctor_id?: string;
+  reason_id?: string;
   ref_command: string;
   command_name: string;
   currency?: string;
@@ -68,6 +70,8 @@ serve(async (req) => {
       item_name,
       item_price,
       appointment_type,
+      doctor_id,
+      reason_id,
       ref_command,
       command_name,
       currency = "XOF",
@@ -90,7 +94,12 @@ serve(async (req) => {
     }
 
     // Price is resolved server-side from the authoritative fee schedule.
-    const expectedPrice = FEE_SCHEDULE[String(appointment_type ?? '').toLowerCase()];
+    let expectedPrice = FEE_SCHEDULE[String(appointment_type ?? '').toLowerCase()];
+    if (reason_id) {
+      const { data: reason, error } = await supabase.from('consultation_reasons').select('price').eq('id', reason_id).eq('doctor_id', doctor_id).eq('is_active', true).single();
+      if (error || !reason) throw new Error('Motif de consultation invalide');
+      expectedPrice = Number(reason.price);
+    }
     if (!expectedPrice) {
       return new Response(
         JSON.stringify({ success: 0, message: 'Type de consultation invalide' }),

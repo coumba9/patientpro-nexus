@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface PaymentSummaryProps {
   consultationType: string;
+  price?: number;
   doctorFees: {
     consultation: number;
     followup: number;
@@ -14,12 +15,13 @@ interface PaymentSummaryProps {
 
 export const PaymentSummary = ({
   consultationType,
+  price,
   doctorFees,
   onSubmit,
   paymentMethod,
 }: PaymentSummaryProps) => {
   const isOnSite = paymentMethod === "on-site";
-  const fee = doctorFees[consultationType as keyof typeof doctorFees] || 0;
+  const fee = price ?? (doctorFees[consultationType as keyof typeof doctorFees] || 0);
 
   return (
     <div className="pt-4 border-t">
