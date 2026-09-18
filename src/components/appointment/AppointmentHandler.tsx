@@ -102,10 +102,17 @@ export const AppointmentHandler = ({
     
     localStorage.setItem("pendingAppointment", JSON.stringify(appointmentData));
     
+    let fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
+    if (data.reasonId && doctorId) {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: reason, error } = await supabase.from('consultation_reasons').select('price').eq('id', data.reasonId).eq('doctor_id', doctorId).eq('is_active', true).single();
+      if (error || !reason) { toast.error('Impossible de vérifier le tarif du motif.'); return; }
+      fee = Number(reason.price);
+    }
     // === Paiement sur place : créer le rendez-vous directement ===
     if (data.paymentMethod === "on-site") {
       try {
-        const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
+
         const dateStr = toLocalDateString(data.date);
 
         await appointmentService.createAppointment({
@@ -139,7 +146,7 @@ export const AppointmentHandler = ({
     const supportedMethods = getSupportedPaymentMethods().map(m => m.id);
     
     if (supportedMethods.includes(data.paymentMethod)) {
-      const fee = doctorInfo.fees[data.type as keyof typeof doctorInfo.fees] || 0;
+
       
       try {
         const methodName = getSupportedPaymentMethods().find(m => m.id === data.paymentMethod)?.name || "PayTech";
@@ -154,6 +161,8 @@ export const AppointmentHandler = ({
           item_name: `Consultation ${specialty || "médicale"}`,
           item_price: fee,
           appointment_type: data.type,
+          doctor_id: doctorId || undefined,
+          reason_id: data.reasonId,
           currency: "XOF",
           ref_command: `APPOINTMENT-${Date.now()}`,
           command_name: `Rendez-vous ${data.type} avec ${doctorName || "Médecin"}`,

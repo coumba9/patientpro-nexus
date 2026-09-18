@@ -47,6 +47,7 @@ export const BookingForm = ({
   doctorFees,
   onSubmit,
 }: BookingFormProps) => {
+  const [reasonPrice, setReasonPrice] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [consultationType, setConsultationType] = useState("consultation");
   const [isOnline, setIsOnline] = useState(false);
@@ -179,6 +180,7 @@ export const BookingForm = ({
             doctorId={doctorId}
             isTeleconsultation={isOnline}
             onReasonChange={(r) => {
+              setReasonPrice(r?.price ?? null);
               form.setValue("reasonId", r?.id);
               form.setValue("durationMinutes", r?.duration);
             }}
@@ -248,6 +250,7 @@ export const BookingForm = ({
           <PaymentMethodSelector form={form} />
 
           <PaymentSummary
+            price={reasonPrice ?? undefined}
             consultationType={consultationType}
             doctorFees={doctorFees}
             paymentMethod={form.watch("paymentMethod")}
