@@ -88,8 +88,8 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           slots: available,
           nextAvailableSlots: [...new Set(available.map(slotLabel))],
           teleconsultation: available.some(s => s.teleconsultation),
-          rating: doctor.average_rating || 0,
-          rating_count: doctor.rating_count || 0,
+          rating: (doctor as { average_rating?: number }).average_rating || 0,
+          rating_count: (doctor as { rating_count?: number }).rating_count || 0,
           years_of_experience: doctor.years_of_experience,
           is_verified: doctor.is_verified,
         };
