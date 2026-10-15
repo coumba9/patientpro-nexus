@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { getSearchAvailability } from '@/api/services/searchAvailability.service';
 import { parseLocalDateString } from '@/lib/availability';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AvailabilityCalendarProps {
   doctorId: string;
@@ -10,15 +11,18 @@ interface AvailabilityCalendarProps {
 }
 export const AvailabilityCalendar = ({ doctorId, onSelectSlot }: AvailabilityCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { user } = useAuth();
   const { data = [], isLoading, error, refetch } = useQuery({
     queryKey: ['search-calendar', doctorId],
     queryFn: () => getSearchAvailability([doctorId]),
+    enabled: !!user,
     staleTime: 30000,
     refetchInterval: 60000,
   });
   const dates = [...new Set(data.map(slot => slot.slot_date))];
   const activeDate = selectedDate && dates.includes(selectedDate) ? selectedDate : dates[0];
   const times = [...new Set(data.filter(slot => slot.slot_date === activeDate).map(slot => slot.slot_time))];
+  if (!user) return <p className="text-sm text-muted-foreground">Connectez-vous pour voir les créneaux disponibles.</p>;
   if (isLoading) return <p role="status">Chargement des disponibilités…</p>;
   if (error) return <div role="alert"><p>Disponibilités inaccessibles. Vérifiez votre connexion à votre compte.</p><Button variant="outline" onClick={() => refetch()}>Réessayer</Button></div>;
   return <section aria-label="Disponibilités">
