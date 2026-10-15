@@ -24,7 +24,7 @@ import {
 interface DoctorInfo {
   name: string;
   specialty: string;
-  fees: {
+  fees?: {
     consultation: number;
     followup: number;
     urgent: number;
@@ -87,7 +87,7 @@ export const DoctorInfoCard = ({ doctorInfo }: DoctorInfoCardProps) => {
           <CardTitle>Tarifs</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          {!doctorInfo.fees ? <p className="text-sm text-muted-foreground">Les tarifs sont indiqués avec chaque motif de consultation lors de la réservation.</p> : <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Type</TableHead>
@@ -108,7 +108,7 @@ export const DoctorInfoCard = ({ doctorInfo }: DoctorInfoCardProps) => {
                   <TableCell className="text-right">{doctorInfo.fees.urgent.toLocaleString('fr-FR')} CFA</TableCell>
                 </TableRow>
             </TableBody>
-          </Table>
+          </Table>}
         </CardContent>
       </Card>
     </div>

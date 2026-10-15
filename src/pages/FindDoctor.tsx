@@ -71,7 +71,7 @@ const FindDoctorContent = () => {
         return false;
       }
       
-      if (filters.teleconsultation || filters.availability !== 'all') {
+      if (isLoggedIn && (filters.teleconsultation || filters.availability !== 'all')) {
         if (!doctor.slots?.some(slot => matchesAvailability(slot.slot_date, filters.availability) && (!filters.teleconsultation || slot.teleconsultation))) return false;
       }
       
@@ -80,7 +80,7 @@ const FindDoctorContent = () => {
       const slots = doctor.slots?.filter(slot => matchesAvailability(slot.slot_date, filters.availability) && (!filters.teleconsultation || slot.teleconsultation)) || [];
       return { ...doctor, slots, nextAvailableSlots: [...new Set(slots.map(slotLabel))], availability: slots.length ? `Prochain créneau : ${slotLabel(slots[0])}` : doctor.availability };
     });
-  }, [filteredDoctors, filters]);
+  }, [filteredDoctors, filters, isLoggedIn]);
 
   // Count active filters
   const activeFiltersCount = useMemo(() => {

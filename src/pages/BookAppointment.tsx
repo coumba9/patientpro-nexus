@@ -44,6 +44,7 @@ export const BookAppointment = () => {
   }, [user, doctorId]);
   const doctorInfo = getDefaultDoctorInfo(doctorName, specialty);
   if (realFees !== null) doctorInfo.fees = {consultation: realFees, followup: realFees, urgent: realFees};
+  const displayInfo = { ...doctorInfo, fees: realFees !== null ? doctorInfo.fees : undefined };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -53,7 +54,7 @@ export const BookAppointment = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Informations du médecin */}
           <div className="md:col-span-1">
-            {realFees !== null ? <DoctorInfoCard doctorInfo={doctorInfo} /> : <p className="text-muted-foreground">Les tarifs sont indiqués avec les motifs après connexion.</p>}
+            <DoctorInfoCard doctorInfo={displayInfo} />
           </div>
 
           {/* Formulaire de réservation ou message de connexion */}

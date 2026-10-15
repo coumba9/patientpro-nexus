@@ -88,8 +88,8 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           slots: available,
           nextAvailableSlots: [...new Set(available.map(slotLabel))],
           teleconsultation: available.some(s => s.teleconsultation),
-          rating: doctor.average_rating || 0,
-          rating_count: doctor.rating_count || 0,
+          rating: (doctor as { average_rating?: number }).average_rating || 0,
+          rating_count: (doctor as { rating_count?: number }).rating_count || 0,
           years_of_experience: doctor.years_of_experience,
           is_verified: doctor.is_verified,
         };
@@ -109,14 +109,14 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const filtered = base.filter(
         (doctor) =>
           matchesSearch(searchTerm, doctor.name, doctor.specialty, doctor.specialty_name) &&
-          matchesSearch(location, doctor.location)
+          (!user || matchesSearch(location, doctor.location))
       );
 
       setFilteredDoctors(filtered);
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, location, doctors, userLocation, selectedRadius]);
+  }, [searchTerm, location, doctors, userLocation, selectedRadius, user]);
 
   // Le bouton "Rechercher" ne fait que forcer la géolocalisation déjà appliquée
   const handleSearch = () => {
@@ -128,7 +128,7 @@ export const DoctorProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       base.filter(
         (doctor) =>
           matchesSearch(searchTerm, doctor.name, doctor.specialty, doctor.specialty_name) &&
-          matchesSearch(location, doctor.location)
+          (!user || matchesSearch(location, doctor.location))
       )
     );
   };
