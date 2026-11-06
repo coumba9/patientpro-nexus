@@ -11,7 +11,9 @@ import { motion } from "framer-motion";
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isDoctor = searchParams.get("type") === "doctor";
+  // Cabinet unique : les médecins sont ajoutés par l'administrateur.
+  void searchParams;
+  const isDoctor = false;
   const { register } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -285,112 +287,6 @@ const Register = () => {
           </motion.div>
 
           {/* Floating Shapes */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="absolute top-1/4 left-10 w-4 h-4 bg-white/30 rounded-full" 
-          />
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1 }}
-            className="absolute top-2/3 right-1/4 w-6 h-6 bg-white/20 rounded-full" 
-          />
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
-            className="absolute bottom-1/3 left-1/4 w-3 h-3 bg-white/40 rounded-full" 
-          />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
-          <motion.div 
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              {isDoctor ? (
-                <Stethoscope className="w-12 h-12" />
-              ) : (
-                <UserPlus className="w-12 h-12" />
-              )}
-              <span className="text-3xl font-bold">JàmmSanté</span>
-            </div>
-            <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-4">
-              {isDoctor ? "Rejoignez notre réseau médical" : "Créez votre compte patient"}
-            </h1>
-            <p className="text-lg xl:text-xl text-white/80 leading-relaxed">
-              {isDoctor 
-                ? "Développez votre patientèle et gérez vos consultations en toute simplicité avec JàmmSanté."
-                : "Accédez à des soins de qualité et gérez votre santé en toute simplicité avec JàmmSanté."
-              }
-            </p>
-          </motion.div>
-
-          {/* Features */}
-          <div className="space-y-4">
-            {features.map((feature, index) => (
-              <motion.div 
-                key={index} 
-                initial={{ x: -30, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <feature.icon className="w-5 h-5" />
-                </div>
-                <span className="text-lg">{feature.text}</span>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <motion.div 
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
-            className="mt-10 grid grid-cols-3 gap-6"
-          >
-            <div className="text-center">
-              <div className="text-3xl font-bold">500+</div>
-              <div className="text-white/70 text-sm">Médecins</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">10k+</div>
-              <div className="text-white/70 text-sm">Patients</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold">98%</div>
-              <div className="text-white/70 text-sm">Satisfaction</div>
-            </div>
-          </motion.div>
-
-          {/* Switch registration type */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1 }}
-            className="mt-8 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20"
-          >
-            <p className="text-white/80 mb-3">
-              {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
-            </p>
-            <Button
-              variant="outline"
-              className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-              asChild
-            >
-              <Link to={isDoctor ? "/register" : "/register?type=doctor"}>
-                {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
-              </Link>
-            </Button>
-          </motion.div>
         </div>
       </div>
 
@@ -492,22 +388,6 @@ const Register = () => {
               </div>
             </motion.div>
 
-            {/* Mobile registration type switcher - Moved to bottom */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-              className="lg:hidden mt-6 p-4 bg-muted/50 rounded-xl text-center"
-            >
-              <p className="text-muted-foreground text-sm mb-3">
-                {isDoctor ? "Vous êtes un patient ?" : "Vous êtes médecin ?"}
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link to={isDoctor ? "/register" : "/register?type=doctor"}>
-                  {isDoctor ? "Inscription Patient" : "Inscription Médecin"}
-                </Link>
-              </Button>
-            </motion.div>
           </motion.div>
         </div>
       </div>

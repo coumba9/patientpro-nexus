@@ -179,7 +179,6 @@ export const Footer = () => {
                 { to: "/about", label: "Qui sommes-nous" },
                 { to: "/values", label: "Nos valeurs" },
                 { to: "/contact", label: "Contact" },
-                { to: "/join-us", label: "Nous rejoindre" },
               ]
             },
             {
@@ -194,7 +193,6 @@ export const Footer = () => {
             {
               title: "Professionnels",
               links: [
-                { to: "/register?type=doctor", label: "Devenir médecin" },
                 { to: "/pricing", label: "Tarifs" },
                 { to: "/login", label: "Espace médecin" },
               ]

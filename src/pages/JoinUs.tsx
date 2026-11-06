@@ -6,7 +6,7 @@ const JoinUs = () => {
 
   useEffect(() => {
     // Redirect to doctor registration page
-    navigate("/register?type=doctor", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate]);
 
   return null;

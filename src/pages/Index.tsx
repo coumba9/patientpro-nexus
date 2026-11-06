@@ -1,9 +1,7 @@
 import { EmergencyBanner } from "@/components/EmergencyBanner";
-import { Features } from "@/components/Features";
 import { Footer } from "@/components/Footer";
-import { Hero } from "@/components/Hero";
+import { CabinetHome } from "@/components/CabinetHome";
 import { HowItWorks } from "@/components/HowItWorks";
-import { Statistics } from "@/components/Statistics";
 import { Testimonials } from "@/components/Testimonials";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, CheckCircle2, Heart, LogIn, UserPlus } from "lucide-react";
@@ -26,7 +24,7 @@ const Index = () => {
   const { user, userRole, loading, logout } = useAuth();
   usePageSEO({
     title: "Votre santé, notre priorité",
-    description: "JàmmSanté - Plateforme de santé digitale au Sénégal. Prenez rendez-vous avec les meilleurs médecins, téléconsultation, dossier médical sécurisé.",
+    description: "JàmmSanté - Cabinet médical JàmmSanté à Keur Massar. Prenez rendez-vous en ligne avec nos médecins.",
     path: "/",
     jsonLd: {
       "@type": "MedicalBusiness",
@@ -203,7 +201,7 @@ const Index = () => {
       </header>
       
       <main className="flex-grow">
-        <Hero />
+        <CabinetHome />
 
         {!(user && userRole === "doctor") && <HowItWorks />}
         
@@ -233,7 +231,7 @@ const Index = () => {
               <p className="text-lg md:text-xl text-primary-foreground/90 mb-10 leading-relaxed">
                 {user && userRole === "doctor"
                   ? "Optimisez votre pratique médicale et suivez vos patients"
-                  : "Rejoignez les milliers de patients qui font confiance à JàmmSanté pour leur santé."}
+                  : "Réservez votre consultation au cabinet JàmmSanté de Keur Massar en quelques clics."}
               </p>
               <Button
                 size="lg"
@@ -250,8 +248,7 @@ const Index = () => {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary-foreground/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         </motion.section>
 
-        <Features />
-        <Statistics />
+        
         {!(user && userRole === "doctor") && <Testimonials />}
       </main>
       
