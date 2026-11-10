@@ -1,12 +1,10 @@
-# Disponibilités réelles dans la recherche
-- [x] Supprimer les médecins et horaires fictifs.
-- [x] Relier les filtres et cartes aux créneaux réservables réels.
-- [x] Vérifier les calculs existants (7 tests) et la recherche publique sans erreur JavaScript.
-- [ ] Vérifier les disponibilités dans une session connectée : test bloqué par l’absence de session de test Supabase externe.
-# Configuration réelle de SAREL
-- [x] Horaires enregistrés : lundi, mercredi, samedi 9h–16h au cabinet existant.
-- [x] Quatre motifs existants enregistrés à 30 minutes et 10 000 FCFA.
-- [x] Montant du motif relié au récapitulatif, au paiement sur place et à la vérification PayTech.
-- [x] Ouverture publique de la page de réservation vérifiée ; connexion requise.
-- [ ] Création administrateur : adresse e-mail distincte nécessaire ; l’adresse fournie est déjà un compte patient.
-- [ ] Test connecté et paiement réel : session Supabase externe indisponible pour les tests automatisés.
+# Refonte JàmmSanté : prise de rendez-vous par spécialité
+Le nouveau périmètre remplace les tâches de recherche de médecins, motifs et paiement à la réservation.
+- [x] Analyser le code, les tables, les droits et les données existantes.
+- [ ] Valider le plan de suppression et de conservation : en attente de la revue du plan.
+- [ ] Migrer les comptes, les identifiants, les disponibilités et les 31 rendez-vous sans perte des identités.
+- [ ] Remplacer la réservation par le parcours spécialité → date → créneau → confirmation sans paiement.
+- [ ] Implémenter la capacité atomique, la confirmation médecin, le délai de modification et l’audit.
+- [ ] Simplifier les espaces patient, médecin et administrateur ; paiements manuels et messages.
+- [ ] Retirer les fonctionnalités hors périmètre et leurs tables, services et routes après conversion des données utiles.
+- [ ] Vérifier les règles, la concurrence, les droits et les parcours sur mobile et ordinateur.
