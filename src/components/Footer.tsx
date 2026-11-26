@@ -113,7 +113,7 @@ export const Footer = () => {
             {/* Contact Info with hover effects */}
             <div className="space-y-4">
               {[
-                { icon: Phone, href: "tel:+221338001234", text: "+221 33 800 12 34" },
+                { icon: Phone, href: "tel:+221770000000", text: "+221 77 000 00 00" },
                 { icon: Mail, href: "mailto:contact@jammsante.sn", text: "contact@jammsante.sn" },
                 { icon: MapPin, href: null, text: "Dakar, Sénégal" },
               ].map((item, index) => (
