@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 export const CABINET = {
   name: "JàmmSanté",
   city: "Keur Massar",
-  phone: "77 319 68 28",
-  phoneHref: "tel:+221773196828",
+  phone: "77 000 00 00",
+  phoneHref: "tel:+221770000000",
 };
 
 export const CabinetHome = () => (
